@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Masqany",
+    "slug": "masqany",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/masqany-logo.png",
+    "scheme": "masqany",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.comphorine.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-foreground.png",
+        "backgroundColor": "#E6F4FE"
+      },
+      "package": "com.comphorine.mobile"
+    },
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-screen.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "6d043614-9ce2-4a68-ab41-b24331c2e90f"
+      }
+    },
+    "owner": "comphorine"
+  }
+}
