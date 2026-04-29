@@ -55,17 +55,19 @@ export const colors = {
 
 export const typography = {
   family: {
-    regular:   "Nunito_400Regular",
-    light:     "Nunito_300Light",
-    medium:    "Nunito_500Medium",
-    semibold:  "Nunito_600SemiBold",
-    bold:      "Nunito_700Bold",
-    extrabold: "Nunito_800ExtraBold",
-    // Display headings
-    displayRegular:  "CG-Regular",
-    displayMedium:   "CG-Medium",
-    displaySemiBold: "CG-SemiBold",
-    displayBold:     "CG-Bold",
+    // Inter — body text
+    regular: "Inter_400Regular",
+    medium: "Inter_500Medium",
+    semibold: "Inter_600SemiBold",
+    bold: "Inter_700Bold",
+    // Poppins — headings
+    headingRegular: "Poppins_400Regular",
+    headingMedium: "Poppins_500Medium",
+    headingSemiBold: "Poppins_600SemiBold",
+    headingBold: "Poppins_700Bold",
+    headingExtraBold: "Poppins_800ExtraBold",
+    // Branding
+    brandBold: "CG-Bold",
   },
   size: {
     xs: 11,

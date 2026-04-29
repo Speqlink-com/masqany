@@ -1,7 +1,7 @@
 /**
  * AgentBubble — typewriter effect.
- * Heading font: CG-Regular (display serif).
- * Cursor: Nunito for clean rendering.
+ * Body font: Inter-Regular.
+ * Cursor: Inter for clean rendering.
  */
 import { memo, useEffect, useRef, useState } from "react";
 import { Animated, Image, Text, View, ViewStyle } from "react-native";
@@ -64,7 +64,7 @@ export const AgentBubble = memo(function AgentBubble({
         style={{ backgroundColor: "rgba(255,255,255,0.78)", borderTopLeftRadius: 4 }}
       >
         <Text
-          className="font-cg-regular text-dark-300"
+          className="font-inter-regular text-dark-300"
           style={{ fontSize: 18, lineHeight: 28 }}
         >
           {displayed}
@@ -72,7 +72,7 @@ export const AgentBubble = memo(function AgentBubble({
             <Animated.Text
               style={{
                 opacity: cursorOpacity,
-                fontFamily: "Nunito_400Regular",
+                fontFamily: "Inter_400Regular",
                 fontSize: 18,
                 color: "#20A6FD",
               }}

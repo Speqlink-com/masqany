@@ -1,13 +1,8 @@
 /**
  * Onboarding step 2 — Role selection.
  *
- * Scroll fix: contentContainerStyle uses paddingBottom only — no flexGrow.
- * The inner View has no flex-1 so content height is natural.
- * When the confirmation bubble appears below the grid, the ScrollView
- * can scroll to show it without the keyboard interfering.
- *
- * Animation: grid slides up 20px when a role is selected, creating
- * visual breathing room for the agent response below.
+ * Everything scrolls and animates together (heading, question, cards, response, button).
+ * Only BackButton, ContactUs remain static.
  */
 import { AgentBubble } from "@/components/auth/AgentBubble";
 import { AuthLayout } from "@/components/auth/AuthLayout";
@@ -21,7 +16,6 @@ import {
   Animated,
   ImageSourcePropType,
   ScrollView,
-  Text,
   View,
 } from "react-native";
 
@@ -73,51 +67,97 @@ const ROLE_MESSAGES: Record<RoleKey, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// RoleGrid — memo so it never re-renders during bubble typing ticks.
+// Animated Content — everything that moves together
 // ---------------------------------------------------------------------------
-interface RoleGridProps {
+interface AnimatedContentProps {
+  name: string;
+  questionDone: boolean;
   selectedRole: RoleKey | null;
-  onSelect: (role: RoleKey) => void;
-  translateY: Animated.Value;
+  typedRole: RoleKey | null;
+  onQuestionComplete: () => void;
+  onRoleSelect: (role: RoleKey) => void;
+  onConfirmationComplete: (role: RoleKey) => void;
+  contentTranslateY: Animated.Value;
 }
 
-const RoleGrid = memo(function RoleGrid({ selectedRole, onSelect, translateY }: RoleGridProps) {
+const AnimatedContent = memo(function AnimatedContent({
+  name,
+  questionDone,
+  selectedRole,
+  typedRole,
+  onQuestionComplete,
+  onRoleSelect,
+  onConfirmationComplete,
+  contentTranslateY,
+}: AnimatedContentProps) {
   return (
-    <Animated.View style={{ transform: [{ translateY }], marginBottom: 16 }}>
-      <View style={{ gap: 12 }}>
-        <View style={{ flexDirection: "row", gap: 12 }}>
-          <RoleCard
-            title={ROLES[0].title}
-            subtitle={ROLES[0].subtitle}
-            icon={ROLES[0].icon}
-            selected={selectedRole === ROLES[0].key}
-            onPress={() => onSelect(ROLES[0].key)}
-          />
-          <RoleCard
-            title={ROLES[1].title}
-            subtitle={ROLES[1].subtitle}
-            icon={ROLES[1].icon}
-            selected={selectedRole === ROLES[1].key}
-            onPress={() => onSelect(ROLES[1].key)}
+    <Animated.View style={{ transform: [{ translateY: contentTranslateY }] }}>
+      {/* Heading */}
+      <Animated.Text
+        className="font-poppins-bold text-dark-400 mb-5"
+        style={{ fontSize: 26 }}
+      >
+        Hi {name || "there"} 👋
+      </Animated.Text>
+
+      {/* Question bubble */}
+      <AgentBubble
+        message="Which one describes you best?"
+        speed={38}
+        onComplete={onQuestionComplete}
+        style={{ marginBottom: 20 }}
+      />
+
+      {/* Role cards */}
+      {questionDone && (
+        <View style={{ gap: 12, marginBottom: 16 }}>
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <RoleCard
+              title={ROLES[0].title}
+              subtitle={ROLES[0].subtitle}
+              icon={ROLES[0].icon}
+              selected={selectedRole === ROLES[0].key}
+              onPress={() => onRoleSelect(ROLES[0].key)}
+            />
+            <RoleCard
+              title={ROLES[1].title}
+              subtitle={ROLES[1].subtitle}
+              icon={ROLES[1].icon}
+              selected={selectedRole === ROLES[1].key}
+              onPress={() => onRoleSelect(ROLES[1].key)}
+            />
+          </View>
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <RoleCard
+              title={ROLES[2].title}
+              subtitle={ROLES[2].subtitle}
+              icon={ROLES[2].icon}
+              selected={selectedRole === ROLES[2].key}
+              onPress={() => onRoleSelect(ROLES[2].key)}
+            />
+            <RoleCard
+              title={ROLES[3].title}
+              subtitle={ROLES[3].subtitle}
+              icon={ROLES[3].icon}
+              selected={selectedRole === ROLES[3].key}
+              onPress={() => onRoleSelect(ROLES[3].key)}
+            />
+          </View>
+        </View>
+      )}
+
+      {/* Confirmation bubble */}
+      {selectedRole && (
+        <View style={{ marginTop: 24 }}>
+          <AgentBubble
+            key={selectedRole}
+            message={ROLE_MESSAGES[selectedRole]}
+            speed={18}
+            onComplete={() => onConfirmationComplete(selectedRole)}
+            style={{ marginBottom: 24 }}
           />
         </View>
-        <View style={{ flexDirection: "row", gap: 12 }}>
-          <RoleCard
-            title={ROLES[2].title}
-            subtitle={ROLES[2].subtitle}
-            icon={ROLES[2].icon}
-            selected={selectedRole === ROLES[2].key}
-            onPress={() => onSelect(ROLES[2].key)}
-          />
-          <RoleCard
-            title={ROLES[3].title}
-            subtitle={ROLES[3].subtitle}
-            icon={ROLES[3].icon}
-            selected={selectedRole === ROLES[3].key}
-            onPress={() => onSelect(ROLES[3].key)}
-          />
-        </View>
-      </View>
+      )}
     </Animated.View>
   );
 });
@@ -132,29 +172,33 @@ export default function OnboardingRoleScreen() {
   const [questionDone, setQuestionDone] = useState(false);
   const [selectedRole, setSelectedRole] = useState<RoleKey | null>(null);
   const [typedRole, setTypedRole] = useState<RoleKey | null>(null);
-  const gridTranslateY = useRef(new Animated.Value(0)).current;
+  const contentTranslateY = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
 
   function handleRoleSelect(role: RoleKey) {
     if (selectedRole === role) return;
     setSelectedRole(role);
     setTypedRole(null);
-    Animated.spring(gridTranslateY, {
-      toValue: -20,
+    
+    // Animate content upward by 60px to make room for response
+    Animated.spring(contentTranslateY, {
+      toValue: -60,
       useNativeDriver: true,
-      tension: 60,
+      tension: 50,
       friction: 10,
     }).start();
-    // Scroll down slightly so the confirmation bubble is visible
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 200);
+    
+    // Scroll to show the response
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 400);
   }
 
   useEffect(() => {
     if (!selectedRole) {
-      Animated.spring(gridTranslateY, {
+      // Return content to original position
+      Animated.spring(contentTranslateY, {
         toValue: 0,
         useNativeDriver: true,
-        tension: 60,
+        tension: 50,
         friction: 10,
       }).start();
     }
@@ -163,7 +207,7 @@ export default function OnboardingRoleScreen() {
   // Scroll to bottom when confirmation button appears
   useEffect(() => {
     if (typedRole === selectedRole && selectedRole !== null) {
-      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 200);
     }
   }, [typedRole, selectedRole]);
 
@@ -172,61 +216,42 @@ export default function OnboardingRoleScreen() {
   return (
     <AuthLayout>
       <ContactUs />
-      {/* KEY FIX: no flexGrow:1 — content height is natural so scroll works */}
-      <ScrollView
-        ref={scrollRef}
-        className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 60 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <BackButton />
-
-        {/* Static — never moves */}
-        <Text
-          className="font-cg-bold text-dark-400 mt-10 mb-5"
-          style={{ fontSize: 26 }}
+      <View className="flex-1">
+        <View className="px-6 pt-6">
+          <BackButton />
+        </View>
+        
+        <ScrollView
+          ref={scrollRef}
+          className="flex-1"
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          Hi {name || "there"} 👋
-        </Text>
-
-        <AgentBubble
-          message="Which one describes you best?"
-          speed={38}
-          onComplete={() => setQuestionDone(true)}
-          style={{ marginBottom: 20 }}
-        />
-
-        {questionDone && (
-          <RoleGrid
+          <AnimatedContent
+            name={name ?? ""}
+            questionDone={questionDone}
             selectedRole={selectedRole}
-            onSelect={handleRoleSelect}
-            translateY={gridTranslateY}
+            typedRole={typedRole}
+            onQuestionComplete={() => setQuestionDone(true)}
+            onRoleSelect={handleRoleSelect}
+            onConfirmationComplete={(role) => setTypedRole(role)}
+            contentTranslateY={contentTranslateY}
           />
-        )}
 
-        {selectedRole && (
-          <AgentBubble
-            key={selectedRole}
-            message={ROLE_MESSAGES[selectedRole]}
-            speed={18}
-            onComplete={() => setTypedRole(selectedRole)}
-            style={{ marginBottom: 24 }}
-          />
-        )}
-
-        {confirmationDone && (
-          <PrimaryButton
-            label="Acknowledge & Continue"
-            onPress={() =>
-              router.push({
-                pathname: "/onboarding-credentials" as any,
-                params: { name: name ?? "", role: selectedRole ?? "" },
-              })
-            }
-          />
-        )}
-      </ScrollView>
+          {confirmationDone && (
+            <PrimaryButton
+              label="Acknowledge & Continue"
+              onPress={() =>
+                router.push({
+                  pathname: "/onboarding-credentials" as any,
+                  params: { name: name ?? "", role: selectedRole ?? "" },
+                })
+              }
+            />
+          )}
+        </ScrollView>
+      </View>
     </AuthLayout>
   );
 }

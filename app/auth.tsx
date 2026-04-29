@@ -26,26 +26,22 @@ export default function AuthScreen() {
           <View className="flex-1 items-center justify-between px-8 pt-10 pb-6">
 
             {/* Logo + buttons as one unit, vertically centered */}
-            <View className="flex-1 items-center justify-center w-full" style={{ gap: 28 }}>
+            <View className="flex-1 items-center justify-center w-full" style={{ gap: 2 }}>
               <Image
                 source={require("../assets/images/blue-black-logo.png")}
                 className="w-36 h-36"
                 resizeMode="contain"
               />
+                   <Text className="font-poppins-bold text-dark-400 text-center mb-3" style={{ fontSize: 28 }}>
+            Welcome back
+          </Text>
+          <Text className="font-inter-regular text-dark-200 text-center leading-6" style={{ fontSize: 16 }}>
+            Choose how you'd like to sign in to your Masqany account.
+          </Text>
+      
 
-              {/* Buttons */}
-              <View className="w-full" style={{ gap: 8 }}>
-                <TouchableOpacity
-                  activeOpacity={0.85}
-                  onPress={() => router.push("/google" as any)}
-                >
-                  <Image
-                    source={require("../assets/images/continue-with-google-btn.png")}
-                    className="w-full h-14"
-                    resizeMode="contain"
-                  />
-                </TouchableOpacity>
-
+              {/* Buttons with "or" separators */}
+              <View className="w-full" style={{ gap: 2 }}>
                 <TouchableOpacity
                   activeOpacity={0.85}
                   onPress={() => router.push("/login" as any)}
@@ -56,6 +52,13 @@ export default function AuthScreen() {
                     resizeMode="contain"
                   />
                 </TouchableOpacity>
+
+                {/* "or" separator */}
+                <View className="flex-row items-center my-2">
+                  <View className="flex-1 h-px bg-light-200" />
+                  <Text className="font-inter-regular text-dark-100 mx-4" style={{ fontSize: 15 }}>or</Text>
+                  <View className="flex-1 h-px bg-light-200" />
+                </View>
 
                 <TouchableOpacity
                   activeOpacity={0.85}
@@ -71,9 +74,8 @@ export default function AuthScreen() {
             </View>
 
             {/* Terms — pinned to bottom */}
-            <Text className="font-cg-regular text-xl text-white text-center leading-5">
-              Masqany Finds,Reserves and Alerts. Whether relocating or looking for a stay
-             
+            <Text className="font-inter text-[#000000] text-center leading-5" style={{ fontSize: 15 }}>
+              Masqany Finds, Reserves and Alerts.
             </Text>
           </View>
         </SafeAreaView>

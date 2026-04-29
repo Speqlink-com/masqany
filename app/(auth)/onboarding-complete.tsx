@@ -54,7 +54,7 @@ export default function OnboardingCompleteScreen() {
       >
         <BackButton />
 
-        <Text className="font-cg-bold text-dark-400 mt-10 mb-5" style={{ fontSize: 24 }}>
+        <Text className="font-poppins-bold text-dark-400 mt-10 mb-5" style={{ fontSize: 24 }}>
           Almost there, {name || "friend"}! 🚀
         </Text>
 
@@ -71,21 +71,21 @@ export default function OnboardingCompleteScreen() {
               className="rounded-[18px] p-5 mb-6"
               style={{ backgroundColor: "rgba(225,230,232,0.88)" }}
             >
-              <Text className="font-cg-semibold text-dark-300 mb-2.5" style={{ fontSize: 17 }}>
+              <Text className="font-poppins-semibold text-dark-300 mb-2.5" style={{ fontSize: 17 }}>
                 Terms & Privacy
               </Text>
-              <Text className="font-cg-regular text-dark-100 leading-6" style={{ fontSize: 15 }}>
+              <Text className="font-inter-regular text-dark-100 leading-6" style={{ fontSize: 15 }}>
                 By finishing registration you confirm that you have read and
                 agree to Masqany's Terms of Use and Privacy Policy.
               </Text>
               <View className="flex-row mt-3" style={{ gap: 16 }}>
                 <TouchableOpacity activeOpacity={0.7}>
-                  <Text className="font-cg-medium text-primary-700 underline" style={{ fontSize: 15 }}>
+                  <Text className="font-inter-medium text-primary-700 underline" style={{ fontSize: 15 }}>
                     Terms of Use
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity activeOpacity={0.7}>
-                  <Text className="font-cg-medium text-primary-700 underline" style={{ fontSize: 15 }}>
+                  <Text className="font-inter-medium text-primary-700 underline" style={{ fontSize: 15 }}>
                     Privacy Policy
                   </Text>
                 </TouchableOpacity>
@@ -107,10 +107,10 @@ export default function OnboardingCompleteScreen() {
                 }}
               >
                 {accepted && (
-                  <Text className="font-cg-bold text-white text-xs">✓</Text>
+                  <Text className="font-poppins-bold text-white text-xs">✓</Text>
                 )}
               </View>
-              <Text className="flex-1 font-cg-regular text-dark-200 leading-6" style={{ fontSize: 15 }}>
+              <Text className="flex-1 font-inter-regular text-dark-200 leading-6" style={{ fontSize: 15 }}>
                 I confirm I have read and agree to the Terms of Use and Privacy Policy
               </Text>
             </TouchableOpacity>

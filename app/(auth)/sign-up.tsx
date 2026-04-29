@@ -25,10 +25,10 @@ export default function SignUpScreen() {
         <View className="flex-1 px-6 pt-6 pb-12">
           <BackButton />
 
-          <Text className="font-cg-bold text-dark-400 mt-10 mb-1.5" style={{ fontSize: 28 }}>
+          <Text className="font-poppins-bold text-dark-400 mt-10 mb-1.5" style={{ fontSize: 28 }}>
             Create your account
           </Text>
-          <Text className="font-cg-regular text-dark-200 mb-6 leading-6" style={{ fontSize: 16 }}>
+          <Text className="font-inter text-dark-200 mb-6 leading-6" style={{ fontSize: 16 }}>
             Before we get started, please review and accept our terms.
           </Text>
 
@@ -37,10 +37,10 @@ export default function SignUpScreen() {
             className="rounded-[18px] p-5 mb-6"
             style={{ backgroundColor: "rgba(225,230,232,0.88)" }}
           >
-            <Text className="font-cg-semibold text-dark-300 mb-2.5" style={{ fontSize: 17 }}>
+            <Text className="font-poppins-semibold text-dark-300 mb-2.5" style={{ fontSize: 17 }}>
               Terms of Use & Privacy Policy
             </Text>
-            <Text className="font-cg-regular text-dark-200 leading-6" style={{ fontSize: 16 }}>
+            <Text className="font-inter text-dark-200 leading-6" style={{ fontSize: 15 }}>
               By creating an account you agree to Masqany's Terms of Use and
               Privacy Policy. We collect and process your data to provide
               property search, booking, and relocation services. Your data is
@@ -50,12 +50,12 @@ export default function SignUpScreen() {
             </Text>
             <View className="flex-row mt-3.5" style={{ gap: 16 }}>
               <TouchableOpacity activeOpacity={0.7}>
-                <Text className="font-cg-medium text-primary-700 underline" style={{ fontSize: 15 }}>
+                <Text className="font-inter-semibold text-primary-700 underline" style={{ fontSize: 14 }}>
                   Terms of Use
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity activeOpacity={0.7}>
-                <Text className="font-cg-medium text-primary-700 underline" style={{ fontSize: 15 }}>
+                <Text className="font-inter-semibold text-primary-700 underline" style={{ fontSize: 14 }}>
                   Privacy Policy
                 </Text>
               </TouchableOpacity>
@@ -78,10 +78,10 @@ export default function SignUpScreen() {
               }}
             >
               {accepted && (
-                <Text className="font-cg-bold text-white text-xs">✓</Text>
+                <Text className="font-inter-bold text-white text-xs">✓</Text>
               )}
             </View>
-            <Text className="flex-1 font-cg-regular text-dark-200 leading-6" style={{ fontSize: 15 }}>
+            <Text className="flex-1 font-inter text-dark-200 leading-6" style={{ fontSize: 15 }}>
               I have read and agree to the Terms of Use and Privacy Policy
             </Text>
           </TouchableOpacity>

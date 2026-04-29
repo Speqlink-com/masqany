@@ -1,16 +1,21 @@
 /**
  * Root layout — font loading, providers.
- * Font stack: Nunito (UI) + Cormorant Garamond (display headings).
- * Rubik removed entirely.
+ * Font stack: Inter (body text) + Poppins (headings) + CG-Bold (branding only).
  */
 import { queryClient } from "@/lib/query/client";
 import {
-  Nunito_400Regular,
-  Nunito_500Medium,
-  Nunito_600SemiBold,
-  Nunito_700Bold,
-  Nunito_800ExtraBold,
-} from "@expo-google-fonts/nunito";
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+} from "@expo-google-fonts/inter";
+import {
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+    Poppins_800ExtraBold,
+} from "@expo-google-fonts/poppins";
 import { FontAwesome5, Foundation, Ionicons } from "@expo/vector-icons";
 import { QueryClientProvider } from "@tanstack/react-query";
 import * as Font from "expo-font";
@@ -27,17 +32,19 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    // Nunito — all UI text
-    Nunito_400Regular,
-    Nunito_500Medium,
-    Nunito_600SemiBold,
-    Nunito_700Bold,
-    Nunito_800ExtraBold,
-    // Cormorant Garamond — display headings & agent bubbles
-    "CG-Regular":  require("../assets/fonts/CormorantGaramond-Regular.ttf"),
-    "CG-Medium":   require("../assets/fonts/CormorantGaramond-Medium.ttf"),
-    "CG-SemiBold": require("../assets/fonts/CormorantGaramond-SemiBold.ttf"),
-    "CG-Bold":     require("../assets/fonts/CormorantGaramond-Bold.ttf"),
+    // Inter — body text
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    // Poppins — headings
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+    Poppins_800ExtraBold,
+    // Cormorant Garamond — branding only
+    "CG-Bold": require("../assets/fonts/CormorantGaramond-Bold.ttf"),
   });
 
   const [iconsLoaded, setIconsLoaded] = useState(false);

@@ -1,7 +1,6 @@
 /**
- * OTP Verification — email then phone.
- * Font: Inter throughout. Poppins-Bold for title.
- * Digit boxes: Inter_800ExtraBold — clean, heavy number rendering.
+ * Forgot Password OTP Verification
+ * Reuses OTP input component from onboarding flow
  */
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
@@ -10,13 +9,13 @@ import { PrimaryButton } from "@/components/auth/PrimaryButton";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  NativeSyntheticEvent,
-  Text,
-  TextInput,
-  TextInputKeyPressEventData,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    NativeSyntheticEvent,
+    Text,
+    TextInput,
+    TextInputKeyPressEventData,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 // ---------------------------------------------------------------------------
@@ -61,6 +60,8 @@ function DigitBox({ value, isFocused, hasError, inputRef, onChangeText, onKeyPre
         maxLength={1}
         selectTextOnFocus
         caretHidden
+        textContentType="oneTimeCode"
+        autoComplete="sms-otp"
         style={{
           fontFamily: "Inter_800ExtraBold",
           fontSize: 24,
@@ -147,47 +148,42 @@ function useCountdown(initial = 60) {
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
-type Step = "email" | "phone";
-
-export default function OnboardingOtpScreen() {
+export default function ForgotPasswordOtpScreen() {
   const router = useRouter();
-  const { name, role, email, phone, password } = useLocalSearchParams<{
-    name: string; role: string; email: string; phone: string; password: string;
+  const { contact, contactType } = useLocalSearchParams<{
+    contact: string;
+    contactType: "email" | "phone";
   }>();
 
-  const [step, setStep] = useState<Step>("email");
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
-
-  const emailCD = useCountdown(60);
-  const phoneCD = useCountdown(60);
-  const cd = step === "email" ? emailCD : phoneCD;
-
-  useEffect(() => { setDigits(Array(6).fill("")); setError(null); }, [step]);
+  const cd = useCountdown(60);
 
   async function handleVerify() {
     if (!digits.every((d) => d)) return;
     setVerifying(true);
     await new Promise((r) => setTimeout(r, 900));
     setVerifying(false);
+
+    // Mock OTP verification
     if (digits.join("") !== "123456") {
       setError("Incorrect code. Please try again.");
       setDigits(Array(6).fill(""));
       return;
     }
-    if (step === "email") { setStep("phone"); }
-    else {
-      router.push({
-        pathname: "/onboarding-complete" as any,
-        params: { name: name ?? "", role: role ?? "", email, phone },
-      });
-    }
+
+    // Success - navigate to reset password
+    router.push({
+      pathname: "/reset-password" as any,
+      params: { contact, resetToken: "mock-reset-token" },
+    });
   }
 
-  const maskedEmail = email?.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "***" + c) ?? "";
-  const maskedPhone = phone ? phone.slice(0, 7) + "***" + phone.slice(-2) : "";
-  const destination = step === "email" ? maskedEmail : maskedPhone;
+  const maskedContact =
+    contactType === "email"
+      ? contact?.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "***" + c) ?? ""
+      : contact ? contact.slice(0, 7) + "***" + contact.slice(-2) : "";
 
   return (
     <AuthLayout>
@@ -195,25 +191,12 @@ export default function OnboardingOtpScreen() {
       <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 48 }}>
         <BackButton />
 
-        {/* Step progress */}
-        <View style={{ flexDirection: "row", gap: 8, marginTop: 40, marginBottom: 32 }}>
-          {(["email", "phone"] as Step[]).map((s) => (
-            <View
-              key={s}
-              style={{
-                flex: 1, height: 4, borderRadius: 2,
-                backgroundColor: s === step ? "#28B4FA" : (step === "phone" && s === "email") ? "#22C55E" : "#DEDFE3",
-              }}
-            />
-          ))}
-        </View>
-
-        <Text className="font-poppins-bold text-dark-400 mb-2" style={{ fontSize: 26 }}>
-          {step === "email" ? "Verify your email" : "Verify your phone"}
+        <Text className="font-poppins-bold text-dark-400 mt-10 mb-2" style={{ fontSize: 26 }}>
+          Verify your {contactType === "email" ? "email" : "phone"}
         </Text>
         <Text style={{ fontFamily: "Inter_400Regular", fontSize: 15, color: "#4F5C62", lineHeight: 24, marginBottom: 36 }}>
           We sent a 6-digit code to{" "}
-          <Text style={{ fontFamily: "Inter_700Bold", color: "#1A2225" }}>{destination}</Text>.
+          <Text style={{ fontFamily: "Inter_700Bold", color: "#1A2225" }}>{maskedContact}</Text>.
           {" "}Enter it below.
         </Text>
 
@@ -253,7 +236,7 @@ export default function OnboardingOtpScreen() {
           </View>
         ) : (
           <PrimaryButton
-            label={step === "email" ? "Verify Email" : "Verify Phone"}
+            label="Verify Code"
             onPress={handleVerify}
             disabled={!digits.every((d) => d)}
           />

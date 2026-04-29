@@ -10,17 +10,19 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // Nunito — primary UI font (rounded, modern, highly legible)
-        "nunito-regular":   ["Nunito_400Regular",   "sans-serif"],
-        "nunito-medium":    ["Nunito_500Medium",    "sans-serif"],
-        "nunito-semibold":  ["Nunito_600SemiBold",  "sans-serif"],
-        "nunito-bold":      ["Nunito_700Bold",      "sans-serif"],
-        "nunito-extrabold": ["Nunito_800ExtraBold", "sans-serif"],
-        // Cormorant Garamond — display/heading serif (Optima/Times-like)
-        "cg-regular":   ["CG-Regular",   "serif"],
-        "cg-medium":    ["CG-Medium",    "serif"],
-        "cg-semibold":  ["CG-SemiBold",  "serif"],
-        "cg-bold":      ["CG-Bold",      "serif"],
+        // Inter — body text (clean, modern, highly legible)
+        "inter": ["Inter_400Regular", "sans-serif"],
+        "inter-medium": ["Inter_500Medium", "sans-serif"],
+        "inter-semibold": ["Inter_600SemiBold", "sans-serif"],
+        "inter-bold": ["Inter_700Bold", "sans-serif"],
+        // Poppins — headings (geometric, bold, attention-grabbing)
+        "poppins": ["Poppins_400Regular", "sans-serif"],
+        "poppins-medium": ["Poppins_500Medium", "sans-serif"],
+        "poppins-semibold": ["Poppins_600SemiBold", "sans-serif"],
+        "poppins-bold": ["Poppins_700Bold", "sans-serif"],
+        "poppins-extrabold": ["Poppins_800ExtraBold", "sans-serif"],
+        // Cormorant Garamond — branding only
+        "cg-bold": ["CG-Bold", "serif"],
       },
       colors: {
         primary: {

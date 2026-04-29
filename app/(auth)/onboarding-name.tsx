@@ -46,10 +46,10 @@ export default function OnboardingNameScreen() {
             {/* "Hello, I'm Masqany" */}
             <View className="mt-10 mb-6">
               <Text style={{ fontSize: 32, lineHeight: 40 }}>
-                <Text className="font-cg-bold" style={{ color: "#20A6FD" }}>
+                <Text className="font-poppins-bold" style={{ color: "#20A6FD" }}>
                   Hello, I'm Mas
                 </Text>
-                <Text className="font-cg-bold text-dark-400">qany</Text>
+                <Text className="font-poppins-bold text-dark-400">qany</Text>
               </Text>
             </View>
 
@@ -67,7 +67,7 @@ export default function OnboardingNameScreen() {
                   className="rounded-[18px] p-5 mb-6"
                   style={{ backgroundColor: "rgba(225,230,232,0.88)" }}
                 >
-                  <Text className="font-cg-semibold text-dark-400 mb-3.5" style={{ fontSize: 18 }}>
+                  <Text className="font-poppins-semibold text-dark-400 mb-3.5" style={{ fontSize: 18 }}>
                     Nice to meet you! 👋
                   </Text>
                   <TextInput
@@ -78,8 +78,8 @@ export default function OnboardingNameScreen() {
                     autoCapitalize="words"
                     autoCorrect={false}
                     returnKeyType="done"
-                    className="h-14 px-5 rounded-full font-cg-regular text-white"
-                    style={{ backgroundColor: "#AAAABB", fontSize: 17 }}
+                    className="h-14 px-5 rounded-full font-inter text-white"
+                    style={{ backgroundColor: "#AAAABB", fontSize: 16 }}
                   />
                 </View>
 

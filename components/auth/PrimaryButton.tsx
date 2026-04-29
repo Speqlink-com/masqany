@@ -1,5 +1,5 @@
 /**
- * PrimaryButton — fully rounded pill, Nunito ExtraBold label.
+ * PrimaryButton — fully rounded pill, Inter ExtraBold label.
  */
 import { ActivityIndicator, Text, TouchableOpacity } from "react-native";
 
@@ -28,7 +28,7 @@ export function PrimaryButton({
         <ActivityIndicator color="#fff" />
       ) : (
         <Text
-          className="font-nunito-extrabold text-white"
+          className="font-inter-extrabold text-white"
           style={{ fontSize: 17, letterSpacing: 0.2 }}
         >
           {label}

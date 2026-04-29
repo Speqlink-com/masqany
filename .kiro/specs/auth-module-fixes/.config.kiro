@@ -1,0 +1,8 @@
+{
+  "specType": "feature",
+  "workflowType": "requirements-first",
+  "featureName": "auth-module-fixes",
+  "createdAt": "2026-04-29T10:12:00Z",
+  "status": "ready",
+  "currentPhase": "tasks"
+}

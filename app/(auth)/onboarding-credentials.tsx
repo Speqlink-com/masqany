@@ -85,7 +85,7 @@ function StrengthBar({ value }: { value: string }) {
           }}
         />
       ))}
-      <Text style={{ fontFamily: "Nunito_600SemiBold", fontSize: 12, color: labelColor, minWidth: 44 }}>
+      <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: labelColor, minWidth: 44 }}>
         {label}
       </Text>
     </View>
@@ -136,7 +136,7 @@ function InputField({
     <View style={{ marginBottom: 20 }}>
       <Text
         style={{
-          fontFamily: "Nunito_600SemiBold",
+          fontFamily: "Inter_600SemiBold",
           fontSize: 13,
           color: "rgba(26,34,37,0.9)",
           marginBottom: 6,
@@ -217,11 +217,11 @@ function InputField({
       </View>
 
       {error ? (
-        <Text style={{ fontFamily: "Nunito_400Regular", fontSize: 12, color: "#F75555", marginTop: 5, marginLeft: 4 }}>
+        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#F75555", marginTop: 5, marginLeft: 4 }}>
           {error}
         </Text>
       ) : hint ? (
-        <Text style={{ fontFamily: "Nunito_400Regular", fontSize: 12, color: "rgba(26,34,37,0.5)", marginTop: 5, marginLeft: 4 }}>
+        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(26,34,37,0.5)", marginTop: 5, marginLeft: 4 }}>
           {hint}
         </Text>
       ) : null}
@@ -310,7 +310,7 @@ export default function OnboardingCredentialsScreen() {
         >
           <BackButton />
 
-          <Text className="font-cg-bold text-dark-400 mt-10 mb-5" style={{ fontSize: 26 }}>
+          <Text className="font-poppins-bold text-dark-400 mt-10 mb-5" style={{ fontSize: 26 }}>
             Secure your account
           </Text>
 
@@ -390,7 +390,7 @@ export default function OnboardingCredentialsScreen() {
               {/* Divider */}
               <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20, gap: 12 }}>
                 <View style={{ flex: 1, height: 1, backgroundColor: "#DEDFE3" }} />
-                <Text style={{ fontFamily: "Nunito_400Regular", fontSize: 14, color: "#BDBDC0" }}>or</Text>
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 14, color: "#BDBDC0" }}>or</Text>
                 <View style={{ flex: 1, height: 1, backgroundColor: "#DEDFE3" }} />
               </View>
 
@@ -418,7 +418,7 @@ export default function OnboardingCredentialsScreen() {
                   style={{ width: 22, height: 22 }}
                   resizeMode="contain"
                 />
-                <Text style={{ fontFamily: "Nunito_800ExtraBold", fontSize: 17, color: "#fff" }}>
+                <Text style={{ fontFamily: "Inter_800ExtraBold", fontSize: 17, color: "#fff" }}>
                   Sign up with Google
                 </Text>
               </TouchableOpacity>
