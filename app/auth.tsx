@@ -44,6 +44,24 @@ export default function AuthScreen() {
               <View className="w-full" style={{ gap: 2 }}>
                 <TouchableOpacity
                   activeOpacity={0.85}
+                  onPress={() => router.push("/google-login" as any)}
+                >
+                  <Image
+                    source={require("../assets/images/continue-with-google-btn.png")}
+                    className="w-full h-14"
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+
+                {/* "or" separator */}
+                <View className="flex-row items-center my-2">
+                  <View className="flex-1 h-px bg-light-200" />
+                  <Text className="font-inter-regular text-dark-100 mx-4" style={{ fontSize: 15 }}>or</Text>
+                  <View className="flex-1 h-px bg-light-200" />
+                </View>
+
+                <TouchableOpacity
+                  activeOpacity={0.85}
                   onPress={() => router.push("/login" as any)}
                 >
                   <Image

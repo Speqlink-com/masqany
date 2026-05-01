@@ -4,17 +4,17 @@
  */
 import { queryClient } from "@/lib/query/client";
 import {
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
 } from "@expo-google-fonts/inter";
 import {
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
-    Poppins_800ExtraBold,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  Poppins_800ExtraBold,
 } from "@expo-google-fonts/poppins";
 import { FontAwesome5, Foundation, Ionicons } from "@expo/vector-icons";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -70,13 +70,17 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <StatusBar style="auto" />
-          <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
+          <Stack screenOptions={{  headerShown: false,
+        animation: 'slide_from_right',
+        gestureEnabled: true,
+        animationDuration: 260}}>
             <Stack.Screen name="index" />
             <Stack.Screen name="splash" />
             <Stack.Screen name="auth" />
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="(registration)" />
+            <Stack.Screen name="(profile)" />
             <Stack.Screen name="(admin)" />
           </Stack>
         </SafeAreaProvider>

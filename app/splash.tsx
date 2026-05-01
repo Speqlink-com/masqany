@@ -1,6 +1,6 @@
-import { View, Image } from "react-native";
-import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Image, View } from "react-native";
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -25,7 +25,7 @@ export default function SplashScreen() {
   return (
     <View className="flex-1">
       <Image
-        source={require("../assets/images/splash-screen.png")}
+        source={require("../assets/images/splash-screen.webp")}
         className="w-full h-full"
         resizeMode="cover"
       />

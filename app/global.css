@@ -1,3 +1,33 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  /* 🔥 Buttons */
+  .btn {
+    @apply px-4 py-3 rounded-2xl items-center justify-center;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-black;
+  }
+
+  /* 🔥 Inputs */
+  .input {
+    @apply border border-light-200 px-4 py-3 rounded-xl text-dark-300;
+  }
+
+  /* 🔥 Card */
+  .card {
+    @apply bg-white rounded-3xl p-4 shadow-md;
+  }
+
+  /* 🔥 Title */
+  .title {
+    @apply text-xl font-poppins-semibold text-dark-400;
+  }
+}
