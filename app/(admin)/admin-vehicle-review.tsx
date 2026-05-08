@@ -7,11 +7,13 @@
 import { AnimatedButton } from "@/components/vehicle/AnimatedButton";
 import { VehicleDetailsSkeleton } from "@/components/vehicle/VehicleDetailsSkeleton";
 import { VerificationBadge } from "@/components/vehicle/VerificationBadge";
+import { canAccessAdminScreens, getPermissionErrorMessage } from "@/lib/permissions";
 import { useApproveVehicle, useRejectVehicle, useVehicle } from "@/modules/vehicle/hooks";
+import { useAuthStore } from "@/store/auth.store";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     Alert,
     Dimensions,
@@ -25,9 +27,8 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { GestureHandlerRootView, PanGestureHandler, PinchGestureHandler } from "react-native-gesture-handler";
+import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, {
-    useAnimatedGestureHandler,
     useAnimatedStyle,
     useSharedValue,
     withSpring,
@@ -135,31 +136,32 @@ export default function AdminVehicleReviewScreen() {
   };
 
   // Pinch gesture handler for zoom
-  const pinchHandler = useAnimatedGestureHandler({
-    onActive: (event) => {
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((event) => {
       scale.value = savedScale.value * event.scale;
-    },
-    onEnd: () => {
+    })
+    .onEnd(() => {
       if (scale.value < 1) {
         scale.value = withSpring(1);
       } else if (scale.value > 3) {
         scale.value = withSpring(3);
       }
       savedScale.value = scale.value;
-    },
-  });
+    });
 
   // Pan gesture handler for dragging
-  const panHandler = useAnimatedGestureHandler({
-    onActive: (event) => {
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
       translateX.value = event.translationX;
       translateY.value = event.translationY;
-    },
-    onEnd: () => {
+    })
+    .onEnd(() => {
       translateX.value = withSpring(0);
       translateY.value = withSpring(0);
-    },
-  });
+    });
+
+  // Compose gestures
+  const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -477,14 +479,11 @@ export default function AdminVehicleReviewScreen() {
                 <View className="gap-3">
                   {canApprove && (
                     <AnimatedButton
+                      title={approveVehicle.isPending ? "Approving..." : "Approve Vehicle"}
                       onPress={handleApprove}
                       disabled={approveVehicle.isPending}
-                      className="bg-success rounded-full py-4 items-center"
-                    >
-                      <Text className="font-inter-semibold text-[15px] text-white">
-                        {approveVehicle.isPending ? "Approving..." : "Approve Vehicle"}
-                      </Text>
-                    </AnimatedButton>
+                      variant="primary"
+                    />
                   )}
 
                   {canReject && (
@@ -569,22 +568,18 @@ export default function AdminVehicleReviewScreen() {
               </View>
 
               <GestureHandlerRootView className="flex-1">
-                <PinchGestureHandler onGestureEvent={pinchHandler}>
-                  <Animated.View className="flex-1">
-                    <PanGestureHandler onGestureEvent={panHandler}>
-                      <Animated.View className="flex-1 items-center justify-center">
-                        <Animated.Image
-                          source={{ uri: vehicle.photos[selectedPhotoIndex] }}
-                          style={[
-                            { width: SCREEN_WIDTH, height: SCREEN_WIDTH },
-                            animatedStyle,
-                          ]}
-                          resizeMode="contain"
-                        />
-                      </Animated.View>
-                    </PanGestureHandler>
+                <GestureDetector gesture={composedGesture}>
+                  <Animated.View className="flex-1 items-center justify-center">
+                    <Animated.Image
+                      source={{ uri: vehicle.photos[selectedPhotoIndex] }}
+                      style={[
+                        { width: SCREEN_WIDTH, height: SCREEN_WIDTH },
+                        animatedStyle,
+                      ]}
+                      resizeMode="contain"
+                    />
                   </Animated.View>
-                </PinchGestureHandler>
+                </GestureDetector>
               </GestureHandlerRootView>
 
               <View className="absolute inset-0 flex-row items-center justify-between px-5 pointer-events-box-none">
@@ -634,22 +629,18 @@ export default function AdminVehicleReviewScreen() {
 
               {selectedDocument && (
                 <GestureHandlerRootView className="flex-1">
-                  <PinchGestureHandler onGestureEvent={pinchHandler}>
-                    <Animated.View className="flex-1">
-                      <PanGestureHandler onGestureEvent={panHandler}>
-                        <Animated.View className="flex-1 items-center justify-center">
-                          <Animated.Image
-                            source={{ uri: selectedDocument.url }}
-                            style={[
-                              { width: SCREEN_WIDTH, height: SCREEN_WIDTH * 1.4 },
-                              animatedStyle,
-                            ]}
-                            resizeMode="contain"
-                          />
-                        </Animated.View>
-                      </PanGestureHandler>
+                  <GestureDetector gesture={composedGesture}>
+                    <Animated.View className="flex-1 items-center justify-center">
+                      <Animated.Image
+                        source={{ uri: selectedDocument.url }}
+                        style={[
+                          { width: SCREEN_WIDTH, height: SCREEN_WIDTH * 1.4 },
+                          animatedStyle,
+                        ]}
+                        resizeMode="contain"
+                      />
                     </Animated.View>
-                  </PinchGestureHandler>
+                  </GestureDetector>
                 </GestureHandlerRootView>
               )}
             </SafeAreaView>

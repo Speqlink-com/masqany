@@ -7,7 +7,9 @@
 import { HistoryTimeline } from "@/components/vehicle/HistoryTimeline";
 import { VehicleDetailsSkeleton } from "@/components/vehicle/VehicleDetailsSkeleton";
 import { VehicleHeader } from "@/components/vehicle/VehicleHeader";
+import { canDeleteVehicle, canEditVehicle, canSetActiveVehicle, canUpdateVehicleStatus } from "@/lib/permissions";
 import { useDeleteVehicle, useSetActiveVehicle, useUpdateVehicleStatus, useVehicle, useVehicleHistory } from "@/modules/vehicle/hooks";
+import { useAuthStore } from "@/store/auth.store";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -23,9 +25,8 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import { GestureHandlerRootView, PanGestureHandler, PinchGestureHandler } from "react-native-gesture-handler";
+import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, {
-    useAnimatedGestureHandler,
     useAnimatedStyle,
     useSharedValue,
     withSpring,
@@ -98,31 +99,32 @@ export default function VehicleDetailsScreen() {
   };
 
   // Pinch gesture handler for zoom
-  const pinchHandler = useAnimatedGestureHandler({
-    onActive: (event) => {
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((event) => {
       scale.value = savedScale.value * event.scale;
-    },
-    onEnd: () => {
+    })
+    .onEnd(() => {
       if (scale.value < 1) {
         scale.value = withSpring(1);
       } else if (scale.value > 3) {
         scale.value = withSpring(3);
       }
       savedScale.value = scale.value;
-    },
-  });
+    });
 
   // Pan gesture handler for dragging
-  const panHandler = useAnimatedGestureHandler({
-    onActive: (event) => {
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
       translateX.value = event.translationX;
       translateY.value = event.translationY;
-    },
-    onEnd: () => {
+    })
+    .onEnd(() => {
       translateX.value = withSpring(0);
       translateY.value = withSpring(0);
-    },
-  });
+    });
+
+  // Compose gestures
+  const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -214,11 +216,18 @@ export default function VehicleDetailsScreen() {
     <View className="flex-1 bg-white">
       <StatusBar style="dark" />
       <SafeAreaView className="flex-1" edges={["top"]}>
+        {/* Back Button */}
+        <View className="flex-row items-center px-5 py-4 border-b border-light-300">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 items-center justify-center"
+          >
+            <Ionicons name="arrow-back" size={24} color="#000000" />
+          </TouchableOpacity>
+        </View>
+
         {/* Header */}
-        <VehicleHeader
-          vehicle={vehicle}
-          onBack={() => router.back()}
-        />
+        <VehicleHeader vehicle={vehicle} />
 
         <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}>
           {/* Status Toggle (for active vehicle only) */}
@@ -466,22 +475,18 @@ export default function VehicleDetailsScreen() {
 
                 {/* Photo with zoom and pan */}
                 <GestureHandlerRootView className="flex-1">
-                  <PinchGestureHandler onGestureEvent={pinchHandler}>
-                    <Animated.View className="flex-1">
-                      <PanGestureHandler onGestureEvent={panHandler}>
-                        <Animated.View className="flex-1 items-center justify-center">
-                          <Animated.Image
-                            source={{ uri: vehicle.photos[selectedPhotoIndex] }}
-                            style={[
-                              { width: SCREEN_WIDTH, height: SCREEN_WIDTH },
-                              animatedStyle,
-                            ]}
-                            resizeMode="contain"
-                          />
-                        </Animated.View>
-                      </PanGestureHandler>
+                  <GestureDetector gesture={composedGesture}>
+                    <Animated.View className="flex-1 items-center justify-center">
+                      <Animated.Image
+                        source={{ uri: vehicle.photos[selectedPhotoIndex] }}
+                        style={[
+                          { width: SCREEN_WIDTH, height: SCREEN_WIDTH },
+                          animatedStyle,
+                        ]}
+                        resizeMode="contain"
+                      />
                     </Animated.View>
-                  </PinchGestureHandler>
+                  </GestureDetector>
                 </GestureHandlerRootView>
 
                 {/* Navigation Arrows */}

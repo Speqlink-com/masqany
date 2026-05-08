@@ -4,10 +4,10 @@
  * Displays user profile header and settings cards for navigation.
  */
 import {
-  ConfirmDialog,
-  ProfileHeader,
-  ProfileSkeleton,
-  SettingsCard
+    ConfirmDialog,
+    ProfileHeader,
+    ProfileSkeleton,
+    SettingsCard
 } from "@/components/profile";
 import { colors, spacing, typography } from "@/constants/tokens";
 import { useAccounts, useLogout, useProfile } from "@/modules/profile";
@@ -16,12 +16,12 @@ import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useState } from "react";
 import {
-  Alert,
-  ImageBackground,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    Alert,
+    ImageBackground,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -50,6 +50,7 @@ export default function ProfileScreen() {
         email: "comphortine@speqlink.com",
         phone: "+1234567890",
         avatar: undefined, // Will use default icon
+        role: "tenant",
         isHost: false,
         isVerified: true,
         createdAt: new Date().toISOString(),

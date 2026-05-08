@@ -3,17 +3,17 @@
 
 import { tokenStore, useAuthStore } from "@/store/auth.store";
 import {
-  useMutation,
-  useQuery,
-  useQueryClient,
+    useMutation,
+    useQuery,
+    useQueryClient,
 } from "@tanstack/react-query";
 import { profileApi } from "./api";
 import type {
-  LanguageUpdatePayload,
-  NotificationUpdatePayload,
-  PasswordChangePayload,
-  ProfileUpdatePayload,
-  TwoFactorTogglePayload,
+    LanguageUpdatePayload,
+    NotificationUpdatePayload,
+    PasswordChangePayload,
+    ProfileUpdatePayload,
+    TwoFactorTogglePayload,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -72,7 +72,11 @@ export function useUpdateProfile() {
       profileApi.updateProfile(payload),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: profileKeys.detail() });
-      setUser(data);
+      // Convert UserProfile to User by adding role field
+      setUser({
+        ...data,
+        role: "tenant", // Default role, should be fetched from API in production
+      });
     },
   });
 }
@@ -171,7 +175,11 @@ export function useSwitchAccount() {
     mutationFn: (accountId: string) => profileApi.switchAccount(accountId),
     onSuccess: (data) => {
       setTokens(data.accessToken, data.refreshToken);
-      setUser(data.user);
+      // Convert UserProfile to User by adding role field
+      setUser({
+        ...data.user,
+        role: "tenant", // Default role, should be fetched from API in production
+      });
       qc.invalidateQueries(); // Invalidate all queries
     },
   });

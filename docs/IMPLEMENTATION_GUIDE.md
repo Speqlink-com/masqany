@@ -1,6 +1,7 @@
 # Masqany Mobile - Implementation Guide
 
 ## Document Purpose
+
 This guide translates the **Expo Enterprise Specifications** into actionable development workflows for the Masqany mobile app. Every module will follow this guide to ensure consistency, scalability, and enterprise-grade quality.
 
 ---
@@ -8,20 +9,17 @@ This guide translates the **Expo Enterprise Specifications** into actionable dev
 ## 🎯 Core Principles
 
 ### 1. **Modular Architecture**
+
 - Each feature is self-contained in `modules/[feature-name]/`
 - No cross-module imports except through `shared/` or `lib/`
 - Each module has: `api.ts`, `hooks.ts`, `types.ts`, `index.ts`
 
 ### 2. **Three-Layer State Management**
 
-| State Type | Tool | Use Cases |
-|------------|------|-----------|
-| **Server State** | TanStack Query | API data, caching, pagination, mutations |
-| **UI State** | Zustand | Modals, loaders, selections, video playback |
-| **Business-Critical** | Redux | Payments, bookings, transactions |
-| **App Context** | Context API | Theme, auth session, language |
+* State TypeToolUse Cases**Server State**TanStack QueryAPI data, caching, pagination, mutations**UI State**ZustandModals, loaders, selections, video playback**Business-Critical**ReduxPayments, bookings, transactions**App Context**Context APITheme, auth session, language
 
 ### 3. **Strict Separation of Concerns**
+
 - **Components** → Render only
 - **Hooks** → Data orchestration (TanStack Query)
 - **API Layer** → Pure HTTP calls (no React, no hooks)
@@ -42,6 +40,7 @@ modules/[module-name]/
 ```
 
 ### Example: Property Module
+
 ```typescript
 // modules/property/api.ts
 export const propertyApi = {
@@ -76,49 +75,53 @@ export * from './types'
 ## 🔄 Module Development Workflow
 
 ### Phase 1: Planning & Requirements
+
 1. **Create Spec File** (`.kiro/specs/[module-name]/`)
+
    - `requirements.md` - Business requirements
    - `design.md` - Technical design
    - `tasks.md` - Implementation tasks
-
 2. **Define API Contracts**
+
    - Document expected endpoints
    - Define request/response schemas
    - Plan error handling
-
 3. **Identify State Needs**
+
    - Server state → TanStack Query
    - UI state → Zustand
    - Business-critical → Redux
 
 ### Phase 2: Implementation
+
 1. **Create Module Structure**
+
    ```bash
    mkdir -p modules/[module-name]
    touch modules/[module-name]/{api,hooks,types,index}.ts
    ```
-
 2. **Define Types First** (`types.ts`)
+
    - All interfaces and types
    - Request/response payloads
    - Domain models
-
 3. **Implement API Layer** (`api.ts`)
+
    - Pure HTTP calls
    - No React dependencies
    - Export named functions
-
 4. **Create Query Hooks** (`hooks.ts`)
+
    - TanStack Query hooks
    - Query keys as constants
    - Mutations with invalidation
-
 5. **Add UI State** (if needed)
+
    - Create Zustand store in `store/`
    - Use selectors pattern
    - Keep state flat
-
 6. **Export Public API** (`index.ts`)
+
    ```typescript
    export * from './api'
    export * from './hooks'
@@ -126,17 +129,19 @@ export * from './types'
    ```
 
 ### Phase 3: Testing & Documentation
+
 1. **Create Mock Data** (`assets/data/[module].ts`)
+
    - For development/testing
    - Matches API response structure
-
 2. **Document Module**
+
    - API endpoints used
    - Query keys
    - State management approach
    - Integration points
-
 3. **Run Deployment Checks**
+
    ```bash
    npx expo-doctor
    pnpm install
@@ -148,6 +153,7 @@ export * from './types'
 ## 🎨 TanStack Query Standards
 
 ### Query Client Configuration
+
 ```typescript
 // lib/query/client.ts
 export const queryClient = new QueryClient({
@@ -163,6 +169,7 @@ export const queryClient = new QueryClient({
 ```
 
 ### Query Keys Pattern
+
 ```typescript
 // Always use structured query keys
 export const propertyKeys = {
@@ -175,6 +182,7 @@ export const propertyKeys = {
 ```
 
 ### Infinite Scroll Pattern (TikTok-style)
+
 ```typescript
 export const usePropertyFeed = () => {
   return useInfiniteQuery({
@@ -187,6 +195,7 @@ export const usePropertyFeed = () => {
 ```
 
 ### Mutation Pattern
+
 ```typescript
 export const useCreateProperty = () => {
   const queryClient = useQueryClient()
@@ -205,6 +214,7 @@ export const useCreateProperty = () => {
 ## 🎭 Zustand Standards
 
 ### Store Structure
+
 ```
 store/
 ├── ui/
@@ -216,6 +226,7 @@ store/
 ```
 
 ### Store Pattern
+
 ```typescript
 // store/ui/modal.store.ts
 export const useModalStore = create((set) => ({
@@ -230,6 +241,7 @@ const openModal = useModalStore(s => s.openModal)
 ```
 
 ### Performance Rules
+
 1. **Always use selectors** - Never `const state = useStore()`
 2. **Use shallow for multiple values**
    ```typescript
@@ -245,13 +257,13 @@ const openModal = useModalStore(s => s.openModal)
 
 ## 🚫 Prohibited Patterns
 
-| ❌ Don't Do This | ✅ Do This Instead | Why |
-|-----------------|-------------------|-----|
-| Store server data in Zustand | Use TanStack Query | Lose caching, duplicate state |
-| Call APIs directly in components | Use query hooks | Breaks caching, deduplication |
-| Generic query keys `['data']` | Structured keys `['properties', filters]` | Cache collisions |
-| Cross-module imports | Import from `shared/` or `lib/` | Breaks modularity |
-| `staleTime: 0` on mobile | `staleTime: 5 * 60 * 1000` | Battery drain |
+| ❌ Don't Do This                 | ✅ Do This Instead                          | Why                           |
+| -------------------------------- | ------------------------------------------- | ----------------------------- |
+| Store server data in Zustand     | Use TanStack Query                          | Lose caching, duplicate state |
+| Call APIs directly in components | Use query hooks                             | Breaks caching, deduplication |
+| Generic query keys `['data']`  | Structured keys `['properties', filters]` | Cache collisions              |
+| Cross-module imports             | Import from `shared/` or `lib/`         | Breaks modularity             |
+| `staleTime: 0` on mobile       | `staleTime: 5 * 60 * 1000`                | Battery drain                 |
 
 ---
 
@@ -275,6 +287,7 @@ Before marking a module as complete:
 ## 🔧 Development Commands
 
 ### Daily Development
+
 ```bash
 pnpm start              # Start Expo dev server
 pnpm android            # Run on Android
@@ -283,6 +296,7 @@ pnpm lint               # Run linter
 ```
 
 ### Module Completion
+
 ```bash
 # 1. Check for issues
 npx expo-doctor

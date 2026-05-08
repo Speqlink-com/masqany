@@ -19,6 +19,14 @@ export function canRegisterVehicle(role: UserRole | undefined): boolean {
 }
 
 /**
+ * Check if user can register properties
+ * Only property_owner and property_agent roles can register properties
+ */
+export function canRegisterProperty(role: UserRole | undefined): boolean {
+  return role === "property_owner" || role === "property_agent";
+}
+
+/**
  * Check if user can access admin screens
  * Only admin and super_admin roles can access admin screens
  */

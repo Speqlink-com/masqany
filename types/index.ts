@@ -26,5 +26,10 @@ export interface User {
 // Re-export domain types for convenience
 export type { Booking, BookingStatus } from "@/modules/booking/types";
 export type { ChatMessage, Conversation } from "@/modules/chat/types";
-export type { Property, PropertyCategory, PropertyStatus } from "@/modules/property/types";
+export type {
+    LongStayProperty, Property,
+    PropertyCategory,
+    PropertyStatus, ShortStayProperty,
+    StayType
+} from "@/modules/property/types";
 
