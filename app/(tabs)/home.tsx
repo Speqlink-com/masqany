@@ -1,318 +1,255 @@
 /**
- * Home — Property Finder with Map
+ * Home — Video Feed Module
  * 
- * Interactive map showing property listings with user location
- * 
- * NOTE: Mapbox requires a dev build. Run: pnpm expo run:android or build with EAS
+ * TikTok-style vertical video feed for property discovery
+ * This is the primary tenant home screen experience
  */
 
-import { mockProperties, type MockProperty } from "@/constants/mockProperties";
+import { EmptyFeedState } from "@/components/video-feed/EmptyFeedState";
+import { NoInternetConnection } from "@/components/video-feed/NoInternetConnection";
+import { SkeletonLoader } from "@/components/video-feed/SkeletonLoader";
+import { VideoFeedList } from "@/components/video-feed/VideoFeedList";
+import { useNetworkStatus } from "@/lib/network/useNetworkStatus";
+import {
+    useDownloadVideo,
+    useLikeVideo,
+    useShareVideo,
+    useVideoFeed,
+} from "@/modules/video-feed";
+import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useCallback, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
+import React, { useCallback } from "react";
+import { Alert, Linking, Platform, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Lazy load map components to avoid import errors in Expo Go
-let BaseMap: any;
-let PropertyMarkers: any;
-let MapSearchBar: any;
-let PropertyCard: any;
-let LocateMeButton: any;
-let Mapbox: any;
-let MAP_CONFIG: any;
-let Location: any;
-
-try {
-  BaseMap = require("@/components/map/BaseMap").BaseMap;
-  PropertyMarkers = require("@/components/map/PropertyMarkers").PropertyMarkers;
-  MapSearchBar = require("@/components/map/MapSearchBar").MapSearchBar;
-  PropertyCard = require("@/components/map/PropertyCard").PropertyCard;
-  LocateMeButton = require("@/components/map/LocateMeButton").LocateMeButton;
-  Mapbox = require("@rnmapbox/maps").default;
-  MAP_CONFIG = require("@/constants/mapConfig").MAP_CONFIG;
-  Location = require("expo-location");
-} catch (error) {
-  // Mapbox not available (running in Expo Go)
-}
-
 export default function HomeScreen() {
-  const mapRef = React.useRef<any>(null);
-  const cameraRef = React.useRef<any>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [allProperties] = useState<MockProperty[]>(mockProperties);
-  const [filteredProperties, setFilteredProperties] = useState<MockProperty[]>(mockProperties);
-  const [selectedProperty, setSelectedProperty] = useState<MockProperty | null>(null);
-  const [mapAvailable] = useState(() => {
-    try {
-      return Mapbox !== undefined && BaseMap !== undefined;
-    } catch {
-      return false;
-    }
-  });
+  const router = useRouter();
+  const networkStatus = useNetworkStatus();
+  const { data, isLoading, isError, error, fetchNextPage, hasNextPage, refetch } = useVideoFeed();
 
-  // Filter properties based on search query
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-    
-    if (!query.trim()) {
-      setFilteredProperties(allProperties);
-      return;
-    }
+  // Mutation hooks for engagement actions
+  const likeVideoMutation = useLikeVideo();
+  const shareVideoMutation = useShareVideo();
+  const downloadVideoMutation = useDownloadVideo();
 
-    const lowerQuery = query.toLowerCase();
-    const filtered = allProperties.filter((property) => {
-      return (
-        property.title.toLowerCase().includes(lowerQuery) ||
-        property.location.toLowerCase().includes(lowerQuery) ||
-        property.price.toString().includes(lowerQuery)
+  // Engagement callbacks
+  const handleLike = useCallback(
+    (videoId: string) => {
+      try {
+        // Get current like status from the video data
+        const video = data?.pages
+          .flatMap((page) => page.videos)
+          .find((v) => v.id === videoId);
+        
+        if (video) {
+          likeVideoMutation.mutate({
+            videoId,
+            isLiked: video.engagement.isLiked,
+          });
+        }
+      } catch (error) {
+        console.error("[HomeScreen] handleLike error:", error);
+      }
+    },
+    [data, likeVideoMutation]
+  );
+
+  const handleShare = useCallback(
+    (videoId: string) => {
+      // Show share options
+      Alert.alert(
+        "Share Video",
+        "Choose how you want to share this property video",
+        [
+          {
+            text: "WhatsApp",
+            onPress: () => {
+              shareVideoMutation.mutate({ videoId, channel: "whatsapp" });
+              // Open WhatsApp share (implementation depends on video URL)
+              // Linking.openURL(`whatsapp://send?text=${videoUrl}`);
+            },
+          },
+          {
+            text: "SMS",
+            onPress: () => {
+              shareVideoMutation.mutate({ videoId, channel: "sms" });
+              // Open SMS share
+            },
+          },
+          {
+            text: "Email",
+            onPress: () => {
+              shareVideoMutation.mutate({ videoId, channel: "email" });
+              // Open email share
+            },
+          },
+          {
+            text: "Copy Link",
+            onPress: () => {
+              shareVideoMutation.mutate({ videoId, channel: "copy_link" });
+              // Copy link to clipboard
+              Alert.alert("Link Copied", "Video link copied to clipboard");
+            },
+          },
+          {
+            text: "Share to Masqany User",
+            onPress: () => {
+              shareVideoMutation.mutate({ videoId, channel: "masqany_user" });
+              // TODO: Navigate to user selection screen when route exists
+              // router.push("/share-to-user" as any);
+              Alert.alert("Coming Soon", "Share to Masqany User feature coming soon!");
+            },
+          },
+          { text: "Cancel", style: "cancel" },
+        ]
       );
-    });
+    },
+    [shareVideoMutation, router]
+  );
 
-    setFilteredProperties(filtered);
-  }, [allProperties]);
-
-  // Clear search
-  const handleClearSearch = useCallback(() => {
-    setSearchQuery("");
-    setFilteredProperties(allProperties);
-  }, [allProperties]);
-
-  // Handle region change to filter visible properties
-  const handleRegionChange = useCallback(async () => {
-    if (!mapAvailable || searchQuery) return; // Don't filter if searching
-    
-    try {
-      const bounds = await mapRef.current?.getVisibleBounds();
-      if (!bounds) return;
-
-      const filtered = allProperties.filter((property) => {
-        const [lng, lat] = property.coords;
-        return (
-          lng >= bounds[0][0] &&
-          lng <= bounds[1][0] &&
-          lat >= bounds[0][1] &&
-          lat <= bounds[1][1]
-        );
-      });
-
-      setFilteredProperties(filtered);
-    } catch (error) {
-      console.error("Error filtering properties:", error);
-    }
-  }, [mapAvailable, allProperties, searchQuery]);
-
-  // Handle marker press
-  const handleMarkerPress = useCallback((propertyId: number) => {
-    if (!mapAvailable) return;
-    const property = allProperties.find((p) => p.id === propertyId);
-    if (property) {
-      setSelectedProperty(property);
-      // Animate camera to property
-      cameraRef.current?.setCamera({
-        centerCoordinate: property.coords,
-        zoomLevel: MAP_CONFIG.camera.propertyDetailZoom,
-        animationDuration: 1000,
-      });
-    }
-  }, [mapAvailable, allProperties]);
-
-  // Handle locate me button
-  const handleLocateMe = useCallback(async () => {
-    if (!mapAvailable) return;
-    
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Location Permission Required",
-          "Please enable location permissions to see your current location on the map.",
-          [{ text: "OK" }]
-        );
-        return;
+  const handleDownload = useCallback(
+    async (videoId: string) => {
+      // Request storage permission (implementation depends on platform)
+      if (Platform.OS === "android") {
+        // Request Android storage permission
+        // const granted = await PermissionsAndroid.request(...);
+        // if (!granted) return;
       }
 
-      const location = await Location.getCurrentPositionAsync({});
-      cameraRef.current?.setCamera({
-        centerCoordinate: [location.coords.longitude, location.coords.latitude],
-        zoomLevel: MAP_CONFIG.userLocationZoom,
-        animationDuration: 1000,
+      downloadVideoMutation.mutate(videoId);
+    },
+    [downloadVideoMutation]
+  );
+
+  const handleBookNow = useCallback(
+    (propertyId: string) => {
+      // TODO: Navigate to booking flow when route exists
+      // router.push(`/booking/${propertyId}` as any);
+      Alert.alert("Coming Soon", "Booking feature coming soon!");
+    },
+    [router]
+  );
+
+  const handleViewListing = useCallback(
+    (propertyId: string) => {
+      // TODO: Navigate to property details screen when route exists
+      // router.push(`/property/${propertyId}` as any);
+      Alert.alert("Coming Soon", "Property details feature coming soon!");
+    },
+    [router]
+  );
+
+  const handleOwnerPress = useCallback(
+    (ownerId: string) => {
+      // TODO: Navigate to owner profile screen when route exists
+      // router.push(`/profile/${ownerId}` as any);
+      Alert.alert("Coming Soon", "Owner profile feature coming soon!");
+    },
+    [router]
+  );
+
+  const handleLocationPress = useCallback(
+    (coords: [number, number]) => {
+      // Open map view with property location
+      const [longitude, latitude] = coords;
+      const url = Platform.select({
+        ios: `maps:0,0?q=${latitude},${longitude}`,
+        android: `geo:0,0?q=${latitude},${longitude}`,
       });
-    } catch (error) {
-      Alert.alert(
-        "Location Error",
-        "Unable to get your current location. Please try again.",
-        [{ text: "OK" }]
-      );
-    }
-  }, [mapAvailable]);
+      if (url) {
+        Linking.openURL(url);
+      }
+    },
+    []
+  );
 
-  // Handle property card press
-  const handlePropertyPress = useCallback((property: MockProperty) => {
-    Alert.alert(
-      property.title,
-      `${property.location}\nKES ${property.price.toLocaleString()}/mo\n\n${
-        property.vacant ? "✅ Available" : "❌ Occupied"
-      }`,
-      [{ text: "Close" }]
-    );
-  }, []);
+  const handleSearchPress = useCallback(() => {
+    // TODO: Navigate to search screen when route exists
+    // router.push("/search" as any);
+    Alert.alert("Coming Soon", "Search feature coming soon!");
+  }, [router]);
 
-  // Show error message if Mapbox is not available (Expo Go)
-  if (!mapAvailable) {
+  // Show no internet connection screen if network is unavailable
+  if (!networkStatus.isConnected) {
     return (
-      <View style={styles.root}>
-        <StatusBar style="dark" />
-        <SafeAreaView style={styles.errorContainer} edges={["top"]}>
-          <Text style={styles.errorTitle}>🗺️ Map Requires Dev Build</Text>
-          <Text style={styles.errorText}>
-            Mapbox Maps requires native code and cannot run in Expo Go.
+      <SafeAreaView className="flex-1 bg-black" edges={["top", "bottom"]}>
+        <StatusBar style="light" />
+        <NoInternetConnection onRetry={refetch} />
+      </SafeAreaView>
+    );
+  }
+
+  // Show skeleton loader during initial load
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-black" edges={["top", "bottom"]}>
+        <StatusBar style="light" />
+        <SkeletonLoader />
+      </SafeAreaView>
+    );
+  }
+
+  // Show error state
+  if (isError) {
+    return (
+      <SafeAreaView className="flex-1 bg-black" edges={["top", "bottom"]}>
+        <StatusBar style="light" />
+        <View className="flex-1 justify-center items-center p-6 bg-black">
+          <Text className="font-bold text-xl text-white mb-3 text-center">
+            Unable to Load Videos
           </Text>
-          <Text style={styles.errorText}>
-            To test the map, build the app:
+          <Text className="font-normal text-base text-[#BDBDC0] text-center">
+            {error?.message || "Something went wrong. Please try again."}
           </Text>
-          <View style={styles.codeBlock}>
-            <Text style={styles.codeText}>pnpm expo run:android</Text>
-            <Text style={styles.codeText}>or</Text>
-            <Text style={styles.codeText}>pnpm dlx eas-cli build -p android</Text>
-          </View>
-          <Text style={styles.errorSubtext}>
-            The map will show {mockProperties.length} properties in Nairobi, Rongai, and surrounding areas with your current location.
-          </Text>
-        </SafeAreaView>
-      </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Flatten paginated data
+  const videos = data?.pages.flatMap((page) => page.videos) ?? [];
+
+  // Show empty state if no videos available
+  if (videos.length === 0 && !isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-black" edges={["top", "bottom"]}>
+        <StatusBar style="light" />
+        <EmptyFeedState />
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="dark" />
+    <View className="flex-1 bg-black">
+      <StatusBar style="light" />
       
-      {/* Map */}
-      <BaseMap
-        ref={mapRef}
-        cameraRef={cameraRef}
-        showUserLocation={true}
-        onRegionDidChange={handleRegionChange}
-      >
-        <PropertyMarkers onMarkerPress={handleMarkerPress} />
-      </BaseMap>
-
-      {/* Search Bar Overlay */}
-      <SafeAreaView style={styles.searchContainer} edges={["top"]}>
-        <MapSearchBar
-          value={searchQuery}
-          onChangeText={handleSearch}
-          onClear={handleClearSearch}
-          placeholder="Search Nairobi, Rongai, Westlands..."
-        />
-      </SafeAreaView>
-
-      {/* Locate Me Button */}
-      <LocateMeButton onPress={handleLocateMe} />
-
-      {/* Property Cards Bottom Sheet */}
-      <View style={styles.bottomSheet}>
-        {filteredProperties.length > 0 ? (
-          <FlatList
-            data={filteredProperties}
-            keyExtractor={(item) => item.id.toString()}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <PropertyCard
-                property={item}
-                onPress={() => handlePropertyPress(item)}
-              />
-            )}
-            contentContainerStyle={styles.listContent}
-          />
-        ) : (
-          <View style={styles.noResults}>
-            <Text style={styles.noResultsText}>
-              No properties found for "{searchQuery}"
-            </Text>
-          </View>
-        )}
+      {/* Top Bar - Blue bar protecting status bar - Fixed position */}
+      <View className="absolute top-0 left-0 right-0 h-[3.5%] bg-[#20A6FD] z-50" />
+      
+      {/* Video Feed - Takes full screen */}
+      <VideoFeedList
+        videos={videos}
+        onEndReached={() => {
+          if (hasNextPage) {
+            fetchNextPage();
+          }
+        }}
+        isLoading={isLoading}
+        hasMore={hasNextPage ?? false}
+        onLike={handleLike}
+        onShare={handleShare}
+        onDownload={handleDownload}
+        onBookNow={handleBookNow}
+        onViewListing={handleViewListing}
+        onOwnerPress={handleOwnerPress}
+        onLocationPress={handleLocationPress}
+        onSearchPress={handleSearchPress}
+      />
+      
+      {/* Bottom Bar - Blue bar covering entire tab bar area - Fixed position */}
+      <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#20A6FD] z-50">
+        <View className="h-[1px] bg-black" />
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  searchContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-  },
-  bottomSheet: {
-    position: "absolute",
-    bottom: 80, // Above tab bar
-    left: 0,
-    right: 0,
-    height: 180,
-    backgroundColor: "transparent",
-  },
-  listContent: {
-    paddingHorizontal: 8,
-  },
-  noResults: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    marginHorizontal: 16,
-    borderRadius: 16,
-  },
-  noResultsText: {
-    fontFamily: "Nunito_400Regular",
-    fontSize: 14,
-    color: "#545454",
-    textAlign: "center",
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-  errorTitle: {
-    fontFamily: "CG-Bold",
-    fontSize: 24,
-    color: "#000000",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  errorText: {
-    fontFamily: "Nunito_400Regular",
-    fontSize: 16,
-    color: "#545454",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  errorSubtext: {
-    fontFamily: "Nunito_400Regular",
-    fontSize: 14,
-    color: "#BDBDC0",
-    marginTop: 24,
-    textAlign: "center",
-  },
-  codeBlock: {
-    backgroundColor: "#F5F5F5",
-    borderRadius: 8,
-    padding: 16,
-    marginVertical: 16,
-    width: "100%",
-  },
-  codeText: {
-    fontFamily: "Courier",
-    fontSize: 13,
-    color: "#20A6FD",
-    marginVertical: 4,
-  },
-});

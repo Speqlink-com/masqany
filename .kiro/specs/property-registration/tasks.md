@@ -218,11 +218,11 @@ The property registration feature supports two distinct flows: Long-Stay (8 step
     - Link property to user ID from Auth Module
     - _Requirements: 18.1, 18.2, 16.7_
 
-- [ ] 5. Checkpoint - Test Long-Stay form end-to-end
+- [x] 5. Checkpoint - Test Long-Stay form end-to-end
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Implement Short-Stay multi-step form
-  - [ ] 6.1 Create Short-Stay form screen structure
+- [x] 6. Implement Short-Stay multi-step form
+  - [x] 6.1 Create Short-Stay form screen structure
     - Create `app/(registration)/property-short-stay-form.tsx`
     - Set up form state management with Zustand store
     - Implement step navigation logic
@@ -231,57 +231,57 @@ The property registration feature supports two distinct flows: Long-Stay (8 step
     - Set up form validation
     - _Requirements: 2.2, 3.1, 3.2, 3.3, 3.4, 3.7, 3.8_
 
-  - [ ] 6.2 Implement Step 1: Property Essence
+  - [x] 6.2 Implement Step 1: Property Essence
     - Create form fields: title (max 80 chars), description (max 250 chars), listing type (entire place, private room, shared room, hotel room)
     - Validate required fields (title, description, listing type)
     - Display character count for title and description
     - _Requirements: 1.27, 15.9_
 
-  - [ ] 6.3 Implement Step 2: Location Details
+  - [x] 6.3 Implement Step 2: Location Details
     - Integrate LocationPicker component
     - Create form fields: county, constituency, ward, estate, nearest landmark, street/road, plot/building number, floor number, unit number, Google Maps link, directions from stage (max 300 chars), nearest tourist attraction, nearest airport, airport distance (km), airport transfer available (toggle), nearest matatu
     - Validate required fields (county, estate, nearest landmark, Google Maps link, directions)
     - _Requirements: 7.6, 7.7, 7.8, 7.9, 7.10, 7.11_
 
-  - [ ] 6.4 Implement Step 3: Guest Capacity
+  - [x] 6.4 Implement Step 3: Guest Capacity
     - Create form fields: max adults, max children, max infants, total beds
     - Integrate BedConfigurationInput component for bed configuration per room
     - Create extra sleeping spaces input (textarea)
     - Validate required fields (max adults, max children, max infants, bed configuration)
     - _Requirements: 8.11_
 
-  - [ ] 6.5 Implement Step 4: Amenities
+  - [x] 6.5 Implement Step 4: Amenities
     - Integrate AmenitySelector component for each category (Essentials, Kitchen, Bathroom, Entertainment, Outdoor, Family, Safety)
     - Display category headers
     - Allow multiple selections per category
     - _Requirements: 4.10, 4.11_
 
-  - [ ] 6.6 Implement Step 5: Pricing (NO deposits)
+  - [x] 6.6 Implement Step 5: Pricing (NO deposits)
     - Create form fields: base nightly rate, standard occupancy, weekend rate (optional), peak season rates (array), holiday rates (array), extra guest fee, extra guest free up to, cleaning fee, weekly discount %, monthly discount %, early bird discount % and days advance, last minute discount % and days within
     - Display note "NO SECURITY DEPOSIT COLLECTED - Short-stay works on trust + reviews"
     - Validate required fields (base nightly rate, standard occupancy, cleaning fee)
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12_
 
-  - [ ] 6.7 Implement Step 6: Availability & Booking Rules
+  - [x] 6.7 Implement Step 6: Availability & Booking Rules
     - Integrate AvailabilityCalendar component
     - Create form fields: min nights stay, max nights stay (optional), advance notice days, same-day booking until (time), check-in time from/to, late check-in available (toggle with fee), self check-in method, check-out time, late check-out available (toggle with fee per hour), instant booking (toggle)
     - Validate required fields (min nights stay, check-in time, check-out time)
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, 11.9, 11.10, 11.11_
 
-  - [ ] 6.8 Implement Step 7: Cancellation Policy
+  - [x] 6.8 Implement Step 7: Cancellation Policy
     - Integrate CancellationPolicySelector component
     - Display policy descriptions
     - Show custom policy textarea when Custom selected
     - Display additional cancellation notes textarea
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.8_
 
-  - [ ] 6.9 Implement Step 8: House Rules
+  - [x] 6.9 Implement Step 8: House Rules
     - Create form fields: max persons, children allowed (selector with age restriction), pets allowed (selector with restrictions), smoking allowed (selector), parties allowed (selector with fee and max guests), quiet hours from/to, commercial photo allowed (selector with fee), guest min age, require ID at check-in (toggle), require signed waiver (toggle), additional rules (textarea)
     - Validate required fields (max persons, children allowed, pets allowed, smoking allowed, parties allowed, quiet hours, guest min age)
     - Show/hide conditional fields
     - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.8, 13.9, 13.10, 13.11, 13.12, 13.13_
 
-  - [ ] 6.10 Implement Step 9: Media Uploads
+  - [x] 6.10 Implement Step 9: Media Uploads
     - Integrate MediaUploader component
     - Validate minimum 3 photos required
     - Display note "High-quality photos improve search ranking"
@@ -289,14 +289,14 @@ The property registration feature supports two distinct flows: Long-Stay (8 step
     - Handle upload errors
     - _Requirements: 6.13, 6.14_
 
-  - [ ] 6.11 Implement Step 10: Terms & Conditions
+  - [x] 6.11 Implement Step 10: Terms & Conditions
     - Integrate DocumentUploader component for house rules (required) and special contracts (optional)
     - Create form fields: tourist registration number (optional), VAT registered (toggle), VAT PIN (conditional)
     - Display confirmation checkboxes (all information accurate, authorized to list, understand terms, agree to fees)
     - Validate all checkboxes are checked before submission
     - _Requirements: 14.9, 14.10, 14.11, 14.12, 14.13, 14.14_
 
-  - [ ] 6.12 Implement form submission
+  - [x] 6.12 Implement form submission
     - Collect all form data from Zustand store
     - Call useCreateProperty hook
     - Handle loading state
@@ -310,7 +310,7 @@ The property registration feature supports two distinct flows: Long-Stay (8 step
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 8. Implement form validation and error handling
-  - [ ] 8.1 Add field-level validation
+  - [x] 8.1 Add field-level validation
     - Validate required fields before allowing navigation to next step
     - Display field-specific error messages below invalid inputs
     - Use danger color (#F75555) for error messages
@@ -319,7 +319,7 @@ The property registration feature supports two distinct flows: Long-Stay (8 step
     - Validate text length limits (title max 80 chars, description max 250 chars)
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.7, 15.8, 15.9_
 
-  - [ ] 8.2 Add file upload validation
+  - [x] 8.2 Add file upload validation
     - Validate file sizes for photos, videos, and documents
     - Validate file types for uploads
     - Display error messages for validation failures

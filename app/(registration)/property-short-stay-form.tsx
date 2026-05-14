@@ -13,12 +13,12 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { Alert, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Keyboard, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import Animated, {
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue,
-    withTiming,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -123,8 +123,8 @@ export default function PropertyShortStayFormScreen() {
         return { isValid: true, message: "" };
       
       case 3:
-        if (shortStayDraft.maxAdults === undefined || shortStayDraft.maxChildren === undefined) {
-          return { isValid: false, message: "Please provide guest capacity details" };
+        if (shortStayDraft.maxAdults === undefined) {
+          return { isValid: false, message: "Please provide max adults" };
         }
         return { isValid: true, message: "" };
       
@@ -132,8 +132,8 @@ export default function PropertyShortStayFormScreen() {
         return { isValid: true, message: "" };
       
       case 5:
-        if (!shortStayDraft.baseNightlyRate || !shortStayDraft.cleaningFee) {
-          return { isValid: false, message: "Please provide base nightly rate and cleaning fee" };
+        if (!shortStayDraft.baseNightlyRate) {
+          return { isValid: false, message: "Please provide base nightly rate" };
         }
         return { isValid: true, message: "" };
       
@@ -283,22 +283,26 @@ export default function PropertyShortStayFormScreen() {
       />
 
       <Animated.View style={[{ flex: 1 }, animatedStyle]}>
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ padding: 20 }}
-          showsVerticalScrollIndicator={false}
-        >
-          {currentStep === 1 && <Step1PropertyEssence />}
-          {currentStep === 2 && <Step2LocationDetails />}
-          {currentStep === 3 && <Step3GuestCapacity />}
-          {currentStep === 4 && <Step4Amenities />}
-          {currentStep === 5 && <Step5Pricing />}
-          {currentStep === 6 && <Step6AvailabilityBooking />}
-          {currentStep === 7 && <Step7CancellationPolicy />}
-          {currentStep === 8 && <Step8HouseRules />}
-          {currentStep === 9 && <Step9MediaUploads />}
-          {currentStep === 10 && <Step10TermsConditions />}
-        </ScrollView>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ padding: 20 }}
+            showsVerticalScrollIndicator={true}
+            indicatorStyle="default"
+            keyboardShouldPersistTaps="handled"
+          >
+            {currentStep === 1 && <Step1PropertyEssence />}
+            {currentStep === 2 && <Step2LocationDetails />}
+            {currentStep === 3 && <Step3GuestCapacity />}
+            {currentStep === 4 && <Step4Amenities />}
+            {currentStep === 5 && <Step5Pricing />}
+            {currentStep === 6 && <Step6AvailabilityBooking />}
+            {currentStep === 7 && <Step7CancellationPolicy />}
+            {currentStep === 8 && <Step8HouseRules />}
+            {currentStep === 9 && <Step9MediaUploads />}
+            {currentStep === 10 && <Step10TermsConditions />}
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </Animated.View>
 
       <SafeAreaView edges={["bottom"]} className="px-5 py-4 bg-white border-t border-light-200">
@@ -339,6 +343,17 @@ function Step1PropertyEssence() {
 
   return (
     <View>
+      <View className="flex-row items-center mb-4">
+        <Image
+          source={require("@/assets/icons/hotel-icon.webp")}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+        <Text className="font-poppins-semibold text-[18px] text-dark-400 ml-3">
+          Property Essence
+        </Text>
+      </View>
+
       <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
         <View className="flex-row items-center mb-2">
           <Image
@@ -466,6 +481,17 @@ function Step2LocationDetails() {
 
   return (
     <View>
+      <View className="flex-row items-center mb-4">
+        <Image
+          source={require("@/assets/icons/hotel-icon.webp")}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+        <Text className="font-poppins-semibold text-[18px] text-dark-400 ml-3">
+          Location Details
+        </Text>
+      </View>
+
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
           <Image
@@ -730,6 +756,7 @@ function Step2LocationDetails() {
           placeholder="https://maps.google.com/..."
           value={shortStayDraft.googleMapsLink}
           onChangeText={(text) => updateShortStayDraft({ googleMapsLink: text })}
+          keyboardType="url"
           autoCapitalize="none"
         />
         <Text className="font-inter text-[11px] text-dark-100 mt-2 ml-4">
@@ -771,6 +798,17 @@ function Step3GuestCapacity() {
 
   return (
     <View>
+      <View className="flex-row items-center mb-4">
+        <Image
+          source={require("@/assets/icons/hotel-icon.webp")}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+        <Text className="font-poppins-semibold text-[18px] text-dark-400 ml-3">
+          Guest Capacity
+        </Text>
+      </View>
+
       <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
         <View className="flex-row items-center mb-3">
           <Image
@@ -802,7 +840,7 @@ function Step3GuestCapacity() {
             resizeMode="contain"
           />
           <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
-            Max Children <Text style={{ color: colors.danger }}>*</Text>
+            Max Children (Optional)
           </Text>
         </View>
         <TextInput
@@ -995,6 +1033,17 @@ function Step4Amenities() {
 
   return (
     <View>
+      <View className="flex-row items-center mb-4">
+        <Image
+          source={require("@/assets/icons/hotel-icon.webp")}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+        <Text className="font-poppins-semibold text-[18px] text-dark-400 ml-3">
+          Amenities
+        </Text>
+      </View>
+
       <View className="mb-4 p-4 rounded-2xl" style={{ backgroundColor: "#E6F4FE" }}>
         <Text className="font-inter text-[13px] text-dark-400">
           ✨ Select all amenities available at your property. Tap to toggle.
@@ -1017,6 +1066,17 @@ function Step5Pricing() {
 
   return (
     <View>
+      <View className="flex-row items-center mb-4">
+        <Image
+          source={require("@/assets/icons/hotel-icon.webp")}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+        <Text className="font-poppins-semibold text-[18px] text-dark-400 ml-3">
+          Pricing
+        </Text>
+      </View>
+
       <View className="mb-4 p-4 rounded-2xl" style={{ backgroundColor: "#E6F4FE" }}>
         <Text className="font-inter-semibold text-[14px] text-primary-700 mb-2">
           🏖 NO SECURITY DEPOSIT COLLECTED
@@ -1103,7 +1163,7 @@ function Step5Pricing() {
             resizeMode="contain"
           />
           <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
-            Cleaning Fee (KES) <Text style={{ color: colors.danger }}>*</Text>
+            Cleaning Fee (KES) (Optional)
           </Text>
         </View>
         <TextInput
@@ -1193,9 +1253,29 @@ function Step5Pricing() {
 function Step6AvailabilityBooking() {
   const { shortStayDraft, updateShortStayDraft } = usePropertyStore();
   const [showSelfCheckInPicker, setShowSelfCheckInPicker] = useState(false);
+  const [showCheckInFromPicker, setShowCheckInFromPicker] = useState(false);
+  const [showCheckInToPicker, setShowCheckInToPicker] = useState(false);
+  const [showCheckOutPicker, setShowCheckOutPicker] = useState(false);
+
+  const timeOptions = [
+    "00:00", "01:00", "02:00", "03:00", "04:00", "05:00",
+    "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
+    "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
+    "18:00", "19:00", "20:00", "21:00", "22:00", "23:00",
+  ];
 
   return (
     <View>
+      <View className="flex-row items-center mb-4">
+        <Image
+          source={require("@/assets/icons/hotel-icon.webp")}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+        <Text className="font-poppins-semibold text-[18px] text-dark-400 ml-3">
+          Availability & Booking
+        </Text>
+      </View>
       <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
         <View className="flex-row items-center mb-3">
           <Image
@@ -1253,12 +1333,37 @@ function Step6AvailabilityBooking() {
             Check-in Time From <Text style={{ color: colors.danger }}>*</Text>
           </Text>
         </View>
-        <TextInput
-          className="font-inter text-[15px] text-dark-400 px-4 py-3 rounded-full border-[0.5px] border-[#28B4F9] bg-white"
-          placeholder="e.g., 14:00"
-          value={shortStayDraft.checkInTimeFrom}
-          onChangeText={(text) => updateShortStayDraft({ checkInTimeFrom: text })}
-        />
+        <TouchableOpacity
+          onPress={() => setShowCheckInFromPicker(!showCheckInFromPicker)}
+          className="border-[0.5px] border-[#28B4F9] rounded-full px-4 py-3 bg-white flex-row items-center justify-between"
+        >
+          <Text className={`font-inter text-[15px] ${shortStayDraft.checkInTimeFrom ? "text-dark-400" : "text-[#545454]"}`}>
+            {shortStayDraft.checkInTimeFrom || "Select check-in time"}
+          </Text>
+          <Image
+            source={require("@/assets/icons/i-dropdown-icon.webp")}
+            className="w-4 h-4"
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+        {showCheckInFromPicker && (
+          <View className="mt-2 bg-white rounded-2xl border border-[#28B4F9] overflow-hidden" style={{ maxHeight: 200 }}>
+            <ScrollView>
+              {timeOptions.map((time, index) => (
+                <TouchableOpacity
+                  key={time}
+                  onPress={() => {
+                    updateShortStayDraft({ checkInTimeFrom: time });
+                    setShowCheckInFromPicker(false);
+                  }}
+                  className={`px-4 py-3 ${index < timeOptions.length - 1 ? "border-b border-light-300" : ""}`}
+                >
+                  <Text className="font-inter text-[15px] text-dark-400">{time}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
         <Text className="font-inter text-[11px] text-dark-100 mt-2 ml-1">
           Earliest check-in time (24-hour format)
         </Text>
@@ -1275,12 +1380,37 @@ function Step6AvailabilityBooking() {
             Check-in Time To (Optional)
           </Text>
         </View>
-        <TextInput
-          className="font-inter text-[15px] text-dark-400 px-4 py-3 rounded-full border-[0.5px] border-[#28B4F9] bg-white"
-          placeholder="e.g., 22:00"
-          value={shortStayDraft.checkInTimeTo}
-          onChangeText={(text) => updateShortStayDraft({ checkInTimeTo: text })}
-        />
+        <TouchableOpacity
+          onPress={() => setShowCheckInToPicker(!showCheckInToPicker)}
+          className="border-[0.5px] border-[#28B4F9] rounded-full px-4 py-3 bg-white flex-row items-center justify-between"
+        >
+          <Text className={`font-inter text-[15px] ${shortStayDraft.checkInTimeTo ? "text-dark-400" : "text-[#545454]"}`}>
+            {shortStayDraft.checkInTimeTo || "Select latest check-in time"}
+          </Text>
+          <Image
+            source={require("@/assets/icons/i-dropdown-icon.webp")}
+            className="w-4 h-4"
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+        {showCheckInToPicker && (
+          <View className="mt-2 bg-white rounded-2xl border border-[#28B4F9] overflow-hidden" style={{ maxHeight: 200 }}>
+            <ScrollView>
+              {timeOptions.map((time, index) => (
+                <TouchableOpacity
+                  key={time}
+                  onPress={() => {
+                    updateShortStayDraft({ checkInTimeTo: time });
+                    setShowCheckInToPicker(false);
+                  }}
+                  className={`px-4 py-3 ${index < timeOptions.length - 1 ? "border-b border-light-300" : ""}`}
+                >
+                  <Text className="font-inter text-[15px] text-dark-400">{time}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
         <Text className="font-inter text-[11px] text-dark-100 mt-2 ml-1">
           Latest check-in time (24-hour format)
         </Text>
@@ -1297,12 +1427,37 @@ function Step6AvailabilityBooking() {
             Check-out Time <Text style={{ color: colors.danger }}>*</Text>
           </Text>
         </View>
-        <TextInput
-          className="font-inter text-[15px] text-dark-400 px-4 py-3 rounded-full border-[0.5px] border-[#28B4F9] bg-white"
-          placeholder="e.g., 11:00"
-          value={shortStayDraft.checkOutTime}
-          onChangeText={(text) => updateShortStayDraft({ checkOutTime: text })}
-        />
+        <TouchableOpacity
+          onPress={() => setShowCheckOutPicker(!showCheckOutPicker)}
+          className="border-[0.5px] border-[#28B4F9] rounded-full px-4 py-3 bg-white flex-row items-center justify-between"
+        >
+          <Text className={`font-inter text-[15px] ${shortStayDraft.checkOutTime ? "text-dark-400" : "text-[#545454]"}`}>
+            {shortStayDraft.checkOutTime || "Select check-out time"}
+          </Text>
+          <Image
+            source={require("@/assets/icons/i-dropdown-icon.webp")}
+            className="w-4 h-4"
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+        {showCheckOutPicker && (
+          <View className="mt-2 bg-white rounded-2xl border border-[#28B4F9] overflow-hidden" style={{ maxHeight: 200 }}>
+            <ScrollView>
+              {timeOptions.map((time, index) => (
+                <TouchableOpacity
+                  key={time}
+                  onPress={() => {
+                    updateShortStayDraft({ checkOutTime: time });
+                    setShowCheckOutPicker(false);
+                  }}
+                  className={`px-4 py-3 ${index < timeOptions.length - 1 ? "border-b border-light-300" : ""}`}
+                >
+                  <Text className="font-inter text-[15px] text-dark-400">{time}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
         <Text className="font-inter text-[11px] text-dark-100 mt-2 ml-1">
           Check-out time (24-hour format)
         </Text>
@@ -1312,7 +1467,7 @@ function Step6AvailabilityBooking() {
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center flex-1">
             <Image
-              source={require("@/assets/icons/info.png")}
+              source={require("@/assets/icons/hotel-icon.webp")}
               style={{ width: 20, height: 20 }}
               resizeMode="contain"
             />
@@ -1401,7 +1556,7 @@ function Step6AvailabilityBooking() {
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center flex-1">
             <Image
-              source={require("@/assets/icons/info.png")}
+              source={require("@/assets/icons/hotel-icon.webp")}
               style={{ width: 20, height: 20 }}
               resizeMode="contain"
             />
@@ -1460,6 +1615,17 @@ function Step7CancellationPolicy() {
 
   return (
     <View>
+      <View className="flex-row items-center mb-4">
+        <Image
+          source={require("@/assets/icons/hotel-icon.webp")}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+        <Text className="font-poppins-semibold text-[18px] text-dark-400 ml-3">
+          Cancellation Policy
+        </Text>
+      </View>
+
       <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
         <View className="flex-row items-center mb-3">
           <Image
@@ -1574,6 +1740,17 @@ function Step8HouseRules() {
 
   return (
     <View>
+      <View className="flex-row items-center mb-4">
+        <Image
+          source={require("@/assets/icons/hotel-icon.webp")}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+        <Text className="font-poppins-semibold text-[18px] text-dark-400 ml-3">
+          House Rules
+        </Text>
+      </View>
+
       <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
         <View className="flex-row items-center mb-3">
           <Image
@@ -1601,7 +1778,7 @@ function Step8HouseRules() {
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center flex-1">
             <Image
-              source={require("@/assets/icons/i-user-icon.webp")}
+              source={require("@/assets/icons/hotel-icon.webp")}
               style={{ width: 20, height: 20 }}
               resizeMode="contain"
             />
@@ -1625,7 +1802,7 @@ function Step8HouseRules() {
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center flex-1">
             <Image
-              source={require("@/assets/icons/info.png")}
+              source={require("@/assets/icons/hotel-icon.webp")}
               style={{ width: 20, height: 20 }}
               resizeMode="contain"
             />
@@ -1996,6 +2173,17 @@ function Step9MediaUploads() {
 
   return (
     <View>
+      <View className="flex-row items-center mb-4">
+        <Image
+          source={require("@/assets/icons/hotel-icon.webp")}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+        <Text className="font-poppins-semibold text-[18px] text-dark-400 ml-3">
+          Media Uploads
+        </Text>
+      </View>
+
       <View className="mb-4 p-4 rounded-2xl" style={{ backgroundColor: "#E6F4FE" }}>
         <Text className="font-inter-semibold text-[14px] text-primary-700 mb-2">
           📸 High-quality photos improve search ranking by 60%!
@@ -2177,6 +2365,17 @@ function Step10TermsConditions() {
 
   return (
     <View>
+      <View className="flex-row items-center mb-4">
+        <Image
+          source={require("@/assets/icons/hotel-icon.webp")}
+          style={{ width: 24, height: 24 }}
+          resizeMode="contain"
+        />
+        <Text className="font-poppins-semibold text-[18px] text-dark-400 ml-3">
+          Terms & Conditions
+        </Text>
+      </View>
+
       <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E6F4FE" }}>
         <Text className="font-inter-semibold text-[16px] text-primary-700 mb-2">
           🎉 Almost Done!

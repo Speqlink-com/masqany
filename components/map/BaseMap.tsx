@@ -12,7 +12,7 @@ import React, { forwardRef, useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 // Set Mapbox access token
-const PUBLIC_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || "pk.eyJ1IjoibWVsdmluc3NpbW9uIiwiYSI6ImNtbnN1MGd0azBkZmkycXF5eXFjZDdmODQifQ.T4NAtHQgGGxndJX1DMfnWg";
+const PUBLIC_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || "";
 Mapbox.setAccessToken(PUBLIC_TOKEN);
 
 interface BaseMapProps {
