@@ -6,36 +6,36 @@ This plan integrates the existing map module components into the Move tab, repla
 
 ## Tasks
 
-- [ ] 1. Set up Move tab state management and imports
+- [x] 1. Set up Move tab state management and imports
   - Import all required map components (BaseMap, MapSearchBar, LocateMeButton, PropertyMarkers, PropertyCard)
   - Import mock property data and Mapbox types
   - Set up React state hooks for searchQuery, selectedPropertyId, and camera ref
   - Import expo-location for location services
   - _Requirements: 1.1, 2.1, 3.1, 4.1, 6.1, 6.2_
 
-- [ ] 2. Implement BaseMap integration with PropertyMarkers
-  - [ ] 2.1 Replace placeholder content with BaseMap component
+- [x] 2. Implement BaseMap integration with PropertyMarkers
+  - [x] 2.1 Replace placeholder content with BaseMap component
     - Remove ImageBackground, SafeAreaView, and placeholder text
     - Add BaseMap component with ref forwarding
     - Pass cameraRef to BaseMap for camera control
     - Preserve StatusBar with style="dark"
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 6.4_
   
-  - [ ] 2.2 Add PropertyMarkers as child of BaseMap
+  - [x] 2.2 Add PropertyMarkers as child of BaseMap
     - Render PropertyMarkers component inside BaseMap children
     - Pass handleMarkerPress callback to PropertyMarkers
     - Verify markers display at correct coordinates from mock data
     - _Requirements: 4.1, 4.2_
 
-- [ ] 3. Implement map overlay components
-  - [ ] 3.1 Add MapSearchBar overlay
+- [x] 3. Implement map overlay components
+  - [x] 3.1 Add MapSearchBar overlay
     - Render MapSearchBar with absolute positioning at top
     - Connect searchQuery state to value prop
     - Connect setSearchQuery to onChangeText prop
     - Implement onClear handler to reset search query
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
   
-  - [ ] 3.2 Add LocateMeButton overlay
+  - [x] 3.2 Add LocateMeButton overlay
     - Render LocateMeButton with absolute positioning at bottom-right
     - Implement handleLocateMe function with location permission check
     - Use expo-location to get current position
@@ -43,20 +43,20 @@ This plan integrates the existing map module components into the Move tab, repla
     - Fallback to Nairobi coordinates if permission denied
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 4. Implement property selection and PropertyCard display
-  - [ ] 4.1 Add property selection state management
+- [x] 4. Implement property selection and PropertyCard display
+  - [x] 4.1 Add property selection state management
     - Create handleMarkerPress function to update selectedPropertyId
     - Find selected property from mockProperties array
     - _Requirements: 4.4, 5.1_
   
-  - [ ] 4.2 Add conditional PropertyCard rendering
+  - [x] 4.2 Add conditional PropertyCard rendering
     - Render PropertyCard when selectedProperty is not null
     - Pass selected property data to PropertyCard
     - Implement onPress handler to clear selection (dismiss card)
     - Position PropertyCard at bottom of screen above tab bar
     - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 5. Checkpoint - Verify map integration
+- [x] 5. Checkpoint - Verify map integration
   - Ensure all tests pass, ask the user if questions arise.
   - Verify map displays with Kenya bounds and street-level detail
   - Verify property markers display at correct locations

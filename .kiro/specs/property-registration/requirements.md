@@ -47,7 +47,7 @@ The module follows the Masqany mobile architecture with TanStack Query for serve
 2. THE Registration_Screen SHALL display a back button in the top left corner
 3. THE Registration_Screen SHALL display a "Pre-Verified Account" badge in the top right corner
 4. THE Registration_Screen SHALL display "Become a Verified" on line 1 and "Property Owner with Masqany" on line 2 in white bold text
-5. THE Registration_Screen SHALL display house-icon.png (80x80) below the title
+5. THE Registration_Screen SHALL display house-icon.webp (80x80) below the title
 6. THE Registration_Screen SHALL display user icon with text "complete property registration to unlock tenants"
 7. THE header content SHALL occupy approximately 30% from the top of the screen
 8. THE Registration_Screen SHALL display a Stay Type Selection Card at 35% from top with 80% screen width

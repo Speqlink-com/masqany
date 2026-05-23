@@ -15,10 +15,10 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import { Alert, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, {
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue,
-    withTiming,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -296,7 +296,7 @@ export default function PropertyLongStayFormScreen() {
             text: "OK",
             onPress: () => {
               clearLongStayDraft();
-              router.replace("/(tabs)/home" as any);
+              router.replace("/(property-admin)" as any);
             },
           },
         ]
@@ -409,7 +409,7 @@ function Step1PropertyEssence() {
       <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
         <View className="flex-row items-center mb-3">
           <Image
-            source={require("@/assets/icons/house-icon.png")}
+            source={require("@/assets/icons/house-icon.webp")}
             style={{ width: 20, height: 20 }}
             resizeMode="contain"
           />
@@ -479,7 +479,7 @@ function Step1PropertyEssence() {
           <View className="mb-3">
             <View className="flex-row items-center mb-2">
               <Image
-                source={require("@/assets/icons/house-icon.png")}
+                source={require("@/assets/icons/house-icon.webp")}
                 style={{ width: 18, height: 18 }}
                 resizeMode="contain"
               />
@@ -868,7 +868,7 @@ function Step2LocationDetails() {
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
           <Image
-            source={require("@/assets/icons/house-icon.png")}
+            source={require("@/assets/icons/house-icon.webp")}
             style={{ width: 20, height: 20 }}
             resizeMode="contain"
           />
@@ -922,7 +922,7 @@ function Step2LocationDetails() {
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
           <Image
-            source={require("@/assets/icons/house-icon.png")}
+            source={require("@/assets/icons/house-icon.webp")}
             style={{ width: 20, height: 20 }}
             resizeMode="contain"
           />
@@ -993,7 +993,7 @@ function Step2LocationDetails() {
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
           <Image
-            source={require("@/assets/icons/house-icon.png")}
+            source={require("@/assets/icons/house-icon.webp")}
             style={{ width: 20, height: 20 }}
             resizeMode="contain"
           />
@@ -1064,7 +1064,7 @@ function Step2LocationDetails() {
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
           <Image
-            source={require("@/assets/icons/house-icon.png")}
+            source={require("@/assets/icons/house-icon.webp")}
             style={{ width: 20, height: 20 }}
             resizeMode="contain"
           />
@@ -1084,7 +1084,7 @@ function Step2LocationDetails() {
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
           <Image
-            source={require("@/assets/icons/house-icon.png")}
+            source={require("@/assets/icons/house-icon.webp")}
             style={{ width: 20, height: 20 }}
             resizeMode="contain"
           />
@@ -1104,7 +1104,7 @@ function Step2LocationDetails() {
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
           <Image
-            source={require("@/assets/icons/house-icon.png")}
+            source={require("@/assets/icons/house-icon.webp")}
             style={{ width: 20, height: 20 }}
             resizeMode="contain"
           />
@@ -1124,7 +1124,7 @@ function Step2LocationDetails() {
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
           <Image
-            source={require("@/assets/icons/house-icon.png")}
+            source={require("@/assets/icons/house-icon.webp")}
             style={{ width: 20, height: 20 }}
             resizeMode="contain"
           />
@@ -1148,7 +1148,7 @@ function Step2LocationDetails() {
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
           <Image
-            source={require("@/assets/icons/house-icon.png")}
+            source={require("@/assets/icons/house-icon.webp")}
             style={{ width: 20, height: 20 }}
             resizeMode="contain"
           />
@@ -1175,7 +1175,7 @@ function Step2LocationDetails() {
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
           <Image
-            source={require("@/assets/icons/house-icon.png")}
+            source={require("@/assets/icons/house-icon.webp")}
             style={{ width: 20, height: 20 }}
             resizeMode="contain"
           />

@@ -11,7 +11,7 @@ import Mapbox from "@rnmapbox/maps";
 import React, { useEffect } from "react";
 import { Image } from "react-native";
 
-const houseIcon = require("@/assets/icons/house-icon.png");
+const houseIcon = require("@/assets/icons/house-icon.webp");
 
 interface PropertyMarkersProps {
   onMarkerPress?: (propertyId: number) => void;

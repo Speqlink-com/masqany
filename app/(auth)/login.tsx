@@ -7,17 +7,18 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
+import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const INPUT_BG = "#AAAABB";
@@ -26,6 +27,7 @@ type LoginMethod = "password" | "otp";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const setUser = useAuthStore((state) => state.setUser);
   const [loginMethod, setLoginMethod] = useState<LoginMethod>("password");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -61,6 +63,23 @@ export default function LoginScreen() {
         params: { identifier: identifier.trim() },
       });
     }
+  }
+
+  function handleDevAccess() {
+    // Set mock user with Property_Owner role
+    const mockUser = {
+      id: "dev-user-001",
+      name: "Dev Property Owner",
+      email: "dev@masqany.com",
+      phone: "+254700000000",
+      role: "property_owner" as const,
+      isHost: true,
+      isVerified: true,
+      createdAt: new Date().toISOString(),
+    };
+    
+    setUser(mockUser);
+    router.replace("/(property-admin)" as any);
   }
 
   return (
@@ -226,6 +245,29 @@ export default function LoginScreen() {
               disabled={!canSubmit}
               loading={loading}
             />
+
+            {/* Development Access Button */}
+            {__DEV__ && (
+              <TouchableOpacity
+                onPress={handleDevAccess}
+                activeOpacity={0.8}
+                className="mt-4 py-4 px-6 rounded-full items-center"
+                style={{ backgroundColor: "#f3f4f3" }}
+              >
+                <Text
+                  className="font-inter-semibold"
+                  style={{ fontSize: 16, color: "#000000" }}
+                >
+                  Property Admin (Dev)
+                </Text>
+                <Text
+                  className="font-inter-regular mt-1"
+                  style={{ fontSize: 12, color: "#545454" }}
+                >
+                  Development Only
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

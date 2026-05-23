@@ -1,19 +1,90 @@
 /**
  * Move — relocation services with map interface.
  */
+import { BaseMap } from "@/components/map/BaseMap";
+import { LocateMeButton } from "@/components/map/LocateMeButton";
+import { MapSearchBar } from "@/components/map/MapSearchBar";
+import { PropertyCard } from "@/components/map/PropertyCard";
+import { PropertyMarkers } from "@/components/map/PropertyMarkers";
+import { mockProperties } from "@/constants/mockProperties";
+import Mapbox from "@rnmapbox/maps";
+import * as Location from "expo-location";
 import { StatusBar } from "expo-status-bar";
-import { Text, View } from "react-native";
+import { useRef, useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 export default function MoveScreen() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
+  const cameraRef = useRef<Mapbox.Camera>(null);
+  const mapRef = useRef<Mapbox.MapView>(null);
+
+  const handleMarkerPress = (propertyId: number) => {
+    setSelectedPropertyId(propertyId);
+  };
+
+  const handleLocateMe = async () => {
+    try {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status === "granted") {
+        const location = await Location.getCurrentPositionAsync({});
+        cameraRef.current?.setCamera({
+          centerCoordinate: [location.coords.longitude, location.coords.latitude],
+          zoomLevel: 14,
+          animationDuration: 1000,
+        });
+      } else {
+        // Fallback to Nairobi center
+        cameraRef.current?.setCamera({
+          centerCoordinate: [36.8219, -1.2921],
+          zoomLevel: 12,
+          animationDuration: 1000,
+        });
+      }
+    } catch (error) {
+      console.error("Error centering map:", error);
+    }
+  };
+
+  const selectedProperty = selectedPropertyId
+    ? mockProperties.find((p) => p.id === selectedPropertyId)
+    : null;
+
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#E6F4FE' }}>
+    <View style={styles.root}>
       <StatusBar style="dark" />
-      <Text style={{ fontSize: 18, fontWeight: '600', color: '#004AAD' }}>
-        Map Coming Soon
-      </Text>
-      <Text style={{ fontSize: 14, color: '#666', marginTop: 8 }}>
-        Available in production build
-      </Text>
+      
+      {/* Top Bar - Blue bar protecting status bar - Fixed position */}
+      <View className="absolute top-0 left-0 right-0 h-[3.5%] bg-[#20A6FD] z-50" />
+
+      <BaseMap ref={mapRef} cameraRef={cameraRef}>
+        <PropertyMarkers onMarkerPress={handleMarkerPress} />
+      </BaseMap>
+
+      <MapSearchBar
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        onClear={() => setSearchQuery("")}
+        placeholder="Search location..."
+      />
+
+      <LocateMeButton onPress={handleLocateMe} />
+
+      {selectedProperty && (
+        <PropertyCard
+          property={selectedProperty}
+          onPress={() => setSelectedPropertyId(null)}
+        />
+      )}
+      
+      {/* Bottom Bar - Blue bar covering entire tab bar area - Fixed position */}
+      <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#20A6FD] z-50">
+        <View className="h-[1px] bg-black" />
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});

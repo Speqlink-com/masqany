@@ -17,7 +17,6 @@ import {
     Poppins_800ExtraBold,
 } from "@expo-google-fonts/poppins";
 import { FontAwesome5, Foundation, Ionicons } from "@expo/vector-icons";
-import Mapbox from "@rnmapbox/maps";
 import { QueryClientProvider } from "@tanstack/react-query";
 import * as Font from "expo-font";
 import { useFonts } from "expo-font";
@@ -28,9 +27,6 @@ import { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./global.css";
-
-// Initialize Mapbox
-Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN || "");
 
 SplashScreen.preventAutoHideAsync();
 

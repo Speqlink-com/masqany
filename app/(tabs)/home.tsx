@@ -1,7 +1,7 @@
 /**
  * Home — Video Feed Module
  * 
- * TikTok-style vertical video feed for property discovery
+ * vertical video feed for property discovery
  * This is the primary tenant home screen experience
  */
 
@@ -11,10 +11,10 @@ import { SkeletonLoader } from "@/components/video-feed/SkeletonLoader";
 import { VideoFeedList } from "@/components/video-feed/VideoFeedList";
 import { useNetworkStatus } from "@/lib/network/useNetworkStatus";
 import {
-    useDownloadVideo,
-    useLikeVideo,
-    useShareVideo,
-    useVideoFeed,
+  useDownloadVideo,
+  useLikeVideo,
+  useShareVideo,
+  useVideoFeed,
 } from "@/modules/video-feed";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -224,7 +224,7 @@ export default function HomeScreen() {
       <StatusBar style="light" />
       
       {/* Top Bar - Blue bar protecting status bar - Fixed position */}
-      <View className="absolute top-0 left-0 right-0 h-[3.5%] bg-[#20A6FD] z-50" />
+      <View className="absolute top-0 left-0 right-0 h-[3.5%] bg-[#3fbdfd] z-50" />
       
       {/* Video Feed - Takes full screen */}
       <VideoFeedList
@@ -247,7 +247,7 @@ export default function HomeScreen() {
       />
       
       {/* Bottom Bar - Blue bar covering entire tab bar area - Fixed position */}
-      <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#20A6FD] z-50">
+      <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#3fbdfd] z-50">
         <View className="h-[1px] bg-black" />
       </View>
     </View>

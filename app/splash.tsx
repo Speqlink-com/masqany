@@ -17,7 +17,7 @@ export default function SplashScreen() {
     // Navigate to auth screen after 4 seconds
     const timer = setTimeout(() => {
       router.replace("/auth");
-    }, 4000);
+    }, 6000);
 
     return () => clearTimeout(timer);
   }, [isReady, router]);

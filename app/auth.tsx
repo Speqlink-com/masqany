@@ -3,6 +3,7 @@
  * Terms pinned to bottom.
  */
 import { ContactUs } from "@/components/auth/ContactUs";
+import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
@@ -10,6 +11,24 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AuthScreen() {
   const router = useRouter();
+  const setUser = useAuthStore((state) => state.setUser);
+
+  function handleDevAccess() {
+    // Set mock user with Property_Owner role
+    const mockUser = {
+      id: "dev-user-001",
+      name: "Dev Property Owner",
+      email: "dev@masqany.com",
+      phone: "+254700000000",
+      role: "property_owner" as const,
+      isHost: true,
+      isVerified: true,
+      createdAt: new Date().toISOString(),
+    };
+    
+    setUser(mockUser);
+    router.replace("/(property-admin)" as any);
+  }
 
   return (
     <View className="flex-1">
@@ -88,6 +107,38 @@ export default function AuthScreen() {
                     resizeMode="contain"
                   />
                 </TouchableOpacity>
+
+                {/* Development Access Button */}
+                {__DEV__ && (
+                  <>
+                    {/* "or" separator */}
+                    <View className="flex-row items-center my-2">
+                      <View className="flex-1 h-px bg-light-200" />
+                      <Text className="font-inter-regular text-dark-100 mx-4" style={{ fontSize: 15 }}>or</Text>
+                      <View className="flex-1 h-px bg-light-200" />
+                    </View>
+
+                    <TouchableOpacity
+                      onPress={handleDevAccess}
+                      activeOpacity={0.8}
+                      className="py-4 px-6 rounded-full items-center"
+                      style={{ backgroundColor: "#f3f4f3" }}
+                    >
+                      <Text
+                        className="font-inter-semibold"
+                        style={{ fontSize: 16, color: "#000000" }}
+                      >
+                        Property Admin (Dev)
+                      </Text>
+                      <Text
+                        className="font-inter-regular mt-1"
+                        style={{ fontSize: 12, color: "#545454" }}
+                      >
+                        Development Only
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
             </View>
 

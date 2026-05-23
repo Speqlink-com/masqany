@@ -48,7 +48,7 @@ All icons are already in the project at `assets/icons/`:
 - ✅ `edit.png` - Property title, descriptions
 - ✅ `info.png` - General information fields
 - ✅ `home.png` - Home/property related
-- ✅ `house-icon.png` - Location fields
+- ✅ `house-icon.webp` - Location fields
 - ✅ `i-dropdown-icon.webp` - Dropdown indicators
 - ✅ `i-location-icon.webp` - Location specific (tourist attractions, airport)
 - ✅ `i-user-icon.webp` - Guest capacity, persons

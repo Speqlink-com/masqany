@@ -16,7 +16,7 @@
 - Removed Mapbox branding
 
 ### 3. Custom Property Icon ✅
-- Using `house-icon.png` (converted from webp)
+- Using `house-icon.webp` (converted from webp)
 - Icon size: 0.15 (adjustable)
 - Color-coded by vacancy:
   - 🟢 Green = Vacant
@@ -154,7 +154,7 @@ pnpm expo run:android
 3. Try "Locate Me" button manually
 
 ### Icons Not Showing
-1. Verify `house-icon.png` exists
+1. Verify `house-icon.webp` exists
 2. Check icon registration in PropertyMarkers
 3. Zoom in closer (icons appear at certain zoom levels)
 

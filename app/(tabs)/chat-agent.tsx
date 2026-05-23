@@ -191,6 +191,9 @@ export default function ChatAgentScreen() {
         className="flex-1"
         resizeMode="cover"
       >
+        {/* Top Bar - Blue bar protecting status bar - Fixed position */}
+        <View className="absolute top-0 left-0 right-0 h-[3.5%] bg-[#20A6FD] z-50" />
+        
         <SafeAreaView className="flex-1" edges={["top"]}>
           {/* Main Content */}
           <View className="flex-1" {...panResponder.panHandlers}>
@@ -355,7 +358,7 @@ export default function ChatAgentScreen() {
             )}
 
             {/* Chat Input Field */}
-            <View className="px-5 py-3" style={{ paddingBottom: 100 }}>
+            <View className="px-5 py-3" style={{ paddingBottom: 350 }}>
               <View className="flex-row items-center bg-dark-400 rounded-full px-5 py-2 shadow-md">
                 <TextInput
                   className="flex-1 font-inter text-[15px] text-white max-h-[100px]"
@@ -513,7 +516,7 @@ export default function ChatAgentScreen() {
                           style={{ marginLeft: SIDEBAR_WIDTH * 0.15, marginRight: 8 }}
                         >
                           <LinearGradient
-                            colors={["#5DE0E6", "#004AAD"]}
+                            colors={["#5DE0E6", "#3fbdfd"]}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                             className="py-1"
@@ -578,6 +581,11 @@ export default function ChatAgentScreen() {
             />
           )}
         </SafeAreaView>
+        
+        {/* Bottom Bar - Blue bar covering entire tab bar area - Fixed position */}
+        <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#20A6FD] z-50">
+          <View className="h-[1px] bg-black" />
+        </View>
       </ImageBackground>
     </View>
   );

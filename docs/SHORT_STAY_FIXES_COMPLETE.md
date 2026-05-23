@@ -75,7 +75,7 @@ All icons already exist in `assets/icons/`:
 | `edit.png` | Property title, descriptions |
 | `info.png` | General information fields |
 | `home.png` | Home/property related |
-| `house-icon.png` | Location fields |
+| `house-icon.webp` | Location fields |
 | `i-dropdown-icon.webp` | Dropdown indicators |
 | `i-location-icon.webp` | Tourist attractions, airport |
 | `i-user-icon.webp` | Guest capacity, persons |

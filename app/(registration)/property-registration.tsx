@@ -182,7 +182,7 @@ export default function PropertyRegistrationScreen() {
             {/* House Icon */}
             <View className="items-center mb-4">
               <Image
-                source={require("@/assets/icons/house-icon.png")}
+                source={require("@/assets/icons/house-icon.webp")}
                 style={{ width: 80, height: 80 }}
                 resizeMode="contain"
               />
@@ -222,10 +222,10 @@ export default function PropertyRegistrationScreen() {
                     className="py-4 px-3 items-center"
                   >
                     <Image
-                      source={require("@/assets/icons/house-icon.png")}
+                      source={require("@/assets/icons/house-icon.webp")}
                       style={{ width: 32, height: 32, marginBottom: 8 }}
                       resizeMode="contain"
-                      tintColor={selectedStayType === "long_stay" ? "#FFFFFF" : "#545454"}
+                      // tintColor={selectedStayType === "long_stay" ? "#FFFFFF" : "#545454"}
                     />
                     <Text 
                       className={`font-inter-semibold text-[13px] ${
@@ -253,7 +253,7 @@ export default function PropertyRegistrationScreen() {
                       source={require("@/assets/icons/hotel-icon.webp")}
                       style={{ width: 32, height: 32, marginBottom: 8 }}
                       resizeMode="contain"
-                      tintColor={selectedStayType === "short_stay" ? "#FFFFFF" : "#545454"}
+                      // tintColor={selectedStayType === "short_stay" ? "#FFFFFF" : "#545454"}
                     />
                     <Text 
                       className={`font-inter-semibold text-[13px] ${
@@ -296,7 +296,7 @@ export default function PropertyRegistrationScreen() {
               {/* Header with Icon */}
               <View className="flex-row items-center mb-3">
                 <Image
-                  source={require("@/assets/icons/house-icon.png")}
+                  source={require("@/assets/icons/house-icon.webp")}
                   style={{ width: 20, height: 20 }}
                   resizeMode="contain"
                 />
