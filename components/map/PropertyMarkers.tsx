@@ -7,34 +7,15 @@
 
 import { MAP_CONFIG } from "@/constants/mapConfig";
 import { mockProperties, toGeoJSON } from "@/constants/mockProperties";
-import Mapbox from "@rnmapbox/maps";
-import React, { useEffect } from "react";
-import { Image } from "react-native";
-
-const houseIcon = require("@/assets/icons/house-icon.webp");
+import { Mapbox } from "@/components/map/mapbox";
+import React from "react";
 
 interface PropertyMarkersProps {
   onMarkerPress?: (propertyId: number) => void;
 }
 
 export function PropertyMarkers({ onMarkerPress }: PropertyMarkersProps) {
-  const geojson = toGeoJSON(mockProperties);
-
-  // Register custom icon
-  useEffect(() => {
-    const registerIcon = async () => {
-      try {
-        const resolvedImage = Image.resolveAssetSource(houseIcon);
-        if (resolvedImage) {
-          // Note: Icon registration is handled by SymbolLayer's iconImage prop
-          // No need to manually register with Mapbox.Images
-        }
-      } catch (error) {
-        console.error("Error resolving icon:", error);
-      }
-    };
-    registerIcon();
-  }, []);
+  const geojson = toGeoJSON(mockProperties.filter((property) => property.vacant));
 
   const handlePress = (event: any) => {
     const feature = event.features[0];
@@ -42,6 +23,10 @@ export function PropertyMarkers({ onMarkerPress }: PropertyMarkersProps) {
       onMarkerPress?.(feature.properties.id);
     }
   };
+
+  if (!Mapbox) {
+    return null;
+  }
 
   return (
     <Mapbox.ShapeSource
@@ -84,20 +69,31 @@ export function PropertyMarkers({ onMarkerPress }: PropertyMarkersProps) {
       />
 
       {/* Individual property markers with custom icon */}
+      <Mapbox.CircleLayer
+        id="property-status-rings"
+        filter={["!", ["has", "point_count"]]}
+        style={{
+          circleColor: [
+            "case",
+            ["==", ["get", "vacant"], true],
+            MAP_CONFIG.colors.propertyVacant,
+            MAP_CONFIG.colors.propertyOccupied,
+          ],
+          circleRadius: 16,
+          circleOpacity: 0.95,
+          circleStrokeWidth: 2,
+          circleStrokeColor: "#ffffff",
+        }}
+      />
+
       <Mapbox.SymbolLayer
         id="unclustered-point"
         filter={["!", ["has", "point_count"]]}
         style={{
           iconImage: "house-icon",
-          iconSize: 0.15,
+          iconSize: 0.16,
           iconAllowOverlap: true,
           iconIgnorePlacement: false,
-          iconColor: [
-            "case",
-            ["==", ["get", "vacant"], true],
-            MAP_CONFIG.colors.propertyVacant, // green = vacant
-            MAP_CONFIG.colors.propertyOccupied, // red = occupied
-          ],
         }}
       />
 

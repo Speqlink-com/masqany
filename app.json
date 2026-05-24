@@ -26,7 +26,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-screen.png",
+          "image": "./assets/images/splash-screen.webp",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -34,12 +34,7 @@
       ],
       "expo-secure-store",
       "expo-web-browser",
-      [
-        "@rnmapbox/maps",
-        {
-          "RNMapboxMapsDownloadToken": "sk.eyJ1IjoibWVsdmluc3NpbW9uIiwiYSI6ImNtb3NtcTVoeDAxMHgycnI0YXJhYnJqaWMifQ.WijDw5UObf85rtsCRPpPtA"
-        }
-      ],
+      "@rnmapbox/maps",
       [
         "expo-location",
         {
@@ -58,4 +53,3 @@
     "owner": "comphorine"
   }
 }
-

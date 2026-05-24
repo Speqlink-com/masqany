@@ -10,19 +10,21 @@ import { Image, ImageSourcePropType, StyleSheet, Text, View } from "react-native
 
 interface TabIconProps {
   icon: ImageSourcePropType;
+  activeIcon?: ImageSourcePropType;
   label: string;
   focused: boolean;
+  activeTint?: boolean;
 }
 
-function TabIcon({ icon, label, focused }: TabIconProps) {
+function TabIcon({ icon, activeIcon, label, focused, activeTint = true }: TabIconProps) {
   return (
     <View style={styles.tabItem}>
       <Image
-        source={icon}
+        source={focused && activeIcon ? activeIcon : icon}
         style={[
           styles.icon,
           // Icons are already gray by design — only tint white when active
-          focused ? { tintColor: "#ffffff" } : undefined,
+          focused && activeTint ? { tintColor: "#ffffff" } : undefined,
         ]}
         resizeMode="contain"
       />
@@ -49,8 +51,10 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <TabIcon
               icon={require("@/assets/icons/home-tab-icon.png")}
+              activeIcon={require("@/assets/icons/home-tab-icon.png")}
               label="Home"
               focused={focused}
+               activeTint={false}
             />
           ),
         }}
@@ -61,8 +65,10 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <TabIcon
               icon={require("@/assets/icons/ai-chat-tab-icon.webp")}
+               activeIcon={require("@/assets/icons/ai-chat-tab-icon.webp")}
               label="Chat"
               focused={focused}
+              activeTint={false}
             />
           ),
         }}
@@ -73,8 +79,10 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <TabIcon
               icon={require("@/assets/icons/move-tab-icon.webp")}
+              activeIcon={require("@/assets/icons/move-tab-icon.webp")}
               label="Move"
               focused={focused}
+              activeTint={false}
             />
           ),
         }}
@@ -85,8 +93,10 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <TabIcon
               icon={require("@/assets/icons/profile-tab-icon.webp")}
+              activeIcon={require("@/assets/icons/profile-tab-icon.webp")}
               label="Profile"
               focused={focused}
+               activeTint={false}
             />
           ),
         }}

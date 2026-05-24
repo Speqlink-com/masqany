@@ -12,12 +12,13 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 interface PropertyCardProps {
   property: MockProperty;
   onPress?: () => void;
+  selected?: boolean;
 }
 
-export function PropertyCard({ property, onPress }: PropertyCardProps) {
+export function PropertyCard({ property, onPress, selected = false }: PropertyCardProps) {
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, selected ? styles.cardSelected : undefined]}
       onPress={onPress}
       activeOpacity={0.8}
     >
@@ -73,7 +74,7 @@ export function PropertyCard({ property, onPress }: PropertyCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#E1E6E8",
     borderRadius: 16,
     padding: 16,
     marginHorizontal: 16,
@@ -85,6 +86,11 @@ const styles = StyleSheet.create({
     elevation: 3,
     flexDirection: "row",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  cardSelected: {
+    borderColor: "#20A6FD",
   },
   badge: {
     position: "absolute",
@@ -109,7 +115,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontFamily: "CG-SemiBold",
+    fontFamily: "CG-Bold",
     fontSize: 16,
     color: "#000000",
     marginBottom: 4,

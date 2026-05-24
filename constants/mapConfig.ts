@@ -1,7 +1,7 @@
 /**
  * Map Configuration
  * 
- * Kenya-bounded map with detailed street-level style (Bolt-like)
+ * Map settings for the Move experience.
  */
 
 export const MAP_CONFIG = {
@@ -20,8 +20,8 @@ export const MAP_CONFIG = {
     ne: [42.0, 5.5] as [number, number],  // Northeast Kenya
   },
   
-  // Mapbox style URL - Streets style for detailed view like Bolt
-  style: "mapbox://styles/mapbox/streets-v12",
+  // White Mapbox style for the Bolt-like map treatment.
+  style: "mapbox://styles/mapbox/light-v11",
   
   // Cluster configuration
   cluster: {

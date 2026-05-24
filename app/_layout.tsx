@@ -16,6 +16,11 @@ import {
     Poppins_700Bold,
     Poppins_800ExtraBold,
 } from "@expo-google-fonts/poppins";
+import {
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+} from "@expo-google-fonts/nunito";
 import { FontAwesome5, Foundation, Ionicons } from "@expo/vector-icons";
 import { QueryClientProvider } from "@tanstack/react-query";
 import * as Font from "expo-font";
@@ -43,6 +48,10 @@ export default function RootLayout() {
     Poppins_600SemiBold,
     Poppins_700Bold,
     Poppins_800ExtraBold,
+    // Nunito — existing UI labels and controls
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
     // Cormorant Garamond — branding only
     "CG-Bold": require("../assets/fonts/CormorantGaramond-Bold.ttf"),
   });
@@ -82,6 +91,8 @@ export default function RootLayout() {
             <Stack.Screen name="(registration)" />
             <Stack.Screen name="(profile)" />
             <Stack.Screen name="(admin)" />
+            <Stack.Screen name="(driver)" />
+            <Stack.Screen name="property" />
           </Stack>
         </SafeAreaProvider>
       </GestureHandlerRootView>

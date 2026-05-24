@@ -5,7 +5,7 @@
  */
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Image, ImageBackground, TouchableOpacity, View } from "react-native";
+import { Image, ImageBackground, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function VehiclePromptScreen() {
@@ -37,6 +37,21 @@ export default function VehiclePromptScreen() {
                 className="w-full h-14"
                 resizeMode="contain"
               />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.85}
+              className="mt-4 w-full min-h-[52px] rounded-full bg-[#3fbdfd] items-center justify-center flex-row"
+              onPress={() => router.replace("/(driver)/dashboard" as never)}
+            >
+              <Image
+                source={require("@/assets/icons/pickup-vehicle-icon.png")}
+                className="w-12 h-7 mr-3"
+                resizeMode="contain"
+              />
+              <Text className="font-poppins-semibold text-white text-[15px]">
+                Open Driver Dashboard
+              </Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>

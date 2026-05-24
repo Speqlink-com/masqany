@@ -10,12 +10,13 @@ import { StyleSheet, TouchableOpacity } from "react-native";
 
 interface LocateMeButtonProps {
   onPress: () => void;
+  bottom?: number;
 }
 
-export function LocateMeButton({ onPress }: LocateMeButtonProps) {
+export function LocateMeButton({ onPress, bottom }: LocateMeButtonProps) {
   return (
     <TouchableOpacity
-      style={styles.button}
+      style={[styles.button, bottom !== undefined ? { bottom } : undefined]}
       onPress={onPress}
       activeOpacity={0.8}
     >

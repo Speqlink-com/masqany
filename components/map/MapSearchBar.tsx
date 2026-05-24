@@ -13,6 +13,7 @@ interface MapSearchBarProps {
   onChangeText: (text: string) => void;
   onClear: () => void;
   placeholder?: string;
+  top?: number;
 }
 
 export function MapSearchBar({
@@ -20,9 +21,10 @@ export function MapSearchBar({
   onChangeText,
   onClear,
   placeholder = "Search location...",
+  top,
 }: MapSearchBarProps) {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, top !== undefined ? { top } : undefined]}>
       <View style={styles.searchBar}>
         <Ionicons name="search" size={20} color="#545454" style={styles.icon} />
         

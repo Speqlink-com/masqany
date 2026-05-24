@@ -6,25 +6,32 @@
  */
 
 import { MAP_CONFIG } from "@/constants/mapConfig";
-import Mapbox from "@rnmapbox/maps";
+import { Mapbox, mapboxUnavailableMessage } from "@/components/map/mapbox";
 import * as Location from "expo-location";
 import React, { forwardRef, useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
-
-// Set Mapbox access token
-const PUBLIC_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || "";
-Mapbox.setAccessToken(PUBLIC_TOKEN);
+import { StyleSheet, Text, View } from "react-native";
 
 interface BaseMapProps {
   children?: React.ReactNode;
   followUserLocation?: boolean;
   showUserLocation?: boolean;
   onRegionDidChange?: (feature: any) => void;
-  cameraRef?: React.RefObject<Mapbox.Camera | null>;
+  onUserLocationResolved?: (coordinate: [number, number]) => void;
+  cameraRef?: React.RefObject<any | null>;
 }
 
-export const BaseMap = forwardRef<Mapbox.MapView, BaseMapProps>(
-  ({ children, followUserLocation = false, showUserLocation = true, onRegionDidChange, cameraRef }, ref) => {
+export const BaseMap = forwardRef<any, BaseMapProps>(
+  (
+    {
+      children,
+      followUserLocation = false,
+      showUserLocation = true,
+      onRegionDidChange,
+      onUserLocationResolved,
+      cameraRef,
+    },
+    ref
+  ) => {
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
     const [locationPermission, setLocationPermission] = useState(false);
 
@@ -36,13 +43,27 @@ export const BaseMap = forwardRef<Mapbox.MapView, BaseMapProps>(
           if (status === "granted") {
             setLocationPermission(true);
             const location = await Location.getCurrentPositionAsync({});
-            setUserLocation([location.coords.longitude, location.coords.latitude]);
+            const coordinate: [number, number] = [
+              location.coords.longitude,
+              location.coords.latitude,
+            ];
+            setUserLocation(coordinate);
+            onUserLocationResolved?.(coordinate);
           }
         } catch (error) {
           console.error("Error getting location:", error);
         }
       })();
-    }, []);
+    }, [onUserLocationResolved]);
+
+    if (!Mapbox) {
+      return (
+        <View style={[styles.container, styles.unavailable]}>
+          <Text style={styles.unavailableTitle}>Map build required</Text>
+          <Text style={styles.unavailableText}>{mapboxUnavailableMessage}</Text>
+        </View>
+      );
+    }
 
     return (
       <View style={styles.container}>
@@ -61,10 +82,6 @@ export const BaseMap = forwardRef<Mapbox.MapView, BaseMapProps>(
             ref={cameraRef}
             zoomLevel={userLocation ? MAP_CONFIG.userLocationZoom : MAP_CONFIG.zoom}
             centerCoordinate={userLocation || MAP_CONFIG.center}
-            maxBounds={{
-              ne: MAP_CONFIG.bounds.ne,
-              sw: MAP_CONFIG.bounds.sw,
-            }}
             minZoomLevel={MAP_CONFIG.camera.minZoom}
             maxZoomLevel={MAP_CONFIG.camera.maxZoom}
             followUserLocation={followUserLocation}
@@ -95,5 +112,24 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  unavailable: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 28,
+    backgroundColor: "#F8FAFC",
+  },
+  unavailableTitle: {
+    color: "#0F172A",
+    fontFamily: "Nunito_700Bold",
+    fontSize: 18,
+    marginBottom: 8,
+  },
+  unavailableText: {
+    color: "#64748B",
+    fontFamily: "Nunito_400Regular",
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
   },
 });

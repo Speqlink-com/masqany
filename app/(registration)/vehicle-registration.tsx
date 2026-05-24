@@ -339,7 +339,7 @@ export default function VehicleRegistrationScreen() {
               Alert.alert(
                 "Registration Submitted!",
                 "Your vehicle registration has been submitted for review. You'll be notified once it's approved.",
-                [{ text: "OK" }]
+                [{ text: "OK", onPress: () => router.replace("/(driver)/dashboard" as any) }]
               );
             } catch (error: any) {
               console.error("Registration error:", error);
@@ -1258,7 +1258,7 @@ export default function VehicleRegistrationScreen() {
                       )}
                     </View>
                     <Text className="flex-1 font-inter text-[13px] text-dark-400 leading-5">
-                      I confirm that all information provided is accurate and complete. I agree to Masqany's Driver Terms of Service and consent to background verification checks.
+                      I confirm that all information provided is accurate and complete. I agree to Masqany Driver Terms of Service and consent to background verification checks.
                     </Text>
                   </TouchableOpacity>
 

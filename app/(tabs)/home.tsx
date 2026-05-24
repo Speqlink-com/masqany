@@ -104,7 +104,7 @@ export default function HomeScreen() {
         ]
       );
     },
-    [shareVideoMutation, router]
+    [shareVideoMutation]
   );
 
   const handleDownload = useCallback(
@@ -123,18 +123,20 @@ export default function HomeScreen() {
 
   const handleBookNow = useCallback(
     (propertyId: string) => {
-      // TODO: Navigate to booking flow when route exists
-      // router.push(`/booking/${propertyId}` as any);
-      Alert.alert("Coming Soon", "Booking feature coming soon!");
+      router.push({
+        pathname: "/property/[propertyId]",
+        params: { propertyId, focus: "payment" },
+      } as never);
     },
     [router]
   );
 
   const handleViewListing = useCallback(
     (propertyId: string) => {
-      // TODO: Navigate to property details screen when route exists
-      // router.push(`/property/${propertyId}` as any);
-      Alert.alert("Coming Soon", "Property details feature coming soon!");
+      router.push({
+        pathname: "/property/[propertyId]",
+        params: { propertyId },
+      } as never);
     },
     [router]
   );
@@ -145,7 +147,7 @@ export default function HomeScreen() {
       // router.push(`/profile/${ownerId}` as any);
       Alert.alert("Coming Soon", "Owner profile feature coming soon!");
     },
-    [router]
+    []
   );
 
   const handleLocationPress = useCallback(
@@ -167,7 +169,7 @@ export default function HomeScreen() {
     // TODO: Navigate to search screen when route exists
     // router.push("/search" as any);
     Alert.alert("Coming Soon", "Search feature coming soon!");
-  }, [router]);
+  }, []);
 
   // Show no internet connection screen if network is unavailable
   if (!networkStatus.isConnected) {
