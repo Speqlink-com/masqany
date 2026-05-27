@@ -126,7 +126,7 @@ export default function ProfileScreen() {
         resizeMode="cover"
       >
         {/* Top Bar - Blue bar protecting status bar - Fixed position */}
-        <View className="absolute top-0 left-0 right-0 h-[3.5%] bg-[#20A6FD] z-50" />
+        <View className="absolute top-0 left-0 right-0 h-[3.5%] bg-[#3fbdfd] z-50" />
         
         <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
           {/* Header */}
@@ -229,7 +229,7 @@ export default function ProfileScreen() {
       />
       
       {/* Bottom Bar - Blue bar covering entire tab bar area - Fixed position */}
-      <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#20A6FD] z-50">
+      <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#3fbdfd] z-50">
         <View className="h-[1px] bg-black" />
       </View>
     </View>

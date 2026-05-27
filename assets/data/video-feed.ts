@@ -5,11 +5,20 @@
 
 import { PropertyVideo } from "@/modules/video-feed/types";
 
+const propertyImages = [
+  require("@/assets/prop-images/image2.jpeg"),
+  require("@/assets/prop-images/image3.jpeg"),
+  require("@/assets/prop-images/image4.jpeg"),
+  require("@/assets/prop-images/image5.jpeg"),
+  require("@/assets/prop-images/image6.jpeg"),
+];
+
 export const mockVideoFeedData: PropertyVideo[] = [
   {
     id: "video-001",
     videoUrl: require("@/assets/video/video1.mp4"),
     thumbnailUrl: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400",
+    propertyImages,
     title: "Modern 2BR Apartment in Kilimani",
     description:
       "Spacious 2-bedroom apartment with modern finishes, open kitchen, and balcony. Located in a secure gated community with 24/7 security, backup generator, and ample parking. Close to shopping malls, restaurants, and public transport.",
@@ -49,6 +58,7 @@ export const mockVideoFeedData: PropertyVideo[] = [
     id: "video-002",
     videoUrl: require("@/assets/video/video2.mp4"),
     thumbnailUrl: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400",
+    propertyImages: [propertyImages[1], propertyImages[2], propertyImages[3], propertyImages[4], propertyImages[0]],
     title: "Luxury Penthouse in Westlands",
     description:
       "Stunning penthouse with panoramic city views, 3 bedrooms, 3 bathrooms, and a private rooftop terrace. Features include a modern kitchen, spacious living area, and premium finishes throughout. Perfect for executives and families.",
@@ -95,6 +105,7 @@ export const mockVideoFeedData: PropertyVideo[] = [
     id: "video-003",
     videoUrl: require("@/assets/video/video3.mp4"),
     thumbnailUrl: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400",
+    propertyImages: [propertyImages[2], propertyImages[3], propertyImages[4], propertyImages[0], propertyImages[1]],
     title: "Cozy Bedsitter in Ngong Road",
     description:
       "Affordable bedsitter perfect for students and young professionals. Features include a kitchenette, private bathroom, and ample natural light. Located near matatu stages and shopping centers.",
@@ -111,7 +122,7 @@ export const mockVideoFeedData: PropertyVideo[] = [
       id: "owner-003",
       name: "Mary Njeri",
       avatar: "https://i.pravatar.cc/150?img=5",
-      isVerified: false,
+      isVerified: true,
     },
     engagement: {
       likes: 567,
@@ -133,12 +144,13 @@ export const mockVideoFeedData: PropertyVideo[] = [
     id: "video-004",
     videoUrl: require("@/assets/video/video1.mp4"),
     thumbnailUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400",
-    title: "Spacious 3BR in Karen",
+    propertyImages: [propertyImages[3], propertyImages[4], propertyImages[0], propertyImages[1], propertyImages[2]],
+    title: "Garden Airbnb Cottage in Karen",
     description:
-      "Beautiful 3-bedroom house in the serene Karen neighborhood. Features a large garden, modern kitchen, and spacious living areas. Perfect for families looking for a quiet environment.",
-    propertyType: "3BR",
-    price: 85000,
-    priceUnit: "month",
+      "Beautiful short-stay cottage in the serene Karen neighborhood. Features a private garden, modern kitchen, and calm living spaces for vacation guests and weekend stays.",
+    propertyType: "airbnb",
+    price: 8500,
+    priceUnit: "night",
     location: {
       estate: "Karen",
       county: "Nairobi",
@@ -160,7 +172,7 @@ export const mockVideoFeedData: PropertyVideo[] = [
       isShared: false,
       isDownloaded: false,
     },
-    bedrooms: 3,
+    bedrooms: 2,
     bathrooms: 2,
     size: 1800,
     amenities: ["WiFi", "Parking", "Security", "Garden", "Water", "Backup Generator"],
@@ -171,12 +183,13 @@ export const mockVideoFeedData: PropertyVideo[] = [
     id: "video-005",
     videoUrl: require("@/assets/video/video2.mp4"),
     thumbnailUrl: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400",
-    title: "Studio Apartment in Parklands",
+    propertyImages: [propertyImages[4], propertyImages[0], propertyImages[1], propertyImages[2], propertyImages[3]],
+    title: "Boutique Hotel Room in Parklands",
     description:
-      "Modern studio apartment with an open-plan layout. Features include a kitchenette, modern bathroom, and great natural lighting. Ideal for singles and young professionals.",
-    propertyType: "studio",
-    price: 28000,
-    priceUnit: "month",
+      "Stylish hotel room with a modern bathroom, bright workspace, room service access, and secure parking. Ideal for business travel and short city stays.",
+    propertyType: "hotel",
+    price: 6500,
+    priceUnit: "night",
     location: {
       estate: "Parklands",
       county: "Nairobi",
@@ -210,12 +223,13 @@ export const mockVideoFeedData: PropertyVideo[] = [
     id: "video-006",
     videoUrl: require("@/assets/video/video3.mp4"),
     thumbnailUrl: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400",
-    title: "Luxury 4BR+ Villa in Runda",
+    propertyImages,
+    title: "Luxury Vacation Villa in Runda",
     description:
-      "Exquisite 4-bedroom villa in the prestigious Runda estate. Features include a swimming pool, landscaped garden, modern kitchen, and spacious living areas. Perfect for luxury living.",
-    propertyType: "4BR+",
-    price: 250000,
-    priceUnit: "month",
+      "Exquisite vacation villa in the prestigious Runda estate. Features include a swimming pool, landscaped garden, modern kitchen, and spacious living areas for premium short stays.",
+    propertyType: "vacation",
+    price: 25000,
+    priceUnit: "day",
     location: {
       estate: "Runda",
       county: "Nairobi",
@@ -258,6 +272,7 @@ export const mockVideoFeedData: PropertyVideo[] = [
     id: "video-007",
     videoUrl: require("@/assets/video/video1.mp4"),
     thumbnailUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400",
+    propertyImages: [propertyImages[1], propertyImages[3], propertyImages[0], propertyImages[4], propertyImages[2]],
     title: "Affordable 1BR in Kasarani",
     description:
       "Budget-friendly 1-bedroom apartment in Kasarani. Features include a modern kitchen, spacious bedroom, and good security. Close to public transport and shopping centers.",
@@ -274,7 +289,7 @@ export const mockVideoFeedData: PropertyVideo[] = [
       id: "owner-007",
       name: "Grace Akinyi",
       avatar: "https://i.pravatar.cc/150?img=10",
-      isVerified: false,
+      isVerified: true,
     },
     engagement: {
       likes: 456,
@@ -296,6 +311,7 @@ export const mockVideoFeedData: PropertyVideo[] = [
     id: "video-008",
     videoUrl: require("@/assets/video/video2.mp4"),
     thumbnailUrl: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400",
+    propertyImages: [propertyImages[2], propertyImages[4], propertyImages[1], propertyImages[3], propertyImages[0]],
     title: "Modern 2BR in Lavington",
     description:
       "Contemporary 2-bedroom apartment in the upscale Lavington area. Features include a modern kitchen, spacious living room, and secure parking. Great for professionals and small families.",
@@ -335,6 +351,7 @@ export const mockVideoFeedData: PropertyVideo[] = [
     id: "video-009",
     videoUrl: require("@/assets/video/video3.mp4"),
     thumbnailUrl: "https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=400",
+    propertyImages: [propertyImages[3], propertyImages[0], propertyImages[4], propertyImages[1], propertyImages[2]],
     title: "Cozy Bedsitter in Rongai",
     description:
       "Affordable bedsitter in the growing Rongai area. Features include a kitchenette, private bathroom, and good security. Perfect for students and young professionals on a budget.",
@@ -351,7 +368,7 @@ export const mockVideoFeedData: PropertyVideo[] = [
       id: "owner-009",
       name: "Lucy Wambui",
       avatar: "https://i.pravatar.cc/150?img=16",
-      isVerified: false,
+      isVerified: true,
     },
     engagement: {
       likes: 345,
@@ -373,6 +390,7 @@ export const mockVideoFeedData: PropertyVideo[] = [
     id: "video-010",
     videoUrl: require("@/assets/video/video1.mp4"),
     thumbnailUrl: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=400",
+    propertyImages: [propertyImages[4], propertyImages[2], propertyImages[0], propertyImages[3], propertyImages[1]],
     title: "Spacious 3BR in Kileleshwa",
     description:
       "Beautiful 3-bedroom apartment in the quiet Kileleshwa neighborhood. Features include a modern kitchen, spacious bedrooms, and secure parking. Great for families.",

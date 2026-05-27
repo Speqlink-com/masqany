@@ -33,14 +33,12 @@ export function PropertyOwnerProfile({ owner, onPress }: PropertyOwnerProfilePro
         />
         
         {/* Verified Badge */}
-        {owner.isVerified && (
-          <View className="absolute -bottom-0.5 -right-0.5">
-            <Image
-              source={require("@/assets/icons/verified-check-icon.webp")}
-              className="w-4 h-4"
-            />
-          </View>
-        )}
+        <View className="absolute -bottom-0.5 -right-0.5">
+          <Image
+            source={require("@/assets/icons/verified-check-icon.webp")}
+            className="w-4 h-4"
+          />
+        </View>
       </View>
 
       {/* Owner Name */}

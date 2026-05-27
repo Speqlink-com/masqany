@@ -1,5 +1,5 @@
 /**
- * VideoPlayer component — Expo AV video player with lifecycle management
+ * VideoPlayer component — expo-video player with lifecycle management
  * 
  * Features:
  * - HLS/DASH adaptive streaming support
@@ -15,8 +15,8 @@
 
 import { useNetworkStatus } from "@/lib/network/useNetworkStatus";
 import { Ionicons } from "@expo/vector-icons";
-import { AVPlaybackStatus, ResizeMode, Video } from "expo-av";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useVideoPlayer, VideoPlayerStatus, VideoSource, VideoView } from "expo-video";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import Reanimated, {
     useAnimatedStyle,
@@ -32,7 +32,12 @@ interface VideoPlayerProps {
   isActive: boolean; // ONLY ONE video is active
   shouldPreload: boolean; // Should this video be preloaded?
   isMuted: boolean;
-  onPlaybackStatusUpdate?: (status: AVPlaybackStatus) => void;
+  onPlaybackStatusUpdate?: (status: {
+    isLoaded: boolean;
+    isPlaying: boolean;
+    isBuffering: boolean;
+    status: VideoPlayerStatus;
+  }) => void;
   onLoad?: () => void;
   onError?: (error: string) => void;
   onTogglePlayback?: () => void;
@@ -53,7 +58,6 @@ export function VideoPlayer({
   onToggleMute,
   onLike,
 }: VideoPlayerProps) {
-  const videoRef = useRef<Video>(null);
   const networkStatus = useNetworkStatus();
   const [isLoading, setIsLoading] = useState(true);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -62,6 +66,7 @@ export function VideoPlayer({
   const [videoError, setVideoError] = useState<string | null>(null);
   const [thumbnailError, setThumbnailError] = useState(false);
   const [wasPlayingBeforeNetworkLoss, setWasPlayingBeforeNetworkLoss] = useState(false);
+  const [audioDisabledByError, setAudioDisabledByError] = useState(false);
   
   // Track taps for double-tap detection
   const lastTapRef = useRef<number>(0);
@@ -71,15 +76,49 @@ export function VideoPlayer({
   const iconOpacity = useSharedValue(0);
   const iconScale = useSharedValue(0.8);
 
-  // Animated values for zoom
-  const scale = useSharedValue(1);
-  const savedScale = useSharedValue(1);
-
   // Animated values for heart animation
   const heartOpacity = useSharedValue(0);
   const heartScale = useSharedValue(0);
   const heartPositionX = useSharedValue(0);
   const heartPositionY = useSharedValue(0);
+  const audioRecoveryAttemptedRef = useRef(false);
+
+  const source = useMemo<VideoSource>(
+    () => (typeof videoUrl === "string" ? { uri: videoUrl } : videoUrl),
+    [videoUrl]
+  );
+
+  const shouldPlayAudioTrack = isActive && !isMuted && !audioDisabledByError;
+
+  const player = useVideoPlayer(source, (videoPlayer) => {
+    videoPlayer.loop = true;
+    videoPlayer.muted = true;
+    videoPlayer.audioTrack = null;
+  });
+
+  useEffect(() => {
+    audioRecoveryAttemptedRef.current = false;
+    setAudioDisabledByError(false);
+  }, [source]);
+
+  const syncAudioTrack = useCallback(() => {
+    try {
+      if (!shouldPlayAudioTrack) {
+        player.muted = true;
+        player.audioTrack = null;
+        return;
+      }
+
+      const firstAudioTrack = player.availableAudioTracks[0];
+      player.muted = false;
+      player.volume = 1;
+      if (firstAudioTrack) {
+        player.audioTrack = firstAudioTrack;
+      }
+    } catch (error) {
+      console.warn("[VideoPlayer] Audio track sync skipped:", error);
+    }
+  }, [player, shouldPlayAudioTrack]);
 
   // CRITICAL: Handle video lifecycle based on isActive and shouldPreload
   useEffect(() => {
@@ -87,16 +126,21 @@ export function VideoPlayer({
       try {
         if (isActive) {
           // ONLY this video plays
-          await videoRef.current?.playAsync();
+          syncAudioTrack();
+          player.play();
           setShowThumbnail(false);
           setIsPlaying(true);
         } else if (shouldPreload) {
           // Preload but don't play
-          await videoRef.current?.pauseAsync();
+          player.audioTrack = null;
+          player.muted = true;
+          player.pause();
           setIsPlaying(false);
         } else {
-          // Unload to save memory
-          await videoRef.current?.unloadAsync();
+          // Pause inactive, non-preloaded players to save work.
+          player.audioTrack = null;
+          player.muted = true;
+          player.pause();
           setIsPlaying(false);
           setShowThumbnail(true);
         }
@@ -106,20 +150,12 @@ export function VideoPlayer({
     };
 
     handleVideoLifecycle();
-  }, [isActive, shouldPreload]);
+  }, [isActive, shouldPreload, player, syncAudioTrack]);
 
   // Handle mute state
   useEffect(() => {
-    const handleMute = async () => {
-      try {
-        await videoRef.current?.setIsMutedAsync(isMuted);
-      } catch (error) {
-        console.error("[VideoPlayer] Mute error:", error);
-      }
-    };
-
-    handleMute();
-  }, [isMuted]);
+    syncAudioTrack();
+  }, [syncAudioTrack]);
 
   // Handle network loss during playback
   useEffect(() => {
@@ -128,12 +164,12 @@ export function VideoPlayer({
         if (!networkStatus.isConnected && isPlaying) {
           // Network lost during playback - pause video
           setWasPlayingBeforeNetworkLoss(true);
-          await videoRef.current?.pauseAsync();
+          player.pause();
           setIsPlaying(false);
         } else if (networkStatus.isConnected && wasPlayingBeforeNetworkLoss && isActive) {
           // Network restored - resume playback if it was playing before
           setWasPlayingBeforeNetworkLoss(false);
-          await videoRef.current?.playAsync();
+          player.play();
           setIsPlaying(true);
         }
       } catch (error) {
@@ -142,44 +178,114 @@ export function VideoPlayer({
     };
 
     handleNetworkChange();
-  }, [networkStatus.isConnected, isPlaying, wasPlayingBeforeNetworkLoss, isActive]);
+  }, [networkStatus.isConnected, isPlaying, wasPlayingBeforeNetworkLoss, isActive, player]);
 
-  // Handle playback status updates
-  const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    if (status.isLoaded) {
-      setIsBuffering(status.isBuffering);
-      
-      // Hide thumbnail once video starts playing
-      if (status.isPlaying && showThumbnail) {
+  useEffect(() => {
+    const statusSubscription = player.addListener("statusChange", ({ status, error }) => {
+      const isLoaded = status === "readyToPlay";
+      const isBufferingNow = status === "loading";
+
+      setIsLoading(isBufferingNow);
+      setIsBuffering(isBufferingNow && !isLoading);
+
+      if (isLoaded) {
+        setIsLoading(false);
+        setVideoError(null);
+        onLoad?.();
+      }
+
+      if (status === "error") {
+        const message = error?.message || "Failed to load video";
+        const isAudioRendererError =
+          message.includes("AudioTrack init failed") ||
+          message.includes("MediaCodecAudioRenderer");
+
+        if (
+          isAudioRendererError &&
+          !audioRecoveryAttemptedRef.current
+        ) {
+          audioRecoveryAttemptedRef.current = true;
+          console.warn("[VideoPlayer] Retrying video without audio track.");
+          setAudioDisabledByError(true);
+          setVideoError(null);
+          setIsLoading(true);
+          setShowThumbnail(true);
+          player.audioTrack = null;
+          player.muted = true;
+          player.replace(source);
+          if (isActive) {
+            player.play();
+          }
+          return;
+        }
+
+        console.error("[VideoPlayer] Error:", message);
+        setIsLoading(false);
+        setVideoError(message);
+        onError?.(message);
+      }
+
+      onPlaybackStatusUpdate?.({
+        isLoaded,
+        isPlaying,
+        isBuffering: isBufferingNow,
+        status,
+      });
+    });
+
+    const playingSubscription = player.addListener("playingChange", ({ isPlaying: playing }) => {
+      setIsPlaying(playing);
+      setIsBuffering(false);
+      if (playing && showThumbnail) {
         setShowThumbnail(false);
       }
-    }
+    });
 
-    onPlaybackStatusUpdate?.(status);
-  };
+    const endedSubscription = player.addListener("playToEnd", () => {
+      player.currentTime = 0;
+      if (isActive) {
+        player.play();
+      }
+    });
 
-  // Handle video load
-  const handleLoad = () => {
-    setIsLoading(false);
-    onLoad?.();
-  };
+    const audioTracksSubscription = player.addListener(
+      "availableAudioTracksChange",
+      () => {
+        syncAudioTrack();
+      }
+    );
 
-  // Handle video error
-  const handleError = (error: string) => {
-    console.error("[VideoPlayer] Error:", error);
-    setIsLoading(false);
-    setVideoError(error);
-    onError?.(error);
-  };
+    return () => {
+      statusSubscription.remove();
+      playingSubscription.remove();
+      endedSubscription.remove();
+      audioTracksSubscription.remove();
+    };
+  }, [
+    isActive,
+    isLoading,
+    isPlaying,
+    onError,
+    onLoad,
+    onPlaybackStatusUpdate,
+    player,
+    syncAudioTrack,
+    showThumbnail,
+    source,
+  ]);
 
   // Handle retry
   const handleRetry = async () => {
     try {
       setVideoError(null);
+      setAudioDisabledByError(false);
       setIsLoading(true);
       setShowThumbnail(true);
-      const source = typeof videoUrl === 'string' ? { uri: videoUrl } : videoUrl;
-      await videoRef.current?.loadAsync(source, {}, false);
+      player.replace(source);
+      syncAudioTrack();
+      if (isActive) {
+        player.play();
+      }
     } catch (error) {
       console.error("[VideoPlayer] Retry error:", error);
       setVideoError("Failed to load video");
@@ -229,10 +335,10 @@ export function VideoPlayer({
       tapTimeoutRef.current = setTimeout(() => {
         // Single tap confirmed - toggle play/pause
         if (isPlaying) {
-          videoRef.current?.pauseAsync().catch((e) => console.error("[VideoPlayer] Pause error:", e));
+          player.pause();
           setIsPlaying(false);
         } else {
-          videoRef.current?.playAsync().catch((e) => console.error("[VideoPlayer] Play error:", e));
+          player.play();
           setIsPlaying(true);
         }
 
@@ -249,7 +355,18 @@ export function VideoPlayer({
         onTogglePlayback?.();
       }, DOUBLE_TAP_DELAY);
     }
-  }, [isPlaying, onLike, onTogglePlayback]);
+  }, [
+    heartOpacity,
+    heartPositionX,
+    heartPositionY,
+    heartScale,
+    iconOpacity,
+    iconScale,
+    isPlaying,
+    onLike,
+    onTogglePlayback,
+    player,
+  ]);
 
   // Animated styles
   const iconAnimatedStyle = useAnimatedStyle(() => ({
@@ -297,18 +414,11 @@ export function VideoPlayer({
 
           {/* Video Player - ONLY load if active or should preload */}
           {(isActive || shouldPreload) && (
-            <Video
-              ref={videoRef}
-              source={typeof videoUrl === 'string' ? { uri: videoUrl } : videoUrl}
+            <VideoView
+              player={player}
               style={StyleSheet.absoluteFillObject}
-              resizeMode={ResizeMode.COVER}
-              shouldPlay={isActive}
-              isLooping
-              isMuted={isMuted}
-              onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-              onLoad={handleLoad}
-              onError={handleError}
-              useNativeControls={false}
+              contentFit="cover"
+              nativeControls={false}
             />
           )}
 

@@ -28,6 +28,7 @@ interface VideoOverlayProps {
   onLocationPress: (coords: [number, number]) => void;
   onBookNow: (propertyId: string) => void;
   onViewListing: (propertyId: string) => void;
+  onFilterPress: () => void;
 }
 
 export function VideoOverlay({
@@ -40,6 +41,7 @@ export function VideoOverlay({
   onLocationPress,
   onBookNow,
   onViewListing,
+  onFilterPress,
 }: VideoOverlayProps) {
   return (
     <View className="absolute inset-0 pointer-events-box-none">
@@ -47,7 +49,7 @@ export function VideoOverlay({
       <View className="absolute top-10 left-4 pointer-events-auto">
         <TouchableOpacity
           onPress={onSearchPress}
-          className="bg-black/40 rounded-full p-2"
+          className="bg-black/50 rounded-full p-3"
           activeOpacity={0.7}
           style={{
             shadowColor: "#000",
@@ -59,7 +61,7 @@ export function VideoOverlay({
         >
           <Image
             source={require("@/assets/icons/search.png")}
-            className="w-6 h-6"
+            className="w-7 h-7"
             resizeMode="contain"
             style={{ tintColor: "#FFFFFF" }}
           />
@@ -96,6 +98,7 @@ export function VideoOverlay({
           propertyId={video.id}
           onBookNow={onBookNow}
           onViewListing={onViewListing}
+          onFilterPress={onFilterPress}
         />
       </View>
     </View>

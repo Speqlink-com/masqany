@@ -9,8 +9,9 @@
  */
 
 import type { PropertyVideo } from "@/modules/video-feed/types";
-import React from "react";
+import React, { useState } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
+import { PropertyMediaGallery } from "./PropertyMediaGallery";
 import { VideoOverlay } from "./VideoOverlay";
 import { VideoPlayer } from "./VideoPlayer";
 
@@ -29,6 +30,7 @@ interface VideoFeedItemProps {
   onOwnerPress: (ownerId: string) => void;
   onLocationPress: (coords: [number, number]) => void;
   onSearchPress: () => void;
+  onFilterPress: () => void;
   onTogglePlayback: () => void;
   onToggleMute: () => void;
 }
@@ -46,9 +48,17 @@ function VideoFeedItemComponent({
   onOwnerPress,
   onLocationPress,
   onSearchPress,
+  onFilterPress,
   onTogglePlayback,
   onToggleMute,
 }: VideoFeedItemProps) {
+  const [showProfileMedia, setShowProfileMedia] = useState(false);
+
+  const handleOwnerPress = (ownerId: string) => {
+    onOwnerPress(ownerId);
+    setShowProfileMedia(true);
+  };
+
   return (
     <View style={styles.container}>
       {/* VIDEO LAYER - Absolute positioned, fills entire space */}
@@ -67,13 +77,21 @@ function VideoFeedItemComponent({
       <VideoOverlay
         video={video}
         onSearchPress={onSearchPress}
-        onOwnerPress={onOwnerPress}
+        onOwnerPress={handleOwnerPress}
         onLike={() => onLike(video.id)}
         onShare={() => onShare(video.id)}
         onDownload={() => onDownload(video.id)}
         onLocationPress={onLocationPress}
         onBookNow={onBookNow}
         onViewListing={onViewListing}
+        onFilterPress={onFilterPress}
+      />
+
+      <PropertyMediaGallery
+        video={video}
+        visible={showProfileMedia}
+        presentation="modal"
+        onClose={() => setShowProfileMedia(false)}
       />
     </View>
   );

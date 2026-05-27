@@ -34,13 +34,13 @@
       ],
       "expo-secure-store",
       "expo-web-browser",
-      "@rnmapbox/maps",
       [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Masqany to use your location to show nearby properties and provide moving services."
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true

@@ -27,7 +27,7 @@ import {
     usePropertyUnits,
     useUpdateUnitStatus
 } from "@/modules/property-admin";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import {
     FlatList,
@@ -39,6 +39,7 @@ import {
 
 export default function UnitsScreen() {
   const { propertyId } = useLocalSearchParams<{ propertyId: string }>();
+  const router = useRouter();
   const {
     isStatusModalOpen,
     openStatusModal,
@@ -91,9 +92,9 @@ export default function UnitsScreen() {
     (unitId: string, newStatus: any) => {
       updateUnitStatus.mutate(
         {
-          propertyId: propertyId || "",
           unitId,
-          status: newStatus,
+          newStatus,
+          updatedBy: "owner-001",
         },
         {
           onSuccess: () => {
@@ -108,7 +109,7 @@ export default function UnitsScreen() {
         }
       );
     },
-    [propertyId, updateUnitStatus, closeStatusModal]
+    [updateUnitStatus, closeStatusModal]
   );
 
   // Calculate property metrics for header
@@ -126,14 +127,14 @@ export default function UnitsScreen() {
     // Calculate monthly rentals (sum of occupied unit prices)
     const monthlyRentals = unitsData.units
       .filter((u) => u.status === "occupied")
-      .reduce((sum, u) => sum + (u.pricePerMonth || 0), 0);
+      .reduce((sum, u) => sum + (u.price || 0), 0);
 
     return {
       icon: require("@/assets/icons/house-icon.webp"),
       title: propertyData.name,
-      location: propertyData.location?.address || "",
+      location: `${propertyData.location.estate}, ${propertyData.location.county}`,
       totalRooms: totalUnits,
-      pricePerMonth: propertyData.pricing?.basePrice || 0,
+      pricePerMonth: propertyData.pricePerUnit || 0,
       monthlyRentals,
       occupancyRatio,
     };
@@ -206,7 +207,7 @@ export default function UnitsScreen() {
             variant="units"
             propertyData={propertyHeaderData}
             onSearchPress={() => {}}
-            onSwitchProperty={() => {}}
+            onSwitchProperty={() => router.push("/(property-admin)/units" as any)}
           />
         )}
         <View className="flex-1">
@@ -236,7 +237,7 @@ export default function UnitsScreen() {
           variant="units"
           propertyData={propertyHeaderData}
           onSearchPress={() => {}}
-          onSwitchProperty={() => {}}
+          onSwitchProperty={() => router.push("/(property-admin)/units" as any)}
         />
       )}
 

@@ -12,14 +12,25 @@
 
 import { useVideoFeedStore } from "@/modules/video-feed";
 import type { PropertyVideo } from "@/modules/video-feed/types";
-import { FlashList } from "@shopify/flash-list";
-import React, { useCallback, useRef, useState } from "react";
+import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import { Image as ExpoImage } from "expo-image";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dimensions, ViewToken } from "react-native";
 import { EndOfFeedState } from "./EndOfFeedState";
 import { VideoFeedItem } from "./VideoFeedItem";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const PRELOAD_RANGE = 2; // Preload ±2 videos from current
+
+function collectRemoteImageUrls(video: PropertyVideo): string[] {
+  const imageUrls = [
+    video.thumbnailUrl,
+    video.owner.avatar,
+    ...(video.propertyImages ?? []),
+  ];
+
+  return imageUrls.filter((source): source is string => typeof source === "string");
+}
 
 interface VideoFeedListProps {
   videos: PropertyVideo[];
@@ -34,6 +45,8 @@ interface VideoFeedListProps {
   onOwnerPress: (ownerId: string) => void;
   onLocationPress: (coords: [number, number]) => void;
   onSearchPress: () => void;
+  onFilterPress: () => void;
+  selectedVideoId?: string;
 }
 
 export function VideoFeedList({
@@ -49,6 +62,8 @@ export function VideoFeedList({
   onOwnerPress,
   onLocationPress,
   onSearchPress,
+  onFilterPress,
+  selectedVideoId,
 }: VideoFeedListProps) {
   const flashListRef = useRef<FlashListRef<PropertyVideo>>(null);
   const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('down');
@@ -66,6 +81,39 @@ export function VideoFeedList({
   const setVisibleVideos = useVideoFeedStore((state) => state.setVisibleVideos);
   const togglePlayback = useVideoFeedStore((state) => state.togglePlayback);
   const toggleMute = useVideoFeedStore((state) => state.toggleMute);
+
+  const selectedVideoIndex = useMemo(
+    () => videos.findIndex((video) => video.id === selectedVideoId),
+    [selectedVideoId, videos]
+  );
+
+  useEffect(() => {
+    if (selectedVideoIndex < 0) return;
+
+    const scrollTimer = setTimeout(() => {
+      setCurrentVideoIndex(selectedVideoIndex);
+      flashListRef.current?.scrollToIndex({
+        index: selectedVideoIndex,
+        animated: false,
+      });
+    }, 120);
+
+    return () => clearTimeout(scrollTimer);
+  }, [selectedVideoIndex, setCurrentVideoIndex]);
+
+  useEffect(() => {
+    const preloadWindow = videos.slice(
+      Math.max(0, currentVideoIndex - 1),
+      Math.min(videos.length, currentVideoIndex + PRELOAD_RANGE + 1)
+    );
+    const urls = Array.from(new Set(preloadWindow.flatMap(collectRemoteImageUrls)));
+
+    if (urls.length === 0) return;
+
+    ExpoImage.prefetch(urls, { cachePolicy: "memory-disk" }).catch((error) => {
+      console.warn("[VideoFeedList] Media prefetch skipped:", error);
+    });
+  }, [currentVideoIndex, videos]);
 
   // Handle viewable items changed - ONLY ONE VIDEO PLAYS
   const handleViewableItemsChanged = useCallback(
@@ -145,15 +193,14 @@ export function VideoFeedList({
           onOwnerPress={onOwnerPress}
           onLocationPress={onLocationPress}
           onSearchPress={onSearchPress}
+          onFilterPress={onFilterPress}
           onTogglePlayback={togglePlayback}
           onToggleMute={toggleMute}
         />
       );
     },
     [
-      currentVideoIndex,
       isMuted,
-      scrollDirection,
       getVideoState,
       shouldPreload,
       onLike,
@@ -164,6 +211,7 @@ export function VideoFeedList({
       onOwnerPress,
       onLocationPress,
       onSearchPress,
+      onFilterPress,
       togglePlayback,
       toggleMute,
     ]
@@ -188,7 +236,6 @@ export function VideoFeedList({
       data={videos}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
-      estimatedItemSize={SCREEN_HEIGHT}
       drawDistance={SCREEN_HEIGHT * 2}
       removeClippedSubviews
       onViewableItemsChanged={handleViewableItemsChanged}
@@ -196,7 +243,10 @@ export function VideoFeedList({
       // CRITICAL: Full-screen paging for TikTok effect
       pagingEnabled
       snapToInterval={SCREEN_HEIGHT}
-      decelerationRate="fast"
+      snapToAlignment="start"
+      disableIntervalMomentum
+      directionalLockEnabled
+      decelerationRate="normal"
       showsVerticalScrollIndicator={false}
       onScroll={handleScroll}
       scrollEventThrottle={16}

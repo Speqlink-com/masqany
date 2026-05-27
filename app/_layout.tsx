@@ -92,7 +92,9 @@ export default function RootLayout() {
             <Stack.Screen name="(profile)" />
             <Stack.Screen name="(admin)" />
             <Stack.Screen name="(driver)" />
-            <Stack.Screen name="property" />
+            <Stack.Screen name="(property-admin)" />
+            <Stack.Screen name="search" />
+            <Stack.Screen name="property/[propertyId]" />
           </Stack>
         </SafeAreaProvider>
       </GestureHandlerRootView>

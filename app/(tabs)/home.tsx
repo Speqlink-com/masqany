@@ -16,7 +16,7 @@ import {
   useShareVideo,
   useVideoFeed,
 } from "@/modules/video-feed";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback } from "react";
 import { Alert, Linking, Platform, Text, View } from "react-native";
@@ -24,6 +24,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ videoId?: string }>();
   const networkStatus = useNetworkStatus();
   const { data, isLoading, isError, error, fetchNextPage, hasNextPage, refetch } = useVideoFeed();
 
@@ -143,9 +144,7 @@ export default function HomeScreen() {
 
   const handleOwnerPress = useCallback(
     (ownerId: string) => {
-      // TODO: Navigate to owner profile screen when route exists
-      // router.push(`/profile/${ownerId}` as any);
-      Alert.alert("Coming Soon", "Owner profile feature coming soon!");
+      console.log("[HomeScreen] owner profile opened:", ownerId);
     },
     []
   );
@@ -166,10 +165,15 @@ export default function HomeScreen() {
   );
 
   const handleSearchPress = useCallback(() => {
-    // TODO: Navigate to search screen when route exists
-    // router.push("/search" as any);
-    Alert.alert("Coming Soon", "Search feature coming soon!");
-  }, []);
+    router.push("/search" as never);
+  }, [router]);
+
+  const handleFilterPress = useCallback(() => {
+    router.push({
+      pathname: "/search",
+      params: { openFilters: "1" },
+    } as never);
+  }, [router]);
 
   // Show no internet connection screen if network is unavailable
   if (!networkStatus.isConnected) {
@@ -246,6 +250,8 @@ export default function HomeScreen() {
         onOwnerPress={handleOwnerPress}
         onLocationPress={handleLocationPress}
         onSearchPress={handleSearchPress}
+        onFilterPress={handleFilterPress}
+        selectedVideoId={typeof params.videoId === "string" ? params.videoId : undefined}
       />
       
       {/* Bottom Bar - Blue bar covering entire tab bar area - Fixed position */}

@@ -76,6 +76,26 @@ export default function GradientHeader({
                   accessible={false}
                 />
               </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={onHomePress}
+                activeOpacity={0.8}
+                className="w-10 h-10 items-center justify-center"
+                accessible={true}
+                accessibilityLabel="Property admin home"
+                accessibilityRole="button"
+                accessibilityHint="Returns to the property admin dashboard"
+              >
+                <Image
+                  source={require("@/assets/icons/home.png")}
+                  style={{ width: 24, height: 24 }}
+                  contentFit="contain"
+                  cachePolicy="memory-disk"
+                  placeholder={require("@/assets/icons/home.png")}
+                  transition={200}
+                  accessible={false}
+                />
+              </TouchableOpacity>
             </View>
 
             {/* Center: Masqany Logo */}

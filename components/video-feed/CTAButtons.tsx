@@ -1,5 +1,5 @@
 /**
- * CTAButtons component — Book Now and View Listing action buttons
+ * CTAButtons component — Filter, Book Now and View Listing action buttons
  * 
  * Features:
  * - Book Now: Blue background, rounded-full, positioned at bottom-right
@@ -9,32 +9,76 @@
  */
 
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 
 interface CTAButtonsProps {
   propertyId: string;
   onBookNow: (propertyId: string) => void;
   onViewListing: (propertyId: string) => void;
+  onFilterPress: () => void;
 }
 
-export function CTAButtons({ propertyId, onBookNow, onViewListing }: CTAButtonsProps) {
+export function CTAButtons({
+  propertyId,
+  onBookNow,
+  onViewListing,
+  onFilterPress,
+}: CTAButtonsProps) {
   return (
     <>
-      {/* View Listing Button - Top Right */}
-      <View className="absolute top-10 right-4">
+      {/* Listing and Filter Buttons - Top Right */}
+      <View className="absolute top-10 right-4 flex-row items-center gap-2">
         <TouchableOpacity
           onPress={() => onViewListing(propertyId)}
-          className="bg-white/30 px-4 py-2 rounded-[20px]"
-          activeOpacity={0.7}
+          className="bg-[#e1e6e8]/95 rounded-[22px] px-3 py-2 flex-row items-center"
+          activeOpacity={0.78}
           style={{
             shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-            elevation: 5,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.2,
+            shadowRadius: 12,
+            elevation: 8,
+            borderWidth: 1,
+            borderColor: "rgba(255,255,255,0.7)",
           }}
         >
-          <Text className="text-white text-[13px] font-medium">View Listing</Text>
+          <View className="w-8 h-8 rounded-full bg-[#3fbdfd] items-center justify-center mr-2">
+            <Image
+              source={require("@/assets/icons/view-listing-icon.png")}
+              className="w-4 h-4"
+              resizeMode="contain"
+            />
+          </View>
+          <View>
+            <Text className="text-black text-[12px] font-bold">View Listing</Text>
+            <Text className="text-black/60 text-[10px] font-medium">
+              Details • Units
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={onFilterPress}
+          activeOpacity={0.78}
+          className="bg-[#e1e6e8]/95 rounded-[22px] px-3 py-2 flex-row items-center"
+          style={{
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.2,
+            shadowRadius: 12,
+            elevation: 8,
+            borderWidth: 1,
+            borderColor: "rgba(255,255,255,0.7)",
+          }}
+        >
+          <View className="w-8 h-8 rounded-full bg-[#3fbdfd] items-center justify-center">
+            <Image
+              source={require("@/assets/icons/filter.png")}
+              className="w-4 h-4"
+              resizeMode="contain"
+              style={{ tintColor: "#FFFFFF" }}
+            />
+          </View>
         </TouchableOpacity>
       </View>
 

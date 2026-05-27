@@ -14,11 +14,15 @@ export type PropertyType =
   | "3BR" 
   | "4BR+" 
   | "studio" 
-  | "penthouse";
+  | "penthouse"
+  | "room"
+  | "airbnb"
+  | "hotel"
+  | "vacation";
 
-export type UnitStatus = "vacant" | "soon_vacant";
+export type UnitStatus = "vacant" | "soon_vacant" | "occupied";
 
-export type PriceUnit = "month" | "night";
+export type PriceUnit = "month" | "day" | "night";
 
 // ---------------------------------------------------------------------------
 // Video Engagement Interface
@@ -63,6 +67,7 @@ export interface PropertyVideo {
   id: string;
   videoUrl: string | number; // string for URLs, number for require() assets
   thumbnailUrl: string;
+  propertyImages?: (string | number)[];
   
   // Property Information
   title: string;
