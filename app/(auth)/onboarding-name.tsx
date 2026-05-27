@@ -7,14 +7,14 @@ import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 const GREETING =
@@ -22,6 +22,7 @@ const GREETING =
 
 export default function OnboardingNameScreen() {
   const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
   const [greetingDone, setGreetingDone] = useState(false);
   const [name, setName] = useState("");
 
@@ -33,21 +34,25 @@ export default function OnboardingNameScreen() {
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 24}
       >
         <ScrollView
+          ref={scrollRef}
           className="flex-1"
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 140 }}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
+          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
         >
-          <View className="flex-1 px-6 pt-6 pb-12">
+          <View className="flex-1 px-6 pt-6 pb-24">
             <BackButton />
 
             {/* "Hello, I'm Masqany" */}
             <View className="mt-10 mb-6">
               <Text style={{ fontSize: 32, lineHeight: 40 }}>
                 <Text className="font-poppins-bold" style={{ color: "#20A6FD" }}>
-                  Hello, I'm Mas
+                  {"Hello, I'm Mas"}
                 </Text>
                 <Text className="font-poppins-bold text-dark-400">qany</Text>
               </Text>
@@ -78,6 +83,9 @@ export default function OnboardingNameScreen() {
                     autoCapitalize="words"
                     autoCorrect={false}
                     returnKeyType="done"
+                    onFocus={() => {
+                      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
+                    }}
                     className="h-14 px-5 rounded-full font-inter text-white"
                     style={{ backgroundColor: "#AAAABB", fontSize: 16 }}
                   />

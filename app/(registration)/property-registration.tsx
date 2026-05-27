@@ -104,14 +104,16 @@ export default function PropertyRegistrationScreen() {
       return;
     }
 
-    if (!selectedPropertyType) {
+    if (selectedStayType === "short_stay" && !selectedPropertyType) {
       Alert.alert("Property Type Required", "Please select your property type.");
       return;
     }
 
     // Save selections to Zustand store
     setStayType(selectedStayType);
-    setPropertyType(selectedPropertyType);
+    if (selectedPropertyType) {
+      setPropertyType(selectedPropertyType);
+    }
     
     // Set total steps based on stay type
     if (selectedStayType === "long_stay") {
@@ -289,7 +291,8 @@ export default function PropertyRegistrationScreen() {
             </View>
 
             {/* Property Type Card */}
-            <View 
+            {selectedStayType !== "long_stay" && (
+            <View
               className="bg-[#E1E6E8] rounded-3xl p-4 mb-4"
               style={{ width: "100%", alignSelf: "center" }}
             >
@@ -359,6 +362,7 @@ export default function PropertyRegistrationScreen() {
                 </Text>
               )}
             </View>
+            )}
 
             {/* Next Button */}
             <TouchableOpacity

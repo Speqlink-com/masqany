@@ -55,7 +55,7 @@ export default function AuthScreen() {
             Welcome back
           </Text>
           <Text className="font-inter-regular text-dark-200 text-center leading-6" style={{ fontSize: 16 }}>
-            Choose how you'd like to sign in to your Masqany account.
+            Choose how you would like to sign in to your Masqany account.
           </Text>
       
 
@@ -99,7 +99,7 @@ export default function AuthScreen() {
 
                 <TouchableOpacity
                   activeOpacity={0.85}
-                  onPress={() => router.push("/sign-up" as any)}
+                  onPress={() => router.push("/onboarding-name" as any)}
                 >
                   <Image
                     source={require("../assets/images/sign-up-btn.png")}

@@ -29,15 +29,9 @@ interface RoleDef {
 const ROLES: RoleDef[] = [
   {
     key: "property_owner",
-    title: "Property Owner",
-    subtitle: "List apartments, Airbnb, hotel rooms",
+    title: "Property Owner/Agent",
+    subtitle: "List, manage & market properties",
     icon: require("@/assets/icons/house-icon.webp"),
-  },
-  {
-    key: "property_agent",
-    title: "Property Agent",
-    subtitle: "Manage & market properties for owners",
-    icon: require("@/assets/icons/agent-icon.webp"),
   },
   {
     key: "relocation_driver",
@@ -104,38 +98,16 @@ export default function OnboardingRoleScreen() {
           {/* Role cards */}
           {questionDone && (
             <View style={{ gap: 12, marginBottom: 16 }}>
-              <View style={{ flexDirection: "row", gap: 12 }}>
+              {ROLES.map((role) => (
                 <RoleCard
-                  title={ROLES[0].title}
-                  subtitle={ROLES[0].subtitle}
-                  icon={ROLES[0].icon}
-                  selected={selectedRole === ROLES[0].key}
-                  onPress={() => handleRoleSelect(ROLES[0].key)}
+                  key={role.key}
+                  title={role.title}
+                  subtitle={role.subtitle}
+                  icon={role.icon}
+                  selected={selectedRole === role.key}
+                  onPress={() => handleRoleSelect(role.key)}
                 />
-                <RoleCard
-                  title={ROLES[1].title}
-                  subtitle={ROLES[1].subtitle}
-                  icon={ROLES[1].icon}
-                  selected={selectedRole === ROLES[1].key}
-                  onPress={() => handleRoleSelect(ROLES[1].key)}
-                />
-              </View>
-              <View style={{ flexDirection: "row", gap: 12 }}>
-                <RoleCard
-                  title={ROLES[2].title}
-                  subtitle={ROLES[2].subtitle}
-                  icon={ROLES[2].icon}
-                  selected={selectedRole === ROLES[2].key}
-                  onPress={() => handleRoleSelect(ROLES[2].key)}
-                />
-                <RoleCard
-                  title={ROLES[3].title}
-                  subtitle={ROLES[3].subtitle}
-                  icon={ROLES[3].icon}
-                  selected={selectedRole === ROLES[3].key}
-                  onPress={() => handleRoleSelect(ROLES[3].key)}
-                />
-              </View>
+              ))}
             </View>
           )}
         </ScrollView>

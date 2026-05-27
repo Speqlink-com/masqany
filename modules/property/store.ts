@@ -10,6 +10,16 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { LongStayPropertyType, ShortStayPropertyType, StayType } from "./types";
 
+export interface LongStayUnitPricing {
+  monthlyRent?: number;
+  monthlyDeposit?: number;
+}
+
+export interface LongStayUnitMedia {
+  photos?: string[];
+  videoUrl?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Form Draft Types
 // ---------------------------------------------------------------------------
@@ -33,6 +43,7 @@ export interface LongStayFormDraft {
   description?: string;
   buildingName?: string;
   buildingType?: string;
+  selectedPropertyTypes?: LongStayPropertyType[];
   totalUnitsInBuilding?: number;
 
   // Step 2: Location Details
@@ -63,6 +74,7 @@ export interface LongStayFormDraft {
   parkingType?: string;
   paidParkingCost?: number;
   waterSources?: string[];
+  waterAvailable24_7?: boolean;
   specialStructureType?: string;
 
   // Step 4: Utilities & Deposits
@@ -85,6 +97,8 @@ export interface LongStayFormDraft {
 
   // Step 5: Rental Pricing
   monthlyRent?: number;
+  monthlyDeposit?: number;
+  unitPricing?: Record<string, LongStayUnitPricing>;
   serviceCharge?: number;
   rentNegotiable?: boolean;
   minimumLeaseTerm?: "6_months" | "1_year" | "2_years" | "flexible";
@@ -113,6 +127,7 @@ export interface LongStayFormDraft {
   // Step 7: Media Uploads
   photos?: string[];
   videoUrl?: string;
+  unitMedia?: Record<string, LongStayUnitMedia>;
   virtualTourUrl?: string;
   floorPlanUrl?: string;
 

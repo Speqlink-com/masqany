@@ -10,6 +10,7 @@ import { PrimaryButton } from "@/components/auth/PrimaryButton";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import type { ImageSourcePropType } from "react-native";
 import {
     Image,
     KeyboardAvoidingView,
@@ -24,6 +25,85 @@ import {
 const INPUT_BG = "#AAAABB";
 
 type LoginMethod = "password" | "otp";
+
+interface LoginInputProps {
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
+  icon: ImageSourcePropType;
+  keyboardType?: "default" | "email-address" | "phone-pad";
+  secureTextEntry?: boolean;
+  showPasswordToggle?: boolean;
+  passwordVisible?: boolean;
+  onTogglePassword?: () => void;
+  containerClassName?: string;
+}
+
+function LoginInput({
+  value,
+  onChangeText,
+  placeholder,
+  icon,
+  keyboardType = "default",
+  secureTextEntry,
+  showPasswordToggle,
+  passwordVisible,
+  onTogglePassword,
+  containerClassName = "mb-4",
+}: LoginInputProps) {
+  return (
+    <View
+      className={`h-14 flex-row items-center rounded-full px-4 ${containerClassName}`}
+      style={{
+        backgroundColor: INPUT_BG,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 5,
+        elevation: 2,
+      }}
+    >
+      <View
+        className="w-9 h-9 rounded-full items-center justify-center mr-3"
+        style={{ backgroundColor: "rgba(255,255,255,0.18)" }}
+      >
+        <Image
+          source={icon}
+          className="w-5 h-5"
+          resizeMode="contain"
+          style={{ tintColor: "#FFFFFF" }}
+        />
+      </View>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="rgba(255,255,255,0.72)"
+        keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
+        autoCapitalize="none"
+        autoCorrect={false}
+        className="flex-1 font-inter text-white"
+        style={{ fontSize: 16 }}
+      />
+      {showPasswordToggle && (
+        <TouchableOpacity
+          onPress={onTogglePassword}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          className="pl-3"
+        >
+          <Image
+            source={require("@/assets/icons/eye-icon.webp")}
+            className="w-6 h-6"
+            resizeMode="contain"
+            style={{ tintColor: "#ffffff", opacity: passwordVisible ? 1 : 0.45 }}
+          />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -154,56 +234,34 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Email / Phone */}
-            <TextInput
+            <LoginInput
               value={identifier}
               onChangeText={(v) => {
                 setIdentifier(v);
                 setError(null);
               }}
+              icon={require("@/assets/icons/i-email-icon.webp")}
               placeholder="Email or +254 phone"
-              placeholderTextColor="rgba(255,255,255,0.7)"
               keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              className="h-14 px-5 rounded-full font-inter text-white mb-4"
-              style={{ backgroundColor: INPUT_BG, fontSize: 16 }}
             />
 
             {/* Password (only for password login) */}
             {loginMethod === "password" && (
               <>
-                <View
-                  className="h-14 flex-row items-center px-5 rounded-full mb-3"
-                  style={{ backgroundColor: INPUT_BG }}
-                >
-                  <TextInput
-                    value={password}
-                    onChangeText={(v) => {
-                      setPassword(v);
-                      setError(null);
-                    }}
-                    placeholder="Password"
-                    placeholderTextColor="rgba(255,255,255,0.7)"
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    className="flex-1 font-inter text-white"
-                    style={{ fontSize: 16 }}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword((v) => !v)}
-                    activeOpacity={0.7}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Image
-                      source={require("@/assets/icons/eye-icon.webp")}
-                      className="w-6 h-6"
-                      resizeMode="contain"
-                      style={{ tintColor: "#ffffff", opacity: showPassword ? 1 : 0.45 }}
-                    />
-                  </TouchableOpacity>
-                </View>
+                <LoginInput
+                  value={password}
+                  onChangeText={(v) => {
+                    setPassword(v);
+                    setError(null);
+                  }}
+                  icon={require("@/assets/icons/password.webp")}
+                  placeholder="Password"
+                  secureTextEntry={!showPassword}
+                  showPasswordToggle
+                  passwordVisible={showPassword}
+                  onTogglePassword={() => setShowPassword((v) => !v)}
+                  containerClassName="mb-3"
+                />
 
                 {/* Forgot password */}
                 <TouchableOpacity 
@@ -226,7 +284,7 @@ export default function LoginScreen() {
                 className="font-inter-regular text-dark-200 mb-6"
                 style={{ fontSize: 14, lineHeight: 20 }}
               >
-                We'll send a 6-digit code to verify your identity
+                We will send a 6-digit code to verify your identity
               </Text>
             )}
 

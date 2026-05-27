@@ -7,13 +7,13 @@
 
 import { PropertyFormHeader } from "@/components/property/PropertyFormHeader";
 import { colors } from "@/constants/tokens";
-import { useCreateProperty, usePropertyStore } from "@/modules/property";
+import { useCreateProperty, usePropertyStore, type LongStayPropertyType } from "@/modules/property";
 import { useAuthStore } from "@/store/auth.store";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { Alert, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -22,15 +22,25 @@ import Animated, {
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type ImagePickerAsset = {
-  uri: string;
-  width: number;
-  height: number;
-  fileName?: string;
-  fileSize?: number;
-  type?: string;
-  duration?: number;
-};
+const LONG_STAY_PROPERTY_TYPES: { value: LongStayPropertyType; label: string }[] = [
+  { value: "single_room", label: "Single Room" },
+  { value: "bedsitter", label: "Bedsitter" },
+  { value: "1_bedroom", label: "1 Bedroom" },
+  { value: "2_bedroom", label: "2 Bedroom" },
+  { value: "3_bedroom", label: "3 Bedroom" },
+  { value: "4plus_bedroom", label: "4+ Bedroom" },
+  { value: "hostel_bed_space", label: "Hostel Bed Space" },
+  { value: "hostel_private_room", label: "Hostel Private Room" },
+  { value: "student_hostel", label: "Student Hostel" },
+  { value: "office_space", label: "Office Space" },
+  { value: "shop_retail", label: "Shop/Retail" },
+  { value: "warehouse", label: "Warehouse" },
+];
+
+const getPropertyTypeLabel = (value: string) =>
+  LONG_STAY_PROPERTY_TYPES.find((type) => type.value === value)?.label || value;
+
+const isMultipleUnitBuilding = (buildingType?: string) => buildingType === "multiple_units_single_building";
 
 export default function PropertyLongStayFormScreen() {
   const router = useRouter();
@@ -40,7 +50,6 @@ export default function PropertyLongStayFormScreen() {
     setCurrentStep,
     totalSteps,
     longStayDraft,
-    updateLongStayDraft,
     clearLongStayDraft,
     markSaved,
     setIsSaving,
@@ -51,7 +60,6 @@ export default function PropertyLongStayFormScreen() {
 
   // Sliding animation
   const translateX = useSharedValue(0);
-  const [activeStep, setActiveStep] = useState(currentStep);
 
   // Auto-save every 30 seconds
   useEffect(() => {
@@ -64,7 +72,7 @@ export default function PropertyLongStayFormScreen() {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [markSaved, setIsSaving]);
 
   const handleBack = () => {
     if (currentStep === 1) {
@@ -83,7 +91,6 @@ export default function PropertyLongStayFormScreen() {
       // Slide to previous step
       translateX.value = withTiming(100, { duration: 350 }, () => {
         runOnJS(setCurrentStep)(currentStep - 1);
-        runOnJS(setActiveStep)(currentStep - 1);
         translateX.value = 0;
       });
     }
@@ -101,7 +108,6 @@ export default function PropertyLongStayFormScreen() {
       // Slide to next step
       translateX.value = withTiming(-100, { duration: 350 }, () => {
         runOnJS(setCurrentStep)(currentStep + 1);
-        runOnJS(setActiveStep)(currentStep + 1);
         translateX.value = 0;
       });
     } else {
@@ -127,11 +133,14 @@ export default function PropertyLongStayFormScreen() {
         if (longStayDraft.propertyCondition === "under_construction" && !longStayDraft.expectedDeliveryDate) {
           return { isValid: false, message: "Please provide expected delivery date for under construction property" };
         }
-        if (!longStayDraft.title || !longStayDraft.description) {
-          return { isValid: false, message: "Please provide property title and description" };
-        }
         if (!longStayDraft.buildingType) {
           return { isValid: false, message: "Please select building type" };
+        }
+        if (!longStayDraft.description) {
+          return { isValid: false, message: "Please provide property description" };
+        }
+        if (!longStayDraft.selectedPropertyTypes?.length) {
+          return { isValid: false, message: "Please select at least one property type" };
         }
         return { isValid: true, message: "" };
       
@@ -141,9 +150,6 @@ export default function PropertyLongStayFormScreen() {
         }
         if (!longStayDraft.googleMapsLink) {
           return { isValid: false, message: "Please provide Google Maps link" };
-        }
-        if (!longStayDraft.directionsFromStage) {
-          return { isValid: false, message: "Please provide directions from nearest stage" };
         }
         return { isValid: true, message: "" };
       
@@ -166,8 +172,17 @@ export default function PropertyLongStayFormScreen() {
         return { isValid: true, message: "" }; // Optional
       
       case 5: // Rental Pricing
-        if (!longStayDraft.monthlyRent) {
-          return { isValid: false, message: "Please provide monthly rent amount" };
+        if (isMultipleUnitBuilding(longStayDraft.buildingType)) {
+          const missingPricingType = (longStayDraft.selectedPropertyTypes || []).find((propertyType) => {
+            const pricing = longStayDraft.unitPricing?.[propertyType];
+            return !pricing?.monthlyRent || !pricing?.monthlyDeposit;
+          });
+
+          if (missingPricingType) {
+            return { isValid: false, message: `Please provide rent and deposit for ${getPropertyTypeLabel(missingPricingType)}` };
+          }
+        } else if (!longStayDraft.monthlyRent || !longStayDraft.monthlyDeposit) {
+          return { isValid: false, message: "Please provide monthly rent and monthly deposit" };
         }
         return { isValid: true, message: "" };
       
@@ -178,8 +193,17 @@ export default function PropertyLongStayFormScreen() {
         return { isValid: true, message: "" };
       
       case 7: // Media Uploads
-        if (!longStayDraft.photos || longStayDraft.photos.length < 3) {
-          return { isValid: false, message: "Please upload at least 3 photos" };
+        if (isMultipleUnitBuilding(longStayDraft.buildingType)) {
+          const missingMediaType = (longStayDraft.selectedPropertyTypes || []).find((propertyType) => {
+            const media = longStayDraft.unitMedia?.[propertyType];
+            return !media?.photos || media.photos.length < 3 || !media.videoUrl;
+          });
+
+          if (missingMediaType) {
+            return { isValid: false, message: `Please upload 3-6 photos and a video for ${getPropertyTypeLabel(missingMediaType)}` };
+          }
+        } else if (!longStayDraft.photos || longStayDraft.photos.length < 3 || !longStayDraft.videoUrl) {
+          return { isValid: false, message: "Please upload at least 3 photos and 1 video" };
         }
         return { isValid: true, message: "" };
       
@@ -198,13 +222,21 @@ export default function PropertyLongStayFormScreen() {
     setIsSubmitting(true);
     
     try {
+      const selectedTypes = longStayDraft.selectedPropertyTypes || [];
+      const generatedTitle = [
+        longStayDraft.buildingName,
+        selectedTypes.map(getPropertyTypeLabel).join(", "),
+        longStayDraft.estate,
+      ].filter(Boolean).join(" - ") || "Long Stay Property";
+
       // Transform longStayDraft to PropertyPayload
       const payload = {
         // Property Essence
-        title: longStayDraft.title!,
+        title: generatedTitle,
         description: longStayDraft.description!,
         stayType: "long_stay" as const,
-        propertyType: longStayDraft.buildingType || "apartment",
+        propertyType: selectedTypes[0] || "bedsitter",
+        propertyTypes: selectedTypes,
         
         // Property Condition & Acquisition
         propertyCondition: longStayDraft.propertyCondition,
@@ -233,12 +265,10 @@ export default function PropertyLongStayFormScreen() {
         googleMapsLink: longStayDraft.googleMapsLink!,
         latitude: longStayDraft.latitude,
         longitude: longStayDraft.longitude,
-        directionsFromStage: longStayDraft.directionsFromStage!,
+        directionsFromStage: longStayDraft.directionsFromStage,
         accessibilityNotes: longStayDraft.accessibilityNotes,
         
         // Property Specifications
-        propertySize: longStayDraft.propertySize,
-        propertySizeUnit: longStayDraft.propertySizeUnit,
         bedrooms: longStayDraft.bedrooms!,
         bathrooms: longStayDraft.bathrooms!,
         bathroomTypes: longStayDraft.bathroomTypes,
@@ -247,7 +277,7 @@ export default function PropertyLongStayFormScreen() {
         furnishedItems: longStayDraft.furnishedItems,
         parkingType: longStayDraft.parkingType!,
         paidParkingCost: longStayDraft.paidParkingCost,
-        waterSources: longStayDraft.waterSources,
+        waterAvailable24_7: longStayDraft.waterAvailable24_7,
         specialStructureType: longStayDraft.specialStructureType,
         
         // Utilities & Deposits
@@ -257,6 +287,8 @@ export default function PropertyLongStayFormScreen() {
         
         // Rental Pricing
         monthlyRent: longStayDraft.monthlyRent!,
+        monthlyDeposit: longStayDraft.monthlyDeposit,
+        unitPricing: longStayDraft.unitPricing,
         serviceCharge: longStayDraft.serviceCharge,
         rentNegotiable: longStayDraft.rentNegotiable,
         minimumLeaseTerm: longStayDraft.minimumLeaseTerm!,
@@ -273,6 +305,7 @@ export default function PropertyLongStayFormScreen() {
         // Media
         photos: longStayDraft.photos!,
         videoUrl: longStayDraft.videoUrl,
+        unitMedia: longStayDraft.unitMedia,
         virtualTourUrl: longStayDraft.virtualTourUrl,
         
         // Status
@@ -402,9 +435,84 @@ function Step1PropertyEssence() {
   const [showBuildingTypePicker, setShowBuildingTypePicker] = useState(false);
 
   const isAHP = longStayDraft.acquisitionModel === "affordable_housing_program";
+  const selectedPropertyTypes = longStayDraft.selectedPropertyTypes || [];
+  const allowsMultiplePropertyTypes = isMultipleUnitBuilding(longStayDraft.buildingType);
+
+  const selectBuildingType = (buildingType: string) => {
+    updateLongStayDraft({
+      buildingType,
+      selectedPropertyTypes: allowsMultiplePropertyTypes && buildingType === "single_unit"
+        ? selectedPropertyTypes.slice(0, 1)
+        : selectedPropertyTypes,
+    });
+    setShowBuildingTypePicker(false);
+  };
+
+  const togglePropertyType = (propertyType: LongStayPropertyType) => {
+    if (!longStayDraft.buildingType) {
+      Alert.alert("Building Type Required", "Please select a building type first.");
+      return;
+    }
+
+    if (!allowsMultiplePropertyTypes) {
+      updateLongStayDraft({ selectedPropertyTypes: [propertyType] });
+      return;
+    }
+
+    const nextTypes = selectedPropertyTypes.includes(propertyType)
+      ? selectedPropertyTypes.filter((type) => type !== propertyType)
+      : [...selectedPropertyTypes, propertyType];
+
+    updateLongStayDraft({ selectedPropertyTypes: nextTypes });
+  };
 
   return (
     <View>
+      {/* Building Type Card */}
+      <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
+        <View className="flex-row items-center mb-3">
+          <Image
+            source={require("@/assets/icons/home.png")}
+            style={{ width: 20, height: 20 }}
+            resizeMode="contain"
+          />
+          <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
+            Building Type <Text style={{ color: colors.danger }}>*</Text>
+          </Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => setShowBuildingTypePicker(!showBuildingTypePicker)}
+          className="border-[0.5px] border-[#28B4F9] rounded-full px-4 py-3 bg-white flex-row items-center justify-between"
+        >
+          <Text className={`font-inter text-[15px] ${longStayDraft.buildingType ? "text-dark-400" : "text-[#545454]"}`}>
+            {longStayDraft.buildingType === "single_unit" && "Single Unit"}
+            {longStayDraft.buildingType === "multiple_units_single_building" && "Multiple Unit"}
+            {!longStayDraft.buildingType && "Select building type"}
+          </Text>
+          <Image
+            source={require("@/assets/icons/i-dropdown-icon.webp")}
+            className="w-4 h-4"
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+        {showBuildingTypePicker && (
+          <View className="mt-2 bg-white rounded-2xl border border-[#28B4F9] overflow-hidden">
+            {[
+              { value: "single_unit", label: "Single Unit" },
+              { value: "multiple_units_single_building", label: "Multiple Unit" },
+            ].map((type, index, array) => (
+              <TouchableOpacity
+                key={type.value}
+                onPress={() => selectBuildingType(type.value)}
+                className={`px-4 py-3 ${index < array.length - 1 ? "border-b border-light-300" : ""}`}
+              >
+                <Text className="font-inter text-[15px] text-dark-400">{type.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+
       {/* Acquisition Model Card */}
       <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
         <View className="flex-row items-center mb-3">
@@ -669,29 +777,6 @@ function Step1PropertyEssence() {
         <View className="mb-3">
           <View className="flex-row items-center mb-2">
             <Image
-              source={require("@/assets/icons/edit.png")}
-              style={{ width: 20, height: 20 }}
-              resizeMode="contain"
-            />
-            <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
-              Property Title <Text style={{ color: colors.danger }}>*</Text>
-            </Text>
-          </View>
-          <TextInput
-            className="font-inter text-[15px] text-dark-400 px-4 py-3 rounded-full border-[0.5px] border-[#28B4F9] bg-white"
-            placeholder={isAHP ? "e.g., Rongai AHP - 2BR Apartment" : "e.g., Modern 2BR Apartment in Kilimani"}
-            value={longStayDraft.title}
-            onChangeText={(text) => updateLongStayDraft({ title: text })}
-            maxLength={80}
-          />
-          <Text className="font-inter text-[11px] text-dark-100 mt-1 ml-1">
-            {longStayDraft.title?.length || 0}/80 characters
-          </Text>
-        </View>
-
-        <View className="mb-3">
-          <View className="flex-row items-center mb-2">
-            <Image
               source={require("@/assets/icons/info.png")}
               style={{ width: 20, height: 20 }}
               resizeMode="contain"
@@ -720,6 +805,49 @@ function Step1PropertyEssence() {
         <View className="mb-3">
           <View className="flex-row items-center mb-2">
             <Image
+              source={require("@/assets/icons/house-icon.webp")}
+              style={{ width: 20, height: 20 }}
+              resizeMode="contain"
+            />
+            <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
+              Property Type <Text style={{ color: colors.danger }}>*</Text>
+            </Text>
+          </View>
+          <View className="flex-row flex-wrap gap-2">
+            {LONG_STAY_PROPERTY_TYPES.map((propertyType) => {
+              const isSelected = selectedPropertyTypes.includes(propertyType.value);
+
+              return (
+                <TouchableOpacity
+                  key={propertyType.value}
+                  onPress={() => togglePropertyType(propertyType.value)}
+                  className="px-4 py-2 rounded-full"
+                  style={{
+                    backgroundColor: isSelected ? colors.primary[700] : "white",
+                    borderWidth: 1,
+                    borderColor: isSelected ? colors.primary[700] : "#28B4F9",
+                  }}
+                >
+                  <Text
+                    className="font-inter-medium text-[13px]"
+                    style={{ color: isSelected ? "#FFFFFF" : colors.dark[400] }}
+                  >
+                    {propertyType.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <Text className="font-inter text-[11px] text-dark-100 mt-2 ml-1">
+            {allowsMultiplePropertyTypes
+              ? "Select every unit type available in this building."
+              : "Single unit buildings can have one property type."}
+          </Text>
+        </View>
+
+        <View className="mb-3">
+          <View className="flex-row items-center mb-2">
+            <Image
               source={require("@/assets/icons/apparment-icon.webp")}
               style={{ width: 20, height: 20 }}
               resizeMode="contain"
@@ -736,60 +864,8 @@ function Step1PropertyEssence() {
           />
         </View>
 
-        <View className="mb-3">
-          <View className="flex-row items-center mb-2">
-            <Image
-              source={require("@/assets/icons/home.png")}
-              style={{ width: 20, height: 20 }}
-              resizeMode="contain"
-            />
-            <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
-              Building Type <Text style={{ color: colors.danger }}>*</Text>
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => setShowBuildingTypePicker(!showBuildingTypePicker)}
-            className="border-[0.5px] border-[#28B4F9] rounded-full px-4 py-3 bg-white flex-row items-center justify-between"
-          >
-            <Text className={`font-inter text-[15px] ${longStayDraft.buildingType ? "text-dark-400" : "text-[#545454]"}`}>
-              {longStayDraft.buildingType === "single_unit" && "Single Unit"}
-              {longStayDraft.buildingType === "multiple_units_single_building" && "Multiple Units (Single Building)"}
-              {longStayDraft.buildingType === "multiple_buildings" && "Multiple Buildings"}
-              {longStayDraft.buildingType === "part_of_larger_building" && "Part of Larger Building"}
-              {!longStayDraft.buildingType && "Select building type"}
-            </Text>
-            <Image
-              source={require("@/assets/icons/i-dropdown-icon.webp")}
-              className="w-4 h-4"
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-          {showBuildingTypePicker && (
-            <View className="mt-2 bg-white rounded-2xl border border-[#28B4F9] overflow-hidden">
-              {[
-                { value: "single_unit", label: "Single Unit" },
-                { value: "multiple_units_single_building", label: "Multiple Units (Single Building)" },
-                { value: "multiple_buildings", label: "Multiple Buildings" },
-                { value: "part_of_larger_building", label: "Part of Larger Building" },
-              ].map((type, index, array) => (
-                <TouchableOpacity
-                  key={type.value}
-                  onPress={() => {
-                    updateLongStayDraft({ buildingType: type.value });
-                    setShowBuildingTypePicker(false);
-                  }}
-                  className={`px-4 py-3 ${index < array.length - 1 ? "border-b border-light-300" : ""}`}
-                >
-                  <Text className="font-inter text-[15px] text-dark-400">{type.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-
         {/* Total Units (conditional) */}
-        {(longStayDraft.buildingType === "multiple_units_single_building" || 
-          longStayDraft.buildingType === "multiple_buildings") && (
+        {isMultipleUnitBuilding(longStayDraft.buildingType) && (
           <View>
             <View className="flex-row items-center mb-2">
               <Image
@@ -1144,33 +1220,6 @@ function Step2LocationDetails() {
         </Text>
       </View>
 
-      {/* Directions from Stage */}
-      <View className="mb-4">
-        <View className="flex-row items-center mb-2">
-          <Image
-            source={require("@/assets/icons/house-icon.webp")}
-            style={{ width: 20, height: 20 }}
-            resizeMode="contain"
-          />
-          <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
-            Directions from Nearest Stage <Text style={{ color: colors.danger }}>*</Text>
-          </Text>
-        </View>
-        <TextInput
-          className="font-inter text-[15px] text-dark-400 px-4 py-3 rounded-3xl border-[0.5px] border-[#28B4F9] bg-white"
-          style={{ minHeight: 100, textAlignVertical: "top" }}
-          placeholder="Describe how to get to the property from the nearest matatu stage..."
-          value={longStayDraft.directionsFromStage}
-          onChangeText={(text) => updateLongStayDraft({ directionsFromStage: text })}
-          maxLength={300}
-          multiline
-          numberOfLines={4}
-        />
-        <Text className="font-inter text-[11px] text-dark-100 mt-2 ml-4">
-          {longStayDraft.directionsFromStage?.length || 0}/300 characters
-        </Text>
-      </View>
-
       {/* Accessibility Notes */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
@@ -1203,7 +1252,6 @@ function Step3PropertySpecs() {
   const [showKitchenPicker, setShowKitchenPicker] = useState(false);
   const [showFurnishingPicker, setShowFurnishingPicker] = useState(false);
   const [showParkingPicker, setShowParkingPicker] = useState(false);
-  const [showSizePicker, setShowSizePicker] = useState(false);
 
   const bathroomTypeOptions = [
     { value: "shower", label: "Shower" },
@@ -1211,15 +1259,6 @@ function Step3PropertySpecs() {
     { value: "separate_toilet", label: "Separate Toilet" },
     { value: "ensuite", label: "Ensuite" },
     { value: "shared", label: "Shared" },
-  ];
-
-  const waterSourceOptions = [
-    { value: "nairobi_water", label: "Nairobi Water" },
-    { value: "county_water", label: "County Water" },
-    { value: "borehole", label: "Borehole" },
-    { value: "well", label: "Well" },
-    { value: "tank_delivery", label: "Tank Delivery" },
-    { value: "other", label: "Other" },
   ];
 
   const furnishedItemOptions = [
@@ -1233,15 +1272,6 @@ function Step3PropertySpecs() {
       updateLongStayDraft({ bathroomTypes: current.filter(t => t !== type) });
     } else {
       updateLongStayDraft({ bathroomTypes: [...current, type] });
-    }
-  };
-
-  const toggleWaterSource = (source: string) => {
-    const current = longStayDraft.waterSources || [];
-    if (current.includes(source)) {
-      updateLongStayDraft({ waterSources: current.filter(s => s !== source) });
-    } else {
-      updateLongStayDraft({ waterSources: [...current, source] });
     }
   };
 
@@ -1259,57 +1289,6 @@ function Step3PropertySpecs() {
       <Text className="font-poppins-semibold text-[17px] text-dark-400 mb-4">
         Property Specifications
       </Text>
-
-      {/* Property Size */}
-      <View className="mb-4">
-        <Text className="font-inter-medium text-[13px] text-dark-400 mb-2">
-          Property Size (Optional)
-        </Text>
-        <View className="flex-row gap-2">
-          <TextInput
-            className="flex-1 font-inter text-[15px] text-dark-400 px-4 py-3 rounded-lg"
-            style={{
-              backgroundColor: colors.light[400],
-              borderWidth: 1,
-              borderColor: colors.light[200],
-            }}
-            placeholder="e.g., 850"
-            keyboardType="numeric"
-            value={longStayDraft.propertySize?.toString()}
-            onChangeText={(text) => updateLongStayDraft({ propertySize: parseFloat(text) || 0 })}
-          />
-          <TouchableOpacity
-            onPress={() => setShowSizePicker(!showSizePicker)}
-            className="px-4 py-3 rounded-lg flex-row items-center"
-            style={{
-              backgroundColor: colors.light[400],
-              borderWidth: 1,
-              borderColor: colors.light[200],
-            }}
-          >
-            <Text className="font-inter text-[15px] text-dark-400 mr-1">
-              {longStayDraft.propertySizeUnit || "sqft"}
-            </Text>
-            <Text className="text-dark-100">▼</Text>
-          </TouchableOpacity>
-        </View>
-        {showSizePicker && (
-          <View className="mt-2 bg-white rounded-lg border border-light-200 overflow-hidden">
-            {["sqft", "sqm", "acres"].map((unit) => (
-              <TouchableOpacity
-                key={unit}
-                onPress={() => {
-                  updateLongStayDraft({ propertySizeUnit: unit as any });
-                  setShowSizePicker(false);
-                }}
-                className="px-4 py-3 border-b border-light-200"
-              >
-                <Text className="font-inter text-[15px] text-dark-400">{unit}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </View>
 
       {/* Bedrooms */}
       <View className="mb-4">
@@ -1588,36 +1567,25 @@ function Step3PropertySpecs() {
       {/* Water Sources */}
       <View className="mb-4">
         <Text className="font-inter-medium text-[13px] text-dark-400 mb-2">
-          Water Sources
+          Water Available 24/7
         </Text>
-        <View className="flex-row flex-wrap gap-2">
-          {waterSourceOptions.map((source) => (
-            <TouchableOpacity
-              key={source.value}
-              onPress={() => toggleWaterSource(source.value)}
-              className="px-4 py-2 rounded-full"
-              style={{
-                backgroundColor: (longStayDraft.waterSources || []).includes(source.value)
-                  ? colors.primary[700]
-                  : colors.light[400],
-                borderWidth: 1,
-                borderColor: (longStayDraft.waterSources || []).includes(source.value)
-                  ? colors.primary[700]
-                  : colors.light[200],
-              }}
-            >
-              <Text
-                className="font-inter-medium text-[13px]"
-                style={{
-                  color: (longStayDraft.waterSources || []).includes(source.value)
-                    ? "#FFFFFF"
-                    : colors.dark[400],
-                }}
-              >
-                {source.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        <View
+          className="flex-row items-center justify-between px-4 py-3 rounded-lg"
+          style={{
+            backgroundColor: colors.light[400],
+            borderWidth: 1,
+            borderColor: colors.light[200],
+          }}
+        >
+          <Text className="font-inter text-[15px] text-dark-400">
+            Available 24/7
+          </Text>
+          <Switch
+            value={!!longStayDraft.waterAvailable24_7}
+            onValueChange={(value) => updateLongStayDraft({ waterAvailable24_7: value })}
+            trackColor={{ false: colors.light[300], true: colors.primary[100] }}
+            thumbColor={longStayDraft.waterAvailable24_7 ? colors.primary[700] : "#FFFFFF"}
+          />
         </View>
       </View>
 
@@ -1668,7 +1636,7 @@ function Step4UtilitiesDeposits() {
 
   return (
     <View>
-      {/* Kenya-Specific Utility Deposits */}
+      {/* Utility Deposits */}
       <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#FFF8E1" }}>
         <View className="flex-row items-center mb-3">
           <Image
@@ -1677,12 +1645,9 @@ function Step4UtilitiesDeposits() {
             resizeMode="contain"
           />
           <Text className="font-inter-semibold text-[16px] text-dark-400 ml-2">
-            🇰🇪 Kenya Utility Deposits
+            Utility Deposits
           </Text>
         </View>
-        <Text className="font-inter text-[12px] text-dark-100 mb-4">
-          In Kenya, landlords typically collect utility deposits to cover final bills when tenants move out.
-        </Text>
 
         {utilityTypes.map((utility) => {
           const deposit = longStayDraft.utilityDeposits?.[utility.key] || {};
@@ -1799,29 +1764,6 @@ function Step4UtilitiesDeposits() {
         )}
       </View>
 
-      {/* Security Deposit */}
-      <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
-        <View className="flex-row items-center mb-3">
-          <Image
-            source={require("@/assets/icons/wallet.png")}
-            style={{ width: 20, height: 20 }}
-            resizeMode="contain"
-          />
-          <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
-            Security Deposit (Optional)
-          </Text>
-        </View>
-        <TextInput
-          className="font-inter text-[15px] text-dark-400 px-4 py-3 rounded-full border-[0.5px] border-[#28B4F9] bg-white"
-          placeholder="e.g., 25000 (typically 1 month rent)"
-          keyboardType="numeric"
-          value={longStayDraft.securityDeposit?.toString()}
-          onChangeText={(text) => updateLongStayDraft({ securityDeposit: parseFloat(text) || 0 })}
-        />
-        <Text className="font-inter text-[11px] text-dark-100 mt-2 ml-1">
-          Refundable deposit to cover damages (typically 1 month's rent in Kenya)
-        </Text>
-      </View>
     </View>
   );
 }
@@ -1832,34 +1774,116 @@ function Step5RentalPricing() {
   const [showLeaseTermPicker, setShowLeaseTermPicker] = useState(false);
 
   const isAHP = longStayDraft.acquisitionModel === "affordable_housing_program";
+  const selectedPropertyTypes = longStayDraft.selectedPropertyTypes || [];
+  const usesPerUnitPricing = isMultipleUnitBuilding(longStayDraft.buildingType);
+
+  const updateUnitPricing = (
+    propertyType: LongStayPropertyType,
+    field: "monthlyRent" | "monthlyDeposit",
+    value: number
+  ) => {
+    const currentPricing = longStayDraft.unitPricing || {};
+    updateLongStayDraft({
+      unitPricing: {
+        ...currentPricing,
+        [propertyType]: {
+          ...(currentPricing[propertyType] || {}),
+          [field]: value,
+        },
+      },
+    });
+  };
 
   return (
     <View>
-      {/* Monthly Rent */}
-      <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
-        <View className="flex-row items-center mb-3">
-          <Image
-            source={require("@/assets/icons/wallet.png")}
-            style={{ width: 20, height: 20 }}
-            resizeMode="contain"
-          />
-          <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
-            Monthly Rent <Text style={{ color: colors.danger }}>*</Text>
+      {usesPerUnitPricing ? (
+        <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
+          <View className="flex-row items-center mb-3">
+            <Image
+              source={require("@/assets/icons/wallet.png")}
+              style={{ width: 20, height: 20 }}
+              resizeMode="contain"
+            />
+            <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
+              Unit Pricing <Text style={{ color: colors.danger }}>*</Text>
+            </Text>
+          </View>
+
+          {selectedPropertyTypes.map((propertyType) => {
+            const pricing = longStayDraft.unitPricing?.[propertyType] || {};
+
+            return (
+              <View key={propertyType} className="mb-4 p-3 rounded-2xl bg-white">
+                <Text className="font-inter-semibold text-[14px] text-dark-400 mb-3">
+                  {getPropertyTypeLabel(propertyType)}
+                </Text>
+                <View className="mb-3">
+                  <Text className="font-inter text-[12px] text-dark-400 mb-2">
+                    Monthly Rent <Text style={{ color: colors.danger }}>*</Text>
+                  </Text>
+                  <TextInput
+                    className="font-inter text-[15px] text-dark-400 px-4 py-3 rounded-full border-[0.5px] border-[#28B4F9] bg-white"
+                    placeholder={isAHP ? "e.g., 15000" : "e.g., 25000"}
+                    keyboardType="numeric"
+                    value={pricing.monthlyRent?.toString()}
+                    onChangeText={(text) => updateUnitPricing(propertyType, "monthlyRent", parseFloat(text) || 0)}
+                  />
+                </View>
+                <View>
+                  <Text className="font-inter text-[12px] text-dark-400 mb-2">
+                    Monthly Deposit <Text style={{ color: colors.danger }}>*</Text>
+                  </Text>
+                  <TextInput
+                    className="font-inter text-[15px] text-dark-400 px-4 py-3 rounded-full border-[0.5px] border-[#28B4F9] bg-white"
+                    placeholder="e.g., 25000"
+                    keyboardType="numeric"
+                    value={pricing.monthlyDeposit?.toString()}
+                    onChangeText={(text) => updateUnitPricing(propertyType, "monthlyDeposit", parseFloat(text) || 0)}
+                  />
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      ) : (
+        <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
+          <View className="flex-row items-center mb-3">
+            <Image
+              source={require("@/assets/icons/wallet.png")}
+              style={{ width: 20, height: 20 }}
+              resizeMode="contain"
+            />
+            <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
+              Rent & Deposit <Text style={{ color: colors.danger }}>*</Text>
+            </Text>
+          </View>
+          <View className="mb-3">
+            <Text className="font-inter text-[12px] text-dark-400 mb-2">Monthly Rent</Text>
+            <TextInput
+              className="font-inter text-[15px] text-dark-400 px-4 py-3 rounded-full border-[0.5px] border-[#28B4F9] bg-white"
+              placeholder={isAHP ? "e.g., 15000 (AHP subsidized rate)" : "e.g., 25000"}
+              keyboardType="numeric"
+              value={longStayDraft.monthlyRent?.toString()}
+              onChangeText={(text) => updateLongStayDraft({ monthlyRent: parseFloat(text) || 0 })}
+            />
+          </View>
+          <View>
+            <Text className="font-inter text-[12px] text-dark-400 mb-2">Monthly Deposit</Text>
+            <TextInput
+              className="font-inter text-[15px] text-dark-400 px-4 py-3 rounded-full border-[0.5px] border-[#28B4F9] bg-white"
+              placeholder="e.g., 25000"
+              keyboardType="numeric"
+              value={longStayDraft.monthlyDeposit?.toString()}
+              onChangeText={(text) => updateLongStayDraft({ monthlyDeposit: parseFloat(text) || 0, securityDeposit: parseFloat(text) || 0 })}
+            />
+          </View>
+          <Text className="font-inter text-[11px] text-dark-100 mt-2 ml-1">
+            {isAHP
+              ? "AHP properties have government-subsidized rates based on income band"
+              : "Enter rent and deposit for this unit type in KES"}
           </Text>
         </View>
-        <TextInput
-          className="font-inter text-[15px] text-dark-400 px-4 py-3 rounded-full border-[0.5px] border-[#28B4F9] bg-white"
-          placeholder={isAHP ? "e.g., 15000 (AHP subsidized rate)" : "e.g., 25000"}
-          keyboardType="numeric"
-          value={longStayDraft.monthlyRent?.toString()}
-          onChangeText={(text) => updateLongStayDraft({ monthlyRent: parseFloat(text) || 0 })}
-        />
-        <Text className="font-inter text-[11px] text-dark-100 mt-2 ml-1">
-          {isAHP 
-            ? "AHP properties have government-subsidized rates based on income band" 
-            : "Enter the monthly rent amount in KES"}
-        </Text>
-      </View>
+      )}
 
       {/* Service Charge (Optional) */}
       {!isAHP && (
@@ -2323,12 +2347,47 @@ function Step7MediaUploads() {
     })();
   }, []);
 
-  const pickPhotos = async () => {
+  const getMediaForType = (propertyType?: LongStayPropertyType) => {
+    if (!propertyType) {
+      return {
+        photos: longStayDraft.photos || [],
+        videoUrl: longStayDraft.videoUrl,
+      };
+    }
+
+    return {
+      photos: longStayDraft.unitMedia?.[propertyType]?.photos || [],
+      videoUrl: longStayDraft.unitMedia?.[propertyType]?.videoUrl,
+    };
+  };
+
+  const updateMediaForType = (
+    propertyType: LongStayPropertyType | undefined,
+    data: { photos?: string[]; videoUrl?: string }
+  ) => {
+    if (!propertyType) {
+      updateLongStayDraft(data);
+      return;
+    }
+
+    const currentMedia = longStayDraft.unitMedia || {};
+    updateLongStayDraft({
+      unitMedia: {
+        ...currentMedia,
+        [propertyType]: {
+          ...(currentMedia[propertyType] || {}),
+          ...data,
+        },
+      },
+    });
+  };
+
+  const pickPhotos = async (propertyType?: LongStayPropertyType) => {
     try {
       setIsUploadingPhoto(true);
       
       // Check current photo count
-      const currentPhotos = longStayDraft.photos || [];
+      const currentPhotos = getMediaForType(propertyType).photos;
       const remainingSlots = 6 - currentPhotos.length;
       
       if (remainingSlots <= 0) {
@@ -2358,7 +2417,7 @@ function Step7MediaUploads() {
         if (validAssets.length > 0) {
           const newPhotoUris = validAssets.map((asset) => asset.uri);
           const updatedPhotos = [...currentPhotos, ...newPhotoUris];
-          updateLongStayDraft({ photos: updatedPhotos });
+          updateMediaForType(propertyType, { photos: updatedPhotos });
           
           Alert.alert(
             "Photos Added",
@@ -2374,7 +2433,7 @@ function Step7MediaUploads() {
     }
   };
 
-  const removePhoto = (index: number) => {
+  const removePhoto = (index: number, propertyType?: LongStayPropertyType) => {
     Alert.alert(
       "Remove Photo",
       "Are you sure you want to remove this photo?",
@@ -2384,20 +2443,21 @@ function Step7MediaUploads() {
           text: "Remove",
           style: "destructive",
           onPress: () => {
-            const currentPhotos = longStayDraft.photos || [];
+            const currentPhotos = getMediaForType(propertyType).photos;
             const updatedPhotos = currentPhotos.filter((_, i) => i !== index);
-            updateLongStayDraft({ photos: updatedPhotos });
+            updateMediaForType(propertyType, { photos: updatedPhotos });
           },
         },
       ]
     );
   };
 
-  const pickVideo = async () => {
+  const pickVideo = async (propertyType?: LongStayPropertyType) => {
     try {
       setIsUploadingVideo(true);
+      const currentVideo = getMediaForType(propertyType).videoUrl;
 
-      if (longStayDraft.videoUrl) {
+      if (currentVideo) {
         Alert.alert("Video Already Added", "You can only upload one video. Remove the existing video first.");
         setIsUploadingVideo(false);
         return;
@@ -2420,28 +2480,13 @@ function Step7MediaUploads() {
           return;
         }
 
-        // Optional: Check duration if available (max 120 seconds for flexibility)
-        // Note: duration might not always be available depending on the platform
-        if (asset.duration && asset.duration > 120) {
-          Alert.alert(
-            "Video Too Long", 
-            `Video is ${Math.round(asset.duration)}s long. We recommend videos under 60 seconds for better engagement. Continue anyway?`,
-            [
-              { text: "Cancel", style: "cancel", onPress: () => setIsUploadingVideo(false) },
-              { 
-                text: "Continue", 
-                onPress: () => {
-                  updateLongStayDraft({ videoUrl: asset.uri });
-                  Alert.alert("Video Added", "Video uploaded successfully!");
-                  setIsUploadingVideo(false);
-                }
-              }
-            ]
-          );
+        if (asset.duration && asset.duration > 60) {
+          Alert.alert("Video Too Long", "Video must be 1 minute or less.");
+          setIsUploadingVideo(false);
           return;
         }
 
-        updateLongStayDraft({ videoUrl: asset.uri });
+        updateMediaForType(propertyType, { videoUrl: asset.uri });
         Alert.alert("Video Added", "Video uploaded successfully!");
       }
     } catch (error) {
@@ -2452,7 +2497,7 @@ function Step7MediaUploads() {
     }
   };
 
-  const removeVideo = () => {
+  const removeVideo = (propertyType?: LongStayPropertyType) => {
     Alert.alert(
       "Remove Video",
       "Are you sure you want to remove this video?",
@@ -2462,20 +2507,35 @@ function Step7MediaUploads() {
           text: "Remove",
           style: "destructive",
           onPress: () => {
-            updateLongStayDraft({ videoUrl: undefined });
+            updateMediaForType(propertyType, { videoUrl: undefined });
           },
         },
       ]
     );
   };
 
-  const currentPhotos = longStayDraft.photos || [];
-  const hasMinimumPhotos = currentPhotos.length >= 3;
+  const selectedPropertyTypes = longStayDraft.selectedPropertyTypes || [];
+  const usesPerUnitMedia = isMultipleUnitBuilding(longStayDraft.buildingType);
+  const mediaSections = usesPerUnitMedia
+    ? selectedPropertyTypes.map((propertyType) => ({
+        propertyType,
+        title: getPropertyTypeLabel(propertyType),
+        ...getMediaForType(propertyType),
+      }))
+    : [{
+        propertyType: undefined,
+        title: "Property",
+        ...getMediaForType(),
+      }];
 
   return (
     <View>
-      {/* Photo Upload */}
-      <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
+      {mediaSections.map((section) => {
+        const hasMinimumPhotos = section.photos.length >= 3;
+        const hasVideo = !!section.videoUrl;
+
+        return (
+      <View key={section.propertyType || "single"} className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
         <View className="flex-row items-center mb-3">
           <Image
             source={require("@/assets/icons/gallery-icon.webp")}
@@ -2483,13 +2543,13 @@ function Step7MediaUploads() {
             resizeMode="contain"
           />
           <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
-            Property Photos <Text style={{ color: colors.danger }}>*</Text>
+            {section.title} Media <Text style={{ color: colors.danger }}>*</Text>
           </Text>
         </View>
         
         <View className="bg-white rounded-2xl p-4 border-[0.5px] border-[#28B4F9]">
           <Text className="font-inter text-[13px] text-dark-400 mb-3">
-            📸 Upload at least 3 high-quality photos of your property
+            📸 Upload 3-6 photos and one video of this unit type
           </Text>
           
           <View className="mb-3">
@@ -2514,10 +2574,10 @@ function Step7MediaUploads() {
           </View>
 
           {/* Photo Grid */}
-          {currentPhotos.length > 0 && (
+          {section.photos.length > 0 && (
             <View className="mb-3">
               <View className="flex-row flex-wrap gap-2">
-                {currentPhotos.map((photoUri, index) => (
+                {section.photos.map((photoUri, index) => (
                   <View key={index} className="relative">
                     <Image
                       source={{ uri: photoUri }}
@@ -2525,7 +2585,7 @@ function Step7MediaUploads() {
                       resizeMode="cover"
                     />
                     <TouchableOpacity
-                      onPress={() => removePhoto(index)}
+                      onPress={() => removePhoto(index, section.propertyType)}
                       className="absolute top-1 right-1 bg-danger rounded-full p-1"
                       style={{ backgroundColor: colors.danger }}
                     >
@@ -2538,61 +2598,47 @@ function Step7MediaUploads() {
           )}
 
           <TouchableOpacity
-            onPress={pickPhotos}
-            disabled={isUploadingPhoto || currentPhotos.length >= 6}
+            onPress={() => pickPhotos(section.propertyType)}
+            disabled={isUploadingPhoto || section.photos.length >= 6}
             className="py-3 rounded-full items-center"
             style={{ 
-              backgroundColor: currentPhotos.length >= 6 ? colors.light[300] : colors.primary[700],
+              backgroundColor: section.photos.length >= 6 ? colors.light[300] : colors.primary[700],
               opacity: isUploadingPhoto ? 0.6 : 1,
             }}
           >
             <Text className="font-inter-semibold text-[15px] text-white">
-              {isUploadingPhoto ? "Uploading..." : currentPhotos.length >= 6 ? "Maximum Photos Reached" : "📷 Upload Photos"}
+              {isUploadingPhoto ? "Uploading..." : section.photos.length >= 6 ? "Maximum Photos Reached" : "📷 Upload Photos"}
             </Text>
           </TouchableOpacity>
 
           {/* Photo count indicator */}
           <View className="mt-3 flex-row items-center justify-center">
             <Text className="font-inter text-[12px] text-dark-100">
-              {currentPhotos.length}/6 photos uploaded
+              {section.photos.length}/6 photos uploaded
             </Text>
             {hasMinimumPhotos && (
               <Text className="font-inter text-[12px] ml-2" style={{ color: "#10B981" }}>
                 ✓ Minimum met
               </Text>
             )}
-            {!hasMinimumPhotos && currentPhotos.length > 0 && (
+            {!hasMinimumPhotos && section.photos.length > 0 && (
               <Text className="font-inter text-[12px] ml-2" style={{ color: colors.danger }}>
-                ({3 - currentPhotos.length} more needed)
+                ({3 - section.photos.length} more needed)
               </Text>
             )}
           </View>
         </View>
 
         <Text className="font-inter text-[11px] text-dark-100 mt-2 ml-1">
-          Minimum 3 photos required. Properties with more photos get 40% more views!
+          Minimum 3 photos required. Maximum 6 photos for each unit type.
         </Text>
-      </View>
 
-      {/* Video Upload (Optional) */}
-      <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
-        <View className="flex-row items-center mb-3">
-          <Image
-            source={require("@/assets/icons/gallery-icon.webp")}
-            style={{ width: 20, height: 20 }}
-            resizeMode="contain"
-          />
-          <Text className="font-inter-semibold text-[14px] text-dark-400 ml-2">
-            Property Video (Optional)
-          </Text>
-        </View>
-        
-        <View className="bg-white rounded-2xl p-4 border-[0.5px] border-[#28B4F9]">
+        <View className="bg-white rounded-2xl p-4 border-[0.5px] border-[#28B4F9] mt-4">
           <Text className="font-inter text-[13px] text-dark-400 mb-3">
-            🎥 Upload a short video tour (recommended: 30-60 seconds, max 100MB)
+            🎥 Upload one video tour (1 minute maximum, max 100MB)
           </Text>
 
-          {longStayDraft.videoUrl && (
+          {section.videoUrl && (
             <View className="mb-3 relative">
               <View className="bg-black rounded-lg overflow-hidden" style={{ height: 200 }}>
                 <View className="flex-1 items-center justify-center">
@@ -2601,7 +2647,7 @@ function Step7MediaUploads() {
                 </View>
               </View>
               <TouchableOpacity
-                onPress={removeVideo}
+                onPress={() => removeVideo(section.propertyType)}
                 className="absolute top-2 right-2 bg-danger rounded-full p-2"
                 style={{ backgroundColor: colors.danger }}
               >
@@ -2611,23 +2657,23 @@ function Step7MediaUploads() {
           )}
 
           <TouchableOpacity
-            onPress={pickVideo}
-            disabled={isUploadingVideo || !!longStayDraft.videoUrl}
+            onPress={() => pickVideo(section.propertyType)}
+            disabled={isUploadingVideo || !!section.videoUrl}
             className="py-3 rounded-full items-center border-[0.5px] border-[#28B4F9]"
             style={{ 
-              backgroundColor: longStayDraft.videoUrl ? colors.light[300] : "white",
+              backgroundColor: section.videoUrl ? colors.light[300] : "white",
               opacity: isUploadingVideo ? 0.6 : 1,
             }}
           >
             <Text 
               className="font-inter-semibold text-[15px]" 
-              style={{ color: longStayDraft.videoUrl ? colors.dark[100] : colors.primary[700] }}
+              style={{ color: section.videoUrl ? colors.dark[100] : colors.primary[700] }}
             >
-              {isUploadingVideo ? "Uploading..." : longStayDraft.videoUrl ? "Video Uploaded ✓" : "🎬 Upload Video"}
+              {isUploadingVideo ? "Uploading..." : section.videoUrl ? "Video Uploaded ✓" : "🎬 Upload Video"}
             </Text>
           </TouchableOpacity>
 
-          {longStayDraft.videoUrl && (
+          {hasVideo && (
             <View className="mt-3 flex-row items-center justify-center">
               <Text className="font-inter text-[12px]" style={{ color: "#10B981" }}>
                 ✓ Video uploaded successfully
@@ -2637,9 +2683,11 @@ function Step7MediaUploads() {
         </View>
 
         <Text className="font-inter text-[11px] text-dark-100 mt-2 ml-1">
-          Properties with videos get 60% more inquiries! 🚀
+          A video is required for each selected unit type.
         </Text>
       </View>
+        );
+      })}
 
       {/* Virtual Tour Link (Optional) */}
       <View className="mb-4 p-4 rounded-3xl" style={{ backgroundColor: "#E1E6E8" }}>
@@ -2670,7 +2718,7 @@ function Step7MediaUploads() {
 }
 
 function Step8TermsConditions() {
-  const { longStayDraft, updateLongStayDraft } = usePropertyStore();
+  const { updateLongStayDraft } = usePropertyStore();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [hostAgreementAccepted, setHostAgreementAccepted] = useState(false);
@@ -2680,7 +2728,7 @@ function Step8TermsConditions() {
   // Update draft when all are accepted
   useEffect(() => {
     updateLongStayDraft({ termsAccepted: allAccepted });
-  }, [allAccepted]);
+  }, [allAccepted, updateLongStayDraft]);
 
   return (
     <View>
@@ -2690,7 +2738,7 @@ function Step8TermsConditions() {
           🎉 Almost Done!
         </Text>
         <Text className="font-inter text-[13px] text-dark-400">
-          You're one step away from listing your property on Masqany. Please review and accept the terms below.
+          You are one step away from listing your property on Masqany. Please review and accept the terms below.
         </Text>
       </View>
 
@@ -2718,7 +2766,7 @@ function Step8TermsConditions() {
             • All information provided is accurate and truthful
           </Text>
           <Text className="font-inter text-[12px] text-dark-100 mb-2">
-            • You agree to Masqany's 10% service fee on successful bookings
+            • You agree to Masqany&apos;s 10% service fee on successful bookings
           </Text>
           <Text className="font-inter text-[12px] text-dark-100 mb-2">
             • You will maintain the property as described in the listing
@@ -2828,7 +2876,7 @@ function Step8TermsConditions() {
             • You will not discriminate based on race, religion, gender, or nationality
           </Text>
           <Text className="font-inter text-[12px] text-dark-100 mb-2">
-            • You agree to resolve disputes through Masqany's resolution process
+            • You agree to resolve disputes through Masqany&apos;s resolution process
           </Text>
           <Text className="font-inter text-[12px] text-dark-100">
             • You will comply with all local housing laws and regulations

@@ -1,5 +1,5 @@
 /**
- * RoleCard — rounded card with white background, Poppins title + Inter subtitle.
+ * RoleCard - rounded horizontal card with white background.
  * Icons keep their original colors (no tint).
  */
 import { memo } from "react";
@@ -21,11 +21,11 @@ export const RoleCard = memo(function RoleCard({
   onPress,
 }: RoleCardProps) {
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.85} className="flex-1">
+    <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
       <View
-        className="flex-1 rounded-2xl items-center justify-center px-3 py-5"
+        className="rounded-2xl flex-row items-center px-4 py-4"
         style={{
-          minHeight: 140,
+          minHeight: 92,
           backgroundColor: "#FFFFFF",
           borderWidth: selected ? 2 : 1,
           borderColor: selected ? "#28B4FA" : "#E5E7EB",
@@ -36,23 +36,30 @@ export const RoleCard = memo(function RoleCard({
           elevation: 3,
         }}
       >
-        <Image
-          source={icon}
-          className="w-10 h-10 mb-3"
-          resizeMode="contain"
-        />
-        <Text
-          className="font-poppins-bold text-center mb-1"
-          style={{ fontSize: 14, color: selected ? "#28B4FA" : "#1A2225" }}
+        <View
+          className="w-14 h-14 rounded-2xl items-center justify-center mr-4"
+          style={{ backgroundColor: selected ? "rgba(40,180,250,0.12)" : "#F3F4F6" }}
         >
-          {title}
-        </Text>
-        <Text
-          className="font-inter-medium text-center"
-          style={{ fontSize: 11, lineHeight: 16, color: "#6B7280" }}
-        >
-          {subtitle}
-        </Text>
+          <Image
+            source={icon}
+            className="w-9 h-9"
+            resizeMode="contain"
+          />
+        </View>
+        <View className="flex-1">
+          <Text
+            className="font-poppins-bold mb-1"
+            style={{ fontSize: 16, color: selected ? "#28B4FA" : "#1A2225" }}
+          >
+            {title}
+          </Text>
+          <Text
+            className="font-inter-medium"
+            style={{ fontSize: 13, lineHeight: 18, color: "#6B7280" }}
+          >
+            {subtitle}
+          </Text>
+        </View>
       </View>
     </TouchableOpacity>
   );

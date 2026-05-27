@@ -20,6 +20,7 @@ import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
+import type { ImageSourcePropType } from "react-native";
 import {
   Image,
   KeyboardAvoidingView,
@@ -61,7 +62,7 @@ export function isStrongPassword(v: string) {
 const INPUT_BG = "#AAAABB";
 // Nunito_700Bold: heavy sans-serif — clean number rendering, no superscripts
 const INPUT_FONT = "Nunito_700Bold";
-const INPUT_SIZE = 16;
+const INPUT_SIZE = 18;
 
 // ---------------------------------------------------------------------------
 // Password strength bar
@@ -73,7 +74,7 @@ function StrengthBar({ value }: { value: string }) {
   const labelColor = ["transparent", "#F75555", "#FFCB1A", "#22C55E"][s];
   if (!value) return null;
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6, marginBottom: 4, paddingHorizontal: 4 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2, marginBottom: 0, paddingHorizontal: 4 }}>
       {[0, 1, 2].map((i) => (
         <View
           key={i}
@@ -109,6 +110,7 @@ interface InputFieldProps {
   showToggle?: boolean;
   showVisible?: boolean;
   onToggleVisible?: () => void;
+  icon?: ImageSourcePropType;
   prefix?: string;
   maxLength?: number;
   inputRef?: React.RefObject<TextInput | null>;
@@ -128,18 +130,19 @@ function InputField({
   showToggle,
   showVisible,
   onToggleVisible,
+  icon,
   prefix,
   maxLength,
   inputRef,
 }: InputFieldProps) {
   return (
-    <View style={{ marginBottom: 20 }}>
+    <View style={{ marginBottom: 14 }}>
       <Text
         style={{
           fontFamily: "Inter_600SemiBold",
           fontSize: 13,
           color: "rgba(26,34,37,0.9)",
-          marginBottom: 6,
+          marginBottom: 4,
           marginLeft: 4,
         }}
       >
@@ -150,26 +153,52 @@ function InputField({
         style={{
           flexDirection: "row",
           alignItems: "center",
-          height: 56,
-          borderRadius: 16,
+          height: 46,
+          borderRadius: 999,
           backgroundColor: INPUT_BG,
           borderWidth: error ? 1.5 : 0,
           borderColor: error ? "#F75555" : "transparent",
-          overflow: "hidden",
+          paddingHorizontal: 16,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 5,
+          elevation: 2,
         }}
       >
+        {icon && (
+          <View
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              alignItems: "center",
+              justifyContent: "center",
+              marginRight: 12,
+              backgroundColor: "rgba(255,255,255,0.18)",
+            }}
+          >
+            <Image
+              source={icon}
+              style={{ width: 20, height: 20, tintColor: "#FFFFFF" }}
+              resizeMode="contain"
+            />
+          </View>
+        )}
+
         {prefix && (
           <View
             style={{
-              height: "100%",
-              paddingHorizontal: 16,
+              height: 28,
+              paddingRight: 12,
+              marginRight: 12,
               alignItems: "center",
               justifyContent: "center",
               borderRightWidth: 1,
               borderRightColor: "rgba(255,255,255,0.3)",
             }}
           >
-            <Text style={{ fontFamily: INPUT_FONT, fontSize: INPUT_SIZE, color: "#fff" }}>
+            <Text style={{ fontFamily: INPUT_FONT, fontSize: INPUT_SIZE, color: "#000000" }}>
               {prefix}
             </Text>
           </View>
@@ -180,7 +209,7 @@ function InputField({
           value={value}
           onChangeText={onChange}
           placeholder={placeholder}
-          placeholderTextColor="rgba(255,255,255,0.5)"
+          placeholderTextColor="rgba(0,0,0,0.45)"
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
           autoCapitalize="none"
@@ -192,9 +221,9 @@ function InputField({
           style={{
             flex: 1,
             fontFamily: INPUT_FONT,
-            fontSize: INPUT_SIZE,
-            color: "#ffffff",
-            paddingHorizontal: 16,
+            fontSize: value ? INPUT_SIZE : 14,
+            color: "#000000",
+            paddingHorizontal: 0,
             paddingVertical: 0,
             includeFontPadding: false,
           }}
@@ -204,12 +233,12 @@ function InputField({
           <TouchableOpacity
             onPress={onToggleVisible}
             activeOpacity={0.7}
-            style={{ paddingRight: 16 }}
+            style={{ paddingLeft: 12 }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Image
               source={require("@/assets/icons/eye-icon.webp")}
-              style={{ width: 20, height: 20, tintColor: "#fff", opacity: showVisible ? 1 : 0.4 }}
+              style={{ width: 20, height: 20, tintColor: "#000", opacity: showVisible ? 1 : 0.45 }}
               resizeMode="contain"
             />
           </TouchableOpacity>
@@ -217,11 +246,11 @@ function InputField({
       </View>
 
       {error ? (
-        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#F75555", marginTop: 5, marginLeft: 4 }}>
+        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#F75555", marginTop: 4, marginLeft: 4 }}>
           {error}
         </Text>
       ) : hint ? (
-        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(26,34,37,0.5)", marginTop: 5, marginLeft: 4 }}>
+        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(26,34,37,0.5)", marginTop: 4, marginLeft: 4 }}>
           {hint}
         </Text>
       ) : null}
@@ -302,7 +331,7 @@ export default function OnboardingCredentialsScreen() {
         {/* KEY FIX: no flexGrow — natural content height enables real scrolling */}
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 80 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: 64 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
@@ -310,7 +339,7 @@ export default function OnboardingCredentialsScreen() {
         >
           <BackButton />
 
-          <Text className="font-poppins-bold text-dark-400 mt-10 mb-5" style={{ fontSize: 26 }}>
+          <Text className="font-poppins-bold text-dark-400 mt-6 mb-4" style={{ fontSize: 26 }}>
             Secure your account
           </Text>
 
@@ -318,7 +347,7 @@ export default function OnboardingCredentialsScreen() {
             message={AGENT_MESSAGE}
             speed={14}
             onComplete={() => setAgentDone(true)}
-            style={{ marginBottom: 28 }}
+            style={{ marginBottom: 20 }}
           />
 
           {agentDone && (
@@ -328,6 +357,7 @@ export default function OnboardingCredentialsScreen() {
                 value={email}
                 onChange={(v) => { setEmail(v); setTouched((t) => ({ ...t, email: true })); }}
                 placeholder="you@example.com"
+                icon={require("@/assets/icons/i-email-icon.webp")}
                 keyboardType="email-address"
                 error={emailErr}
                 returnKeyType="next"
@@ -342,6 +372,7 @@ export default function OnboardingCredentialsScreen() {
                   setTouched((t) => ({ ...t, phone: true }));
                 }}
                 placeholder="7XX XXX XXX"
+                icon={require("@/assets/icons/i-phone-icon.webp")}
                 keyboardType="numeric"
                 prefix="+254"
                 maxLength={9}
@@ -357,6 +388,7 @@ export default function OnboardingCredentialsScreen() {
                 value={password}
                 onChange={(v) => { setPassword(v); setTouched((t) => ({ ...t, password: true })); }}
                 placeholder="Create a strong password"
+                icon={require("@/assets/icons/password.webp")}
                 secureTextEntry={!showPwd}
                 showToggle
                 showVisible={showPwd}
@@ -373,6 +405,7 @@ export default function OnboardingCredentialsScreen() {
                 value={confirm}
                 onChange={(v) => { setConfirm(v); setTouched((t) => ({ ...t, confirm: true })); }}
                 placeholder="Re-enter your password"
+                icon={require("@/assets/icons/lock-icon.png")}
                 secureTextEntry={!showConfirm}
                 showToggle
                 showVisible={showConfirm}
@@ -383,12 +416,12 @@ export default function OnboardingCredentialsScreen() {
                 inputRef={confirmRef}
               />
 
-              <View style={{ marginTop: 8, marginBottom: 28 }}>
+              <View style={{ marginTop: 2, marginBottom: 16 }}>
                 <PrimaryButton label="Continue" onPress={handleContinue} />
               </View>
 
               {/* Divider */}
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20, gap: 12 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 14, gap: 12 }}>
                 <View style={{ flex: 1, height: 1, backgroundColor: "#DEDFE3" }} />
                 <Text style={{ fontFamily: "Inter_400Regular", fontSize: 14, color: "#BDBDC0" }}>or</Text>
                 <View style={{ flex: 1, height: 1, backgroundColor: "#DEDFE3" }} />
