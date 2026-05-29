@@ -22,14 +22,14 @@ export function PrimaryButton({
       disabled={disabled || loading}
       activeOpacity={0.85}
       className="w-full h-14 rounded-full items-center justify-center"
-      style={{ backgroundColor: disabled ? "#A8D8FA" : "#28B4FA" }}
+      style={{ backgroundColor: disabled ? "#A8D8FA" : "#3fbdfd" }}
     >
       {loading ? (
         <ActivityIndicator color="#fff" />
       ) : (
         <Text
           className="font-inter-extrabold text-white"
-          style={{ fontSize: 17, letterSpacing: 0.2 }}
+          style={{ fontSize: 18, letterSpacing: 0.2 }}
         >
           {label}
         </Text>

@@ -49,7 +49,7 @@ export default function OnboardingNameScreen() {
             <BackButton />
 
             {/* "Hello, I'm Masqany" */}
-            <View className="mt-10 mb-6">
+            <View className="mt-8 mb-6">
               <Text style={{ fontSize: 32, lineHeight: 40 }}>
                 <Text className="font-poppins-bold" style={{ color: "#20A6FD" }}>
                   {"Hello, I'm Mas"}
@@ -101,6 +101,9 @@ export default function OnboardingNameScreen() {
                   }
                   disabled={!canContinue}
                 />
+
+                {/* Small extra spacing for keyboard */}
+                <View style={{ height: 60 }} />
               </>
             )}
           </View>

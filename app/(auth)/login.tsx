@@ -2,11 +2,11 @@
  * Login with password or OTP.
  * User can toggle between password and OTP login methods.
  */
-import { mockLogin } from "@/assets/data/auth";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
+import { authApi } from "@/modules/auth/api";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -123,25 +123,32 @@ export default function LoginScreen() {
     setLoading(true);
     setError(null);
 
-    await new Promise((r) => setTimeout(r, 1200));
-
     if (loginMethod === "password") {
-      // Password login
-      const response = mockLogin(identifier.trim(), password);
-      if (!response) {
+      try {
+        const response = await authApi.login({
+          email: identifier.trim(),
+          password,
+          device_info: `${Platform.OS}`,
+        });
+        setLoading(false);
+        routeByRole(response.user.role, router);
+      } catch (err) {
         setError("Invalid email or password");
         setLoading(false);
         return;
       }
-      setLoading(false);
-      routeByRole(response.user.role, router);
     } else {
-      // OTP login - navigate to OTP screen
-      setLoading(false);
-      router.push({
-        pathname: "/login-otp" as any,
-        params: { identifier: identifier.trim() },
-      });
+      try {
+        await authApi.sendOtp({ email: identifier.trim(), purpose: "login" });
+        setLoading(false);
+        router.push({
+          pathname: "/login-otp" as any,
+          params: { identifier: identifier.trim() },
+        });
+      } catch (err) {
+        setError("Unable to send OTP. Please try again.");
+        setLoading(false);
+      }
     }
   }
 

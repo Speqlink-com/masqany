@@ -1,5 +1,5 @@
 /**
- * OTP Verification — email then phone.
+ * OTP Verification — email verification for signup.
  * Font: Inter throughout. Poppins-Bold for title.
  * Digit boxes: Inter_800ExtraBold — clean, heavy number rendering.
  */
@@ -7,6 +7,7 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
+import { authApi } from "@/modules/auth/api";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -147,47 +148,53 @@ function useCountdown(initial = 60) {
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
-type Step = "email" | "phone";
-
 export default function OnboardingOtpScreen() {
   const router = useRouter();
-  const { name, role, email, phone, password } = useLocalSearchParams<{
-    name: string; role: string; email: string; phone: string; password: string;
+  const { name, role, email, phone } = useLocalSearchParams<{
+    name: string; role: string; email: string; phone: string;
   }>();
 
-  const [step, setStep] = useState<Step>("email");
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
 
-  const emailCD = useCountdown(60);
-  const phoneCD = useCountdown(60);
-  const cd = step === "email" ? emailCD : phoneCD;
-
-  useEffect(() => { setDigits(Array(6).fill("")); setError(null); }, [step]);
+  const cd = useCountdown(60);
 
   async function handleVerify() {
     if (!digits.every((d) => d)) return;
     setVerifying(true);
-    await new Promise((r) => setTimeout(r, 900));
-    setVerifying(false);
-    if (digits.join("") !== "123456") {
-      setError("Incorrect code. Please try again.");
-      setDigits(Array(6).fill(""));
-      return;
-    }
-    if (step === "email") { setStep("phone"); }
-    else {
+    try {
+      await authApi.verifyOtp({
+        email,
+        otp_code: digits.join(""),
+        purpose: "verification",
+      });
+
       router.push({
         pathname: "/onboarding-complete" as any,
         params: { name: name ?? "", role: role ?? "", email, phone },
       });
+    } catch {
+      setError("Incorrect code. Please try again.");
+      setDigits(Array(6).fill(""));
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  async function handleResend() {
+    if (!email) return;
+    try {
+      await authApi.sendOtp({ email, purpose: "verification" });
+      cd.reset();
+      setDigits(Array(6).fill(""));
+      setError(null);
+    } catch {
+      setError("Unable to resend the code. Please try again.");
     }
   }
 
   const maskedEmail = email?.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "***" + c) ?? "";
-  const maskedPhone = phone ? phone.slice(0, 7) + "***" + phone.slice(-2) : "";
-  const destination = step === "email" ? maskedEmail : maskedPhone;
 
   return (
     <AuthLayout>
@@ -197,23 +204,15 @@ export default function OnboardingOtpScreen() {
 
         {/* Step progress */}
         <View style={{ flexDirection: "row", gap: 8, marginTop: 40, marginBottom: 32 }}>
-          {(["email", "phone"] as Step[]).map((s) => (
-            <View
-              key={s}
-              style={{
-                flex: 1, height: 4, borderRadius: 2,
-                backgroundColor: s === step ? "#28B4FA" : (step === "phone" && s === "email") ? "#22C55E" : "#DEDFE3",
-              }}
-            />
-          ))}
+          <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: "#28B4FA" }} />
         </View>
 
         <Text className="font-poppins-bold text-dark-400 mb-2" style={{ fontSize: 26 }}>
-          {step === "email" ? "Verify your email" : "Verify your phone"}
+          Verify your email
         </Text>
         <Text style={{ fontFamily: "Inter_400Regular", fontSize: 15, color: "#4F5C62", lineHeight: 24, marginBottom: 36 }}>
           We sent a 6-digit code to{" "}
-          <Text style={{ fontFamily: "Inter_700Bold", color: "#1A2225" }}>{destination}</Text>.
+          <Text style={{ fontFamily: "Inter_700Bold", color: "#1A2225" }}>{maskedEmail}</Text>.
           {" "}Enter it below.
         </Text>
 
@@ -235,7 +234,7 @@ export default function OnboardingOtpScreen() {
             Didn't receive it?{" "}
           </Text>
           {cd.canResend ? (
-            <TouchableOpacity onPress={() => { cd.reset(); setDigits(Array(6).fill("")); setError(null); }} activeOpacity={0.7}>
+            <TouchableOpacity onPress={handleResend} activeOpacity={0.7}>
               <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: "#20A6FD", textDecorationLine: "underline" }}>
                 Resend code
               </Text>
@@ -253,14 +252,14 @@ export default function OnboardingOtpScreen() {
           </View>
         ) : (
           <PrimaryButton
-            label={step === "email" ? "Verify Email" : "Verify Phone"}
+            label="Verify Email"
             onPress={handleVerify}
             disabled={!digits.every((d) => d)}
           />
         )}
 
         <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#BDBDC0", textAlign: "center", marginTop: 20 }}>
-          Demo: use code 123456
+          Use the code sent to your email.
         </Text>
       </View>
     </AuthLayout>

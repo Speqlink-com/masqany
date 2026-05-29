@@ -8,7 +8,6 @@ export default function AuthGroupLayout() {
       <Stack.Screen name="login-otp" />
       <Stack.Screen name="sign-up" />
       <Stack.Screen name="forgot-password" />
-      <Stack.Screen name="forgot-password-otp" />
       <Stack.Screen name="reset-password" />
       <Stack.Screen name="onboarding-name" />
       <Stack.Screen name="onboarding-role" />

@@ -17,6 +17,7 @@ import { AgentBubble } from "@/components/auth/AgentBubble";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
+import { authApi } from "@/modules/auth/api";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
@@ -276,6 +277,7 @@ export default function OnboardingCredentialsScreen() {
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [touched, setTouched] = useState({ email: false, phone: false, password: false, confirm: false });
 
   const phoneRef = useRef<TextInput>(null);
@@ -310,14 +312,31 @@ export default function OnboardingCredentialsScreen() {
 
   const isValid = isValidEmail(email) && isValidPhoneDigits(phoneDigits) && isStrongPassword(password) && password === confirm;
 
-  function handleContinue() {
+  async function handleContinue() {
     setSubmitted(true);
     setTouched({ email: true, phone: true, password: true, confirm: true });
     if (!isValid) return;
-    router.push({
-      pathname: "/onboarding-otp" as any,
-      params: { name: name ?? "", role: role ?? "", email: email.trim(), phone: `+254${phoneDigits}`, password },
-    });
+
+    setLoading(true);
+    try {
+      await authApi.signup({
+        name: name ?? "",
+        email: email.trim(),
+        phone_number: `+254${phoneDigits}`,
+        role: (role ?? "TENANT") as "TENANT" | "PROPERTY_OWNER" | "DRIVER",
+        password,
+      });
+
+      router.push({
+        pathname: "/onboarding-otp" as any,
+        params: { name: name ?? "", role: role ?? "", email: email.trim(), phone: `+254${phoneDigits}` },
+      });
+    } catch {
+      // Keep the inline UX lightweight; the screen already shows validation states.
+      setSubmitted(true);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -417,7 +436,7 @@ export default function OnboardingCredentialsScreen() {
               />
 
               <View style={{ marginTop: 2, marginBottom: 16 }}>
-                <PrimaryButton label="Continue" onPress={handleContinue} />
+                <PrimaryButton label="Continue" onPress={handleContinue} loading={loading} />
               </View>
 
               {/* Divider */}

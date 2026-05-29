@@ -6,6 +6,7 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
+import { authApi } from "@/modules/auth/api";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -29,6 +30,7 @@ export default function ForgotPasswordScreen() {
   const [phoneDigits, setPhoneDigits] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
   const isValidPhone = (v: string) => /^(7|1)\d{8}$/.test(v.replace(/\s/g, ""));
@@ -40,17 +42,24 @@ export default function ForgotPasswordScreen() {
     if (!canSubmit) return;
     setLoading(true);
     setError(null);
-
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
+    setSuccess(null);
 
     const contact = contactType === "email" ? email.trim() : `+254${phoneDigits}`;
 
-    router.push({
-      pathname: "/forgot-password-otp" as any,
-      params: { contact, contactType },
-    });
+    if (contactType !== "email") {
+      setError("Password reset currently uses email only.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await authApi.forgotPassword({ email: contact });
+      setSuccess("If an account exists with this email, you’ll receive a password reset link shortly.");
+    } catch {
+      setError("Unable to send reset link. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -205,12 +214,20 @@ export default function ForgotPasswordScreen() {
               </Text>
             )}
 
-            <PrimaryButton
-              label="Send OTP"
-              onPress={handleSendOTP}
-              disabled={!canSubmit}
-              loading={loading}
-            />
+            {success ? (
+              <View className="mb-4 rounded-2xl p-4" style={{ backgroundColor: "rgba(40,180,250,0.12)" }}>
+                <Text className="font-inter-semibold text-center" style={{ color: "#1A2225", fontSize: 14, lineHeight: 20 }}>
+                  {success}
+                </Text>
+              </View>
+            ) : (
+              <PrimaryButton
+                label="Send reset link"
+                onPress={handleSendOTP}
+                disabled={!canSubmit}
+                loading={loading}
+              />
+            )}
 
             <TouchableOpacity
               onPress={() => router.back()}

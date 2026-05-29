@@ -61,7 +61,7 @@ export default function OnboardingRoleConfirmationScreen() {
             className="font-poppins-bold text-dark-400 mb-5"
             style={{ fontSize: 26 }}
           >
-            You selected: {roleTitle}
+            You selected - {roleTitle}
           </Text>
 
           {/* Confirmation message */}

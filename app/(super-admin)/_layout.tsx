@@ -1,7 +1,7 @@
 /**
- * Admin Group Layout
+ * Super Admin Group Layout
  * 
- * Tab navigator for admin screens (no SA-specific features)
+ * Tab navigator for super admin screens with custom sidebar
  */
 
 import { Tabs } from "expo-router";
@@ -31,7 +31,7 @@ function TabIcon({ icon, label, focused }: TabIconProps) {
   );
 }
 
-export default function AdminGroupLayout() {
+export default function SuperAdminLayout() {
   return (
     <Tabs
       screenOptions={{
@@ -53,6 +53,30 @@ export default function AdminGroupLayout() {
         }}
       />
       <Tabs.Screen
+        name="admins"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              icon={require("@/assets/icons/sa-admin-tab-icon.png")}
+              label="Admins"
+              focused={focused}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              icon={require("@/assets/icons/chat-icon.webp")}
+              label="Chat"
+              focused={focused}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="users"
         options={{
           tabBarIcon: ({ focused }) => (
@@ -62,18 +86,6 @@ export default function AdminGroupLayout() {
               focused={focused}
             />
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="admin-vehicles"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="admin-vehicle-review"
-        options={{
-          href: null,
         }}
       />
     </Tabs>

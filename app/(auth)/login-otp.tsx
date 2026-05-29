@@ -2,11 +2,12 @@
  * Login OTP Verification
  * Verifies OTP for login without password
  */
-import { MOCK_USERS, mockVerifyOTP } from "@/assets/data/auth";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
+import { authApi } from "@/modules/auth/api";
+import { tokenStore, useAuthStore } from "@/store/auth.store";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -152,6 +153,8 @@ function useCountdown(initial = 60) {
 export default function LoginOtpScreen() {
   const router = useRouter();
   const { identifier } = useLocalSearchParams<{ identifier: string }>();
+  const setUser = useAuthStore((state) => state.setUser);
+  const setTokens = tokenStore((state) => state.setTokens);
 
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
   const [error, setError] = useState<string | null>(null);
@@ -161,28 +164,33 @@ export default function LoginOtpScreen() {
   async function handleVerify() {
     if (!digits.every((d) => d)) return;
     setVerifying(true);
-    await new Promise((r) => setTimeout(r, 900));
-    setVerifying(false);
-
-    // Mock OTP verification
-    if (!mockVerifyOTP(digits.join(""))) {
+    try {
+      const response = await authApi.login({
+        email: identifier,
+        otp_code: digits.join(""),
+        device_info: "mobile",
+      });
+      setTokens(response.accessToken, response.refreshToken);
+      setUser(response.user);
+      routeByRole(response.user.role, router);
+    } catch {
       setError("Incorrect code. Please try again.");
       setDigits(Array(6).fill(""));
-      return;
+    } finally {
+      setVerifying(false);
     }
+  }
 
-    // Find user by identifier
-    const user = Object.values(MOCK_USERS).find(
-      (u) => u.email === identifier || u.phone === identifier
-    );
-
-    if (!user) {
-      setError("User not found");
-      return;
+  async function handleResend() {
+    if (!identifier) return;
+    try {
+      await authApi.sendOtp({ email: identifier, purpose: "login" });
+      cd.reset();
+      setDigits(Array(6).fill(""));
+      setError(null);
+    } catch {
+      setError("Unable to resend code. Please try again.");
     }
-
-    // Success - route by role
-    routeByRole(user.role, router);
   }
 
   const maskedIdentifier = identifier?.includes("@")
@@ -222,7 +230,7 @@ export default function LoginOtpScreen() {
             Didn't receive it?{" "}
           </Text>
           {cd.canResend ? (
-            <TouchableOpacity onPress={() => { cd.reset(); setDigits(Array(6).fill("")); setError(null); }} activeOpacity={0.7}>
+            <TouchableOpacity onPress={handleResend} activeOpacity={0.7}>
               <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: "#20A6FD", textDecorationLine: "underline" }}>
                 Resend code
               </Text>
@@ -247,7 +255,7 @@ export default function LoginOtpScreen() {
         )}
 
         <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#BDBDC0", textAlign: "center", marginTop: 20 }}>
-          Demo: use code 123456
+          Use the code sent to your email.
         </Text>
       </View>
     </AuthLayout>

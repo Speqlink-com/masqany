@@ -12,7 +12,7 @@
  * - React.memo for performance optimization
  */
 
-import { colors, radius, shadow, spacing, typography } from "@/constants/tokens";
+import { colors, spacing, typography } from "@/constants/tokens";
 import { Image, ImageSource } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
@@ -62,9 +62,13 @@ MetricsCard.displayName = "MetricsCard";
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    borderRadius: radius.md,
+    borderRadius: 20,
     minHeight: 110,
-    ...shadow.md,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   content: {
     flex: 1,
@@ -73,24 +77,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   icon: {
-    width: 32,
-    height: 32,
+    width: 48,
+    height: 48,
     marginBottom: spacing.sm,
   },
   value: {
     fontFamily: typography.family.headingBold,
-    fontSize: 24,
+    fontSize: 28,
     color: colors.light[400],
     marginBottom: spacing.xs,
   },
   unit: {
     fontFamily: typography.family.headingBold,
-    fontSize: 16,
+    fontSize: 18,
     color: colors.light[400],
   },
   label: {
     fontFamily: typography.family.medium,
-    fontSize: 13,
+    fontSize: 14,
     color: colors.light[400],
     textAlign: "center",
   },

@@ -1,23 +1,23 @@
 /**
- * Admin Dashboard
+ * Super Admin Dashboard
  * 
- * Main dashboard for admins (no SA-specific features like create admin)
+ * Main dashboard for super admins with full control
  */
 
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import {
-    Image,
-    ImageBackground,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  ImageBackground,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function AdminDashboard() {
+export default function SuperAdminDashboard() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
   return (
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
           {/* Header Section - 30% of screen */}
           <View className="h-[30%] px-5 pt-3">
             {/* Top Row: Menu, Logo, Notification */}
-            <View className="flex-row items-center justify-between mb-4">
+            <View className="flex-row items-center justify-between mb-1">
               <TouchableOpacity
                 onPress={() => setSidebarVisible(!sidebarVisible)}
                 className="p-2"
@@ -59,19 +59,24 @@ export default function AdminDashboard() {
               </TouchableOpacity>
             </View>
 
-            {/* Speqlink Row - No Crown Icon for regular admin */}
-            <View className="flex-row items-center mb-3">
+            {/* Speqlink Row */}
+            <View className="flex-row items-center mb-0">
               <Image
                 source={require("@/assets/icons/sa-speqlink-logo.png")}
                 className="w-10 h-10 mr-3"
                 resizeMode="contain"
               />
-              <Text className="text-white font-bold text-lg mr-2">
-                Speqers Admin
+              <Text className="text-white font-bold text-xl mr-2">
+                Speqers SA
               </Text>
               <Image
+                source={require("@/assets/icons/sa-crown-icon.png")}
+                className="w-6 h-6 mr-2"
+                resizeMode="contain"
+              />
+              <Image
                 source={require("@/assets/images/black-white-logo.png")}
-                className="w-7 h-7"
+                className="w-20 h-20"
                 resizeMode="contain"
               />
             </View>
@@ -85,9 +90,9 @@ export default function AdminDashboard() {
               />
               <View className="flex-1">
                 <Text className="text-white text-sm">
-                  admin@masqany.com
+                  comphortine@speqlink.com
                 </Text>
-                <Text className="text-white text-sm font-semibold">Administrator</Text>
+                <Text className="text-white text-xl font-semibold">CEO</Text>
               </View>
             </View>
           </View>
@@ -96,7 +101,7 @@ export default function AdminDashboard() {
           <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
             {/* General Metrics Cards */}
             <View className="mb-5">
-              <Text className="text-white font-bold text-xl mb-4">
+              <Text className="text-black font-bold text-xl mb-4">
                 General Metrics
               </Text>
               <View className="flex-row justify-between" style={{ gap: 12 }}>
@@ -174,12 +179,40 @@ export default function AdminDashboard() {
               </View>
             </View>
 
-            {/* Quick Actions - No Create Admin for regular admin */}
+            {/* Quick Actions */}
             <View className="mb-5">
               <Text className="text-black font-bold text-xl mb-4">
                 Quick Actions
               </Text>
               <View className="flex-row flex-wrap justify-between" style={{ gap: 12 }}>
+                {/* Create Admin */}
+                <LinearGradient
+                  colors={["#333333", "#898989"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  className="w-[48%] p-4"
+                  style={{
+                    borderRadius: 20,
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.15,
+                    shadowRadius: 8,
+                    elevation: 5,
+                  }}
+                >
+                  <Image
+                    source={require("@/assets/icons/sa-add-admin.png")}
+                    className="w-12 h-12 mb-2"
+                    resizeMode="contain"
+                  />
+                  <Text className="text-white font-semibold text-base mb-1">
+                    Create Admin
+                  </Text>
+                  <Text className="text-gray-300 text-sm">
+                    Add new platform administrators
+                  </Text>
+                </LinearGradient>
+
                 {/* Broadcast Message */}
                 <LinearGradient
                   colors={["#333333", "#898989"]}
@@ -268,7 +301,7 @@ export default function AdminDashboard() {
 
             {/* Activities */}
             <View className="mb-20">
-              <Text className="text-white font-bold text-xl mb-4">
+              <Text className="text-black font-bold text-xl mb-4">
                 Recent Activities
               </Text>
               <View

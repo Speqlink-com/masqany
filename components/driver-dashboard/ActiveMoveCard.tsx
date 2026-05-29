@@ -157,10 +157,14 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     backgroundColor: "#E1E6E8",
-    borderRadius: radius.lg,
+    borderRadius: 20,
     padding: spacing.base,
     marginBottom: spacing.md,
-    ...shadow.md,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   urgentRow: {
     flexDirection: "row",

@@ -14,7 +14,7 @@
  * Requirements: 5.2, 5.3, 5.4, 5.5, 13.4, 13.5, 15.4
  */
 
-import { colors, radius, shadow, spacing, typography } from "@/constants/tokens";
+import { colors, radius, spacing, typography } from "@/constants/tokens";
 import type { MoveRequest } from "@/modules/driver-dashboard/types";
 import { Image } from "expo-image";
 import React from "react";
@@ -182,10 +182,14 @@ UpcomingMoveCard.displayName = "UpcomingMoveCard";
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#E1E6E8",
-    borderRadius: radius.md,
+    borderRadius: 20,
     padding: spacing.base,
     marginBottom: spacing.md,
-    ...shadow.md,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   headerRow: {
     flexDirection: "row",

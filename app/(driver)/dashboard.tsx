@@ -1,14 +1,10 @@
 import {
   ActiveMoveCard,
   DriverProfileCard,
-  MetricsGrid,
   SectionHeader,
-  StatusBarProtection,
-  TabBarProtection,
   UpcomingMoveCard,
 } from "@/components/driver-dashboard";
 import icons from "@/constants/icons";
-import images from "@/constants/images";
 import { colors, spacing, typography } from "@/constants/tokens";
 import {
   useAcceptMove,
@@ -17,9 +13,10 @@ import {
   useRejectMove,
   useStartMove,
 } from "@/modules/driver-dashboard";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -43,6 +40,7 @@ export default function DriverDashboardScreen() {
   const startMove = useStartMove();
   const isRefreshing = useDriverDashboardStore((state) => state.isRefreshing);
   const setRefreshing = useDriverDashboardStore((state) => state.setRefreshing);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
 
   const data = dashboard.data;
 
@@ -126,23 +124,32 @@ export default function DriverDashboardScreen() {
 
   if (dashboard.isLoading) {
     return (
-      <ImageBackground source={images.appFullScreen} style={styles.background} resizeMode="cover">
+      <ImageBackground 
+        source={require("@/assets/images/property-registration-initial-screen.webp")} 
+        style={styles.background} 
+        resizeMode="cover"
+      >
         <StatusBar style="light" />
-        <StatusBarProtection />
         <View style={styles.centerState}>
           <ActivityIndicator color={colors.primary[700]} size="large" />
           <Text style={styles.stateText}>Loading driver dashboard</Text>
         </View>
-        <TabBarProtection />
+        
+        <View style={styles.bottomBar}>
+          <View style={styles.bottomBarLine} />
+        </View>
       </ImageBackground>
     );
   }
 
   if (dashboard.isError || !data) {
     return (
-      <ImageBackground source={images.appFullScreen} style={styles.background} resizeMode="cover">
+      <ImageBackground 
+        source={require("@/assets/images/property-registration-initial-screen.webp")} 
+        style={styles.background} 
+        resizeMode="cover"
+      >
         <StatusBar style="light" />
-        <StatusBarProtection />
         <View style={styles.centerState}>
           <Text style={styles.stateTitle}>Dashboard unavailable</Text>
           <Text style={styles.stateText}>We could not load your driver jobs right now.</Text>
@@ -150,18 +157,54 @@ export default function DriverDashboardScreen() {
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
         </View>
-        <TabBarProtection />
+        
+        <View style={styles.bottomBar}>
+          <View style={styles.bottomBarLine} />
+        </View>
       </ImageBackground>
     );
   }
 
   return (
-    <ImageBackground source={images.appFullScreen} style={styles.background} resizeMode="cover">
+    <ImageBackground 
+      source={require("@/assets/images/property-registration-initial-screen.webp")} 
+      style={styles.background} 
+      resizeMode="cover"
+    >
       <StatusBar style="light" />
-      <StatusBarProtection />
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        {/* Header Section - 30% of screen */}
+        <View style={styles.headerSection}>
+          <View style={styles.topRow}>
+            <TouchableOpacity
+              onPress={() => setSidebarVisible(!sidebarVisible)}
+              style={styles.menuButton}
+            >
+              <Image
+                source={require("@/assets/icons/menu.png")}
+                style={styles.menuIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+
+            <View style={styles.profileContainer}>
+              <DriverProfileCard profile={data.profile} />
+            </View>
+
+            <TouchableOpacity style={styles.menuButton}>
+              <Image
+                source={icons.bell}
+                style={styles.menuIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Scrollable Content */}
         <ScrollView
-          contentContainerStyle={styles.content}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -172,62 +215,139 @@ export default function DriverDashboardScreen() {
             />
           }
         >
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.iconButton} accessibilityRole="button">
-              <Image source={icons.filter} style={styles.headerIcon} resizeMode="contain" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} accessibilityRole="button">
-              <Image source={icons.bell} style={styles.headerIcon} resizeMode="contain" />
-            </TouchableOpacity>
+          {/* Performance Metrics */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Performance Metrics</Text>
+            <View style={styles.metricsRow}>
+              {/* Total Trips - Gradient #cdffd8 to #94b9ff */}
+              <LinearGradient
+                colors={["#cdffd8", "#94b9ff"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.metricCard}
+              >
+                <Image
+                  source={icons.tripMetrics}
+                  style={styles.metricIcon}
+                  resizeMode="contain"
+                />
+                <Text style={styles.metricLabelDark}>Total Trips</Text>
+                <Text style={styles.metricValueDark}>{data.metrics.totalTrips}</Text>
+              </LinearGradient>
+
+              {/* Weekly Income - Gray/White #f5f5f5 */}
+              <View style={[styles.metricCard, { backgroundColor: "#f5f5f5" }]}>
+                <Image
+                  source={icons.incomeMetrics}
+                  style={styles.metricIcon}
+                  resizeMode="contain"
+                />
+                <Text style={styles.metricLabelDark}>Weekly Income</Text>
+                <Text style={styles.metricValueDark}>KSh {data.metrics.weeklyIncome.toLocaleString()}</Text>
+              </View>
+            </View>
+
+            <View style={styles.metricsRow}>
+              {/* Clients Served - Cyan to Cobalt Blue #00CED1 to #004AAD */}
+              <LinearGradient
+                colors={["#00CED1", "#004AAD"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.metricCard}
+              >
+                <Image
+                  source={icons.clientsMetrics}
+                  style={styles.metricIcon}
+                  resizeMode="contain"
+                />
+                <Text style={styles.metricLabel}>Clients Served</Text>
+                <Text style={styles.metricValue}>{data.metrics.totalClients}</Text>
+              </LinearGradient>
+
+              {/* Distance Traveled - Gradient #333333 to #898989 */}
+              <LinearGradient
+                colors={["#333333", "#898989"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.metricCard}
+              >
+                <Image
+                  source={icons.location}
+                  style={styles.metricIcon}
+                  resizeMode="contain"
+                />
+                <Text style={styles.metricLabel}>Distance</Text>
+                <Text style={styles.metricValue}>{data.metrics.totalDistanceKm} km</Text>
+              </LinearGradient>
+            </View>
           </View>
 
-          <View style={styles.profileRow}>
-            <DriverProfileCard profile={data.profile} />
+          {/* Active Moves */}
+          <View style={styles.section}>
+            <SectionHeader
+              icon={icons.activeMove}
+              title="Active moves!!"
+              actionText="refresh"
+              onActionPress={handleRefresh}
+            />
+            {data.activeMoves.length > 0 ? (
+              data.activeMoves.map((move) => (
+                <ActiveMoveCard
+                  key={move.id}
+                  move={move}
+                  onStartMove={handleStartMove}
+                  onMessage={handleMessage}
+                  onCall={handleCall}
+                />
+              ))
+            ) : (
+              <Text style={styles.emptyText}>No active moves right now.</Text>
+            )}
           </View>
 
-          <MetricsGrid metrics={data.metrics} />
-
-          <SectionHeader
-            icon={icons.activeMove}
-            title="Active moves!!"
-            actionText="refresh"
-            onActionPress={handleRefresh}
-          />
-          {data.activeMoves.length > 0 ? (
-            data.activeMoves.map((move) => (
-              <ActiveMoveCard
-                key={move.id}
-                move={move}
-                onStartMove={handleStartMove}
-                onMessage={handleMessage}
-                onCall={handleCall}
-              />
-            ))
-          ) : (
-            <Text style={styles.emptyText}>No active moves right now.</Text>
-          )}
-
-          <SectionHeader
-            icon={icons.upcomingMoves}
-            title="Upcoming moves"
-            actionText="view all"
-            onActionPress={() => Alert.alert("Upcoming moves", "All available requests are shown.")}
-          />
-          {data.upcomingMoves.length > 0 ? (
-            data.upcomingMoves.map((moveRequest) => (
-              <UpcomingMoveCard
-                key={moveRequest.id}
-                moveRequest={moveRequest}
-                onConfirm={handleConfirmMove}
-                onReject={handleRejectMove}
-              />
-            ))
-          ) : (
-            <Text style={styles.emptyText}>No upcoming requests available.</Text>
-          )}
+          {/* Upcoming Moves */}
+          <View style={styles.section}>
+            <SectionHeader
+              icon={icons.upcomingMoves}
+              title="Upcoming moves"
+              actionText="view all"
+              onActionPress={() => Alert.alert("Upcoming moves", "All available requests are shown.")}
+            />
+            {data.upcomingMoves.length > 0 ? (
+              data.upcomingMoves.map((moveRequest) => (
+                <UpcomingMoveCard
+                  key={moveRequest.id}
+                  moveRequest={moveRequest}
+                  onConfirm={handleConfirmMove}
+                  onReject={handleRejectMove}
+                />
+              ))
+            ) : (
+              <Text style={styles.emptyText}>No upcoming requests available.</Text>
+            )}
+          </View>
         </ScrollView>
       </SafeAreaView>
-      <TabBarProtection />
+      
+      <View style={styles.bottomBar}>
+        <View style={styles.bottomBarLine} />
+      </View>
+
+      {sidebarVisible && (
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setSidebarVisible(false)}
+          style={styles.sidebarOverlay}
+        >
+          <View style={styles.sidebar}>
+            <Image
+              source={require("@/assets/images/side-bar.png")}
+              style={styles.sidebarImage}
+              resizeMode="cover"
+            />
+          </View>
+        </TouchableOpacity>
+      )}
     </ImageBackground>
   );
 }
@@ -239,32 +359,90 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  content: {
-    paddingHorizontal: spacing.base,
-    paddingTop: spacing.md,
-    paddingBottom: 128,
+  headerSection: {
+    height: "30%",
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
   },
-  header: {
-    minHeight: 52,
+  topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: spacing.md,
   },
-  iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  menuButton: {
+    padding: spacing.sm,
+  },
+  menuIcon: {
+    width: 28,
+    height: 28,
+  },
+  profileContainer: {
+    flex: 1,
+    marginHorizontal: spacing.base,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: 120,
+  },
+  section: {
+    marginBottom: spacing.lg,
+  },
+  sectionTitle: {
+    fontFamily: typography.family.headingBold,
+    fontSize: typography.size.xl,
+    color: colors.dark[400],
+    marginBottom: spacing.base,
+  },
+  metricsRow: {
+    flexDirection: "row",
+    gap: spacing.base,
+    marginBottom: spacing.base,
+  },
+  metricCard: {
+    flex: 1,
+    padding: spacing.base,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.86)",
+    minHeight: 120,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  headerIcon: {
-    width: 22,
-    height: 22,
+  metricIcon: {
+    width: 48,
+    height: 48,
+    marginBottom: spacing.sm,
   },
-  profileRow: {
-    marginBottom: spacing.lg,
+  metricLabel: {
+    fontFamily: typography.family.medium,
+    fontSize: 14,
+    color: colors.light[400],
+    textAlign: "center",
+    marginBottom: spacing.xs,
+  },
+  metricLabelDark: {
+    fontFamily: typography.family.medium,
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: spacing.xs,
+  },
+  metricValue: {
+    fontFamily: typography.family.headingBold,
+    fontSize: 16,
+    color: colors.light[400],
+  },
+  metricValueDark: {
+    fontFamily: typography.family.headingBold,
+    fontSize: 16,
+    color: "#111827",
   },
   emptyText: {
     color: colors.dark[100],
@@ -306,5 +484,36 @@ const styles = StyleSheet.create({
     color: colors.light[400],
     fontFamily: typography.family.semibold,
     fontSize: typography.size.base,
+  },
+  bottomBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    backgroundColor: "#3fbdfd",
+    zIndex: 50,
+  },
+  bottomBarLine: {
+    height: 1,
+    backgroundColor: "#000000",
+  },
+  sidebarOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    zIndex: 40,
+  },
+  sidebar: {
+    width: 256,
+    height: "100%",
+    backgroundColor: "#ffffff",
+  },
+  sidebarImage: {
+    width: "100%",
+    height: "100%",
   },
 });

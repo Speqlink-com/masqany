@@ -62,16 +62,8 @@ export function useLogin() {
 // Register mutation
 // ---------------------------------------------------------------------------
 export function useRegister() {
-  const setUser = useAuthStore((s) => s.setUser);
-  const setTokens = tokenStore((s) => s.setTokens);
-
   return useMutation({
-    mutationFn: (payload: RegisterPayload) => authApi.register(payload),
-    onSuccess: (data) => {
-      setTokens(data.accessToken, data.refreshToken);
-      setUser(data.user);
-      queryClient.setQueryData(authKeys.me, data.user);
-    },
+    mutationFn: (payload: RegisterPayload) => authApi.signup(payload),
   });
 }
 

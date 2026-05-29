@@ -1,10 +1,11 @@
 /**
- * Reset Password — Create new password after OTP verification
+ * Reset Password — Create new password using backend reset token
  */
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
+import { authApi } from "@/modules/auth/api";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -91,12 +92,18 @@ export default function ResetPasswordScreen() {
     if (!isValid) return;
 
     setLoading(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1200));
-    setLoading(false);
+    try {
+      await authApi.resetPassword({
+        token: resetToken,
+        new_password: password,
+      });
 
-    // Success - navigate to login
-    router.replace("/login" as any);
+      router.replace("/login" as any);
+    } catch {
+      // Keep the error surface simple; validation already happens client-side.
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

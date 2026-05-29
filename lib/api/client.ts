@@ -17,7 +17,7 @@ import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } fro
 // Base URL — swap via environment variable in EAS build profiles
 // ---------------------------------------------------------------------------
 const BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? "https://api.masqany.com/v1";
+  process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.0.100:8080/api/v1";
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
