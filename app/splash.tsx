@@ -17,7 +17,7 @@ export default function SplashScreen() {
     // Navigate to auth screen after 4 seconds
     const timer = setTimeout(() => {
       router.replace("/auth");
-    }, 6000);
+    }, 4000);
 
     return () => clearTimeout(timer);
   }, [isReady, router]);
@@ -25,7 +25,7 @@ export default function SplashScreen() {
   return (
     <View className="flex-1">
       <Image
-        source={require("../assets/images/splash-screen.webp")}
+        source={require("../assets/images/splash-screen.png")}
         className="w-full h-full"
         resizeMode="cover"
       />

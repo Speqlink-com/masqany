@@ -12,7 +12,7 @@ import continueWithPassword from "@/assets/images/continue-with-password-btn.png
 import masqanyLogo from "@/assets/images/masqany-logo.png";
 import registerPropertyBtn from "@/assets/images/register-property-btn.webp";
 import signUpBtn from "@/assets/images/sign-up-btn.png";
-import splashScreen from "@/assets/images/splash-screen.webp";
+import splashScreen from "@/assets/images/splash-screen.png";
 import vehicleRegistrationBtn from "@/assets/images/vehicle-registration-btn.webp";
 
 export default {

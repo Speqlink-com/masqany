@@ -833,7 +833,7 @@ export default function ChatAgentScreen() {
                             onPress={() => pinChat(chat.id)}
                           />
                           <OptionRow
-                            icon={require("@/assets/icons/delete.webp")}
+                            icon={require("@/assets/icons/delete.png")}
                             label="Delete"
                             danger
                             onPress={() => deleteChat(chat.id)}
