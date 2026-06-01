@@ -9,24 +9,24 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
-  Animated,
-  Dimensions,
-  FlatList,
-  Image,
-  ImageBackground,
-  Keyboard,
-  KeyboardAvoidingView,
-  Modal,
-  PanResponder,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    Animated,
+    Dimensions,
+    FlatList,
+    Image,
+    ImageBackground,
+    Keyboard,
+    KeyboardAvoidingView,
+    Modal,
+    PanResponder,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -483,7 +483,6 @@ export default function ChatAgentScreen() {
         style={styles.background}
         resizeMode="cover"
       >
-        <View pointerEvents="none" style={styles.topBlueBar} />
         <SafeAreaView style={styles.safeArea} edges={["top"]}>
           <View style={styles.main} {...mainPanResponder.panHandlers}>
             <View style={styles.header}>
@@ -1166,15 +1165,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-  },
-  topBlueBar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "3.5%",
-    backgroundColor: THEME_BLUE,
-    zIndex: 50,
   },
   bottomBlueBar: {
     position: "absolute",

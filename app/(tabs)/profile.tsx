@@ -4,10 +4,10 @@
  * Displays user profile header and settings cards for navigation.
  */
 import {
-    ConfirmDialog,
-    ProfileHeader,
-    ProfileSkeleton,
-    SettingsCard
+  ConfirmDialog,
+  ProfileHeader,
+  ProfileSkeleton,
+  SettingsCard
 } from "@/components/profile";
 import { colors, spacing, typography } from "@/constants/tokens";
 import { useAccounts, useLogout, useProfile } from "@/modules/profile";
@@ -16,12 +16,12 @@ import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useState } from "react";
 import {
-    Alert,
-    ImageBackground,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  ImageBackground,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -125,9 +125,6 @@ export default function ProfileScreen() {
         style={styles.bg}
         resizeMode="cover"
       >
-        {/* Top Bar - Blue bar protecting status bar - Fixed position */}
-        <View className="absolute top-0 left-0 right-0 h-[3.5%] bg-[#3fbdfd] z-50" />
-        
         <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
           {/* Header */}
           <View style={styles.header}>
@@ -230,7 +227,7 @@ export default function ProfileScreen() {
       
       {/* Bottom Bar - Blue bar covering entire tab bar area - Fixed position */}
       <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#3fbdfd] z-50">
-        <View className="h-[1px] bg-black" />
+        <View className="h-[2px] bg-white" />
       </View>
     </View>
   );
