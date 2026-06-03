@@ -1,24 +1,21 @@
 /**
- * Login OTP Verification
- * Verifies OTP for login without password
+ * Phone OTP Verification — phone verification for signup (step 2).
  */
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
 import { apiClient } from "@/lib/api/client";
-import { saveSession } from "@/modules/auth/storage";
-import { tokenStore, useAuthStore } from "@/store/auth.store";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    NativeSyntheticEvent,
-    Text,
-    TextInput,
-    TextInputKeyPressEventData,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  NativeSyntheticEvent,
+  Text,
+  TextInput,
+  TextInputKeyPressEventData,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 // ---------------------------------------------------------------------------
@@ -63,8 +60,6 @@ function DigitBox({ value, isFocused, hasError, inputRef, onChangeText, onKeyPre
         maxLength={1}
         selectTextOnFocus
         caretHidden
-        textContentType="oneTimeCode"
-        autoComplete="sms-otp"
         style={{
           fontFamily: "Inter_800ExtraBold",
           fontSize: 24,
@@ -151,15 +146,16 @@ function useCountdown(initial = 60) {
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
-export default function LoginOtpScreen() {
+export default function OnboardingPhoneOtpScreen() {
   const router = useRouter();
-  const { identifier } = useLocalSearchParams<{ identifier: string }>();
-  const setUser = useAuthStore((state) => state.setUser);
-  const setTokens = tokenStore((state) => state.setTokens);
+  const { name, role, email, phone } = useLocalSearchParams<{
+    name: string; role: string; email: string; phone: string;
+  }>();
 
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
+
   const cd = useCountdown(60);
 
   async function handleVerify() {
@@ -169,52 +165,43 @@ export default function LoginOtpScreen() {
     const code = digits.join("");
     
     console.log("=".repeat(50));
-    console.log("[LOGIN OTP VERIFY] Verifying OTP...");
-    console.log("[LOGIN OTP VERIFY] Identifier:", identifier);
-    console.log("[LOGIN OTP VERIFY] Code:", code);
+    console.log("[PHONE OTP] Verifying phone OTP...");
+    console.log("[PHONE OTP] Email:", email);
+    console.log("[PHONE OTP] Code:", code);
     console.log("=".repeat(50));
 
     try {
-      console.log("[LOGIN OTP VERIFY] Calling POST /api/auth/signin/otp/verify");
+      console.log("[PHONE OTP] Calling POST /api/auth/signup/verify-phone");
       
-      const response = await apiClient.post("/api/auth/signin/otp/verify", {
-        identifier: identifier,
-        code: code,
+      const response = await apiClient.post("/api/auth/signup/verify-phone", {
+        email,
+        code,
       });
 
-      console.log("[LOGIN OTP VERIFY] ✅ Response received:", JSON.stringify(response.data, null, 2));
-
-      const { refreshToken, user } = response.data;
-
-      // Save session to secure storage
-      console.log("[LOGIN OTP VERIFY] Saving session...");
-      await saveSession(refreshToken, refreshToken, user);
-      
-      // Update app state
-      console.log("[LOGIN OTP VERIFY] Updating app state...");
-      setTokens(refreshToken, refreshToken);
-      setUser(user);
-
-      console.log("[LOGIN OTP VERIFY] ✅ Login successful! User:", user.fullName, "Role:", user.role);
+      console.log("[PHONE OTP] ✅ Phone verified:", JSON.stringify(response.data, null, 2));
+      console.log("[PHONE OTP] Next step:", response.data.nextStep);
       console.log("=".repeat(50));
 
       setVerifying(false);
-      routeByRole(user.role, router);
-      
+
+      // Next step is accept_terms
+      router.push({
+        pathname: "/onboarding-complete" as any,
+        params: { name: name ?? "", role: role ?? "", email, phone },
+      });
     } catch (err: any) {
-      console.log("[LOGIN OTP VERIFY] ❌ Verification failed:");
-      console.error("[LOGIN OTP VERIFY] Full error:", err);
-      console.error("[LOGIN OTP VERIFY] Error message:", err.message);
-      console.error("[LOGIN OTP VERIFY] Error status:", err.status);
+      console.log("[PHONE OTP] ❌ Verification failed:");
+      console.error("[PHONE OTP] Full error:", err);
+      console.error("[PHONE OTP] Error message:", err.message);
+      console.error("[PHONE OTP] Error status:", err.status);
       console.log("=".repeat(50));
       
       let errorMsg = err.message || err.response?.data?.message || "Verification failed";
       
-      // User-friendly messages
       if (err.status === 400 || errorMsg.toLowerCase().includes("invalid") || errorMsg.toLowerCase().includes("incorrect")) {
         errorMsg = "Incorrect code. Please try again.";
-      } else if (err.status === 404) {
-        errorMsg = "OTP expired. Please request a new code.";
+      } else if (err.status === 404 || errorMsg.toLowerCase().includes("expired")) {
+        errorMsg = "Code expired. Please request a new code.";
       }
       
       setError(errorMsg);
@@ -224,40 +211,28 @@ export default function LoginOtpScreen() {
   }
 
   async function handleResend() {
-    if (!identifier) return;
+    if (!email) return;
     
-    console.log("=".repeat(50));
-    console.log("[LOGIN OTP RESEND] Resending OTP...");
-    console.log("[LOGIN OTP RESEND] Identifier:", identifier);
-    console.log("=".repeat(50));
+    console.log("[PHONE OTP] Resending phone OTP for:", email);
     
     try {
-      console.log("[LOGIN OTP RESEND] Calling POST /api/auth/signin/otp/request");
-      
-      const response = await apiClient.post("/api/auth/signin/otp/request", {
-        identifier: identifier,
+      const response = await apiClient.post("/api/auth/signup/resend-phone-otp", {
+        email,
       });
       
-      console.log("[LOGIN OTP RESEND] ✅ OTP resent:", JSON.stringify(response.data, null, 2));
-      console.log("=".repeat(50));
+      console.log("[PHONE OTP] ✅ OTP resent:", response.data.message);
       
       cd.reset();
       setDigits(Array(6).fill(""));
       setError(null);
     } catch (err: any) {
-      console.log("[LOGIN OTP RESEND] ❌ Resend failed:");
-      console.error("[LOGIN OTP RESEND] Full error:", err);
-      console.error("[LOGIN OTP RESEND] Error message:", err.message);
-      console.log("=".repeat(50));
-      
-      const errorMsg = err.message || err.response?.data?.message || "Unable to resend code. Please try again.";
+      console.error("[PHONE OTP] Resend failed:", err);
+      const errorMsg = err.message || err.response?.data?.message || "Unable to resend the code. Please try again.";
       setError(errorMsg);
     }
   }
 
-  const maskedIdentifier = identifier?.includes("@")
-    ? identifier.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "***" + c)
-    : identifier ? identifier.slice(0, 7) + "***" + identifier.slice(-2) : "";
+  const maskedPhone = phone ? phone.slice(0, 7) + "***" + phone.slice(-2) : "";
 
   return (
     <AuthLayout>
@@ -265,12 +240,18 @@ export default function LoginOtpScreen() {
       <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 48 }}>
         <BackButton />
 
-        <Text className="font-poppins-bold text-dark-400 mt-10 mb-2" style={{ fontSize: 26 }}>
-          Verify your identity
+        {/* Step progress */}
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 40, marginBottom: 32 }}>
+          <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: "#28B4FA" }} />
+          <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: "#28B4FA" }} />
+        </View>
+
+        <Text className="font-poppins-bold text-dark-400 mb-2" style={{ fontSize: 26 }}>
+          Verify your phone
         </Text>
         <Text style={{ fontFamily: "Inter_400Regular", fontSize: 15, color: "#4F5C62", lineHeight: 24, marginBottom: 36 }}>
           We sent a 6-digit code to{" "}
-          <Text style={{ fontFamily: "Inter_700Bold", color: "#1A2225" }}>{maskedIdentifier}</Text>.
+          <Text style={{ fontFamily: "Inter_700Bold", color: "#1A2225" }}>{maskedPhone}</Text>.
           {" "}Enter it below.
         </Text>
 
@@ -310,41 +291,16 @@ export default function LoginOtpScreen() {
           </View>
         ) : (
           <PrimaryButton
-            label="Verify & Login"
+            label="Verify Phone"
             onPress={handleVerify}
             disabled={!digits.every((d) => d)}
           />
         )}
 
         <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#BDBDC0", textAlign: "center", marginTop: 20 }}>
-          Use the code sent to your email.
+          Use the code sent via SMS to your phone.
         </Text>
       </View>
     </AuthLayout>
   );
-}
-
-function routeByRole(role: string, router: ReturnType<typeof useRouter>) {
-  console.log("[LOGIN OTP] Routing user based on role:", role);
-  
-  switch (role) {
-    case "admin":
-    case "superadmin":
-      console.log("[LOGIN OTP] -> Routing to super-admin dashboard");
-      router.replace("/(super-admin)/dashboard" as any);
-      break;
-    case "property_owner":
-    case "property_agent":
-      console.log("[LOGIN OTP] -> Routing to property-admin");
-      router.replace("/(property-admin)" as any);
-      break;
-    case "relocation_driver":
-      console.log("[LOGIN OTP] -> Routing to driver dashboard");
-      router.replace("/(tabs)/home" as any);
-      break;
-    case "tenant":
-    default:
-      console.log("[LOGIN OTP] -> Routing to home");
-      router.replace("/(tabs)/home" as any);
-  }
 }

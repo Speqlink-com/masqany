@@ -7,7 +7,7 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
-import { authApi } from "@/modules/auth/api";
+import { apiClient } from "@/lib/api/client";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -162,35 +162,75 @@ export default function OnboardingOtpScreen() {
 
   async function handleVerify() {
     if (!digits.every((d) => d)) return;
+    
     setVerifying(true);
+    const code = digits.join("");
+    
+    console.log("=".repeat(50));
+    console.log("[OTP] Verifying email OTP...");
+    console.log("[OTP] Email:", email);
+    console.log("[OTP] Code:", code);
+    console.log("=".repeat(50));
+
     try {
-      await authApi.verifyOtp({
+      console.log("[OTP] Calling POST /api/auth/signup/verify-email");
+      
+      const response = await apiClient.post("/api/auth/signup/verify-email", {
         email,
-        otp_code: digits.join(""),
-        purpose: "verification",
+        code,
       });
 
+      console.log("[OTP] ✅ Email verified:", JSON.stringify(response.data, null, 2));
+      console.log("[OTP] Next step:", response.data.nextStep);
+      console.log("=".repeat(50));
+
+      setVerifying(false);
+
+      // Next step is verify_phone - navigate to phone OTP screen
       router.push({
-        pathname: "/onboarding-complete" as any,
+        pathname: "/onboarding-phone-otp" as any,
         params: { name: name ?? "", role: role ?? "", email, phone },
       });
-    } catch {
-      setError("Incorrect code. Please try again.");
+    } catch (err: any) {
+      console.log("[OTP] ❌ Verification failed:");
+      console.error("[OTP] Full error:", err);
+      console.error("[OTP] Error message:", err.message);
+      console.error("[OTP] Error status:", err.status);
+      console.log("=".repeat(50));
+      
+      let errorMsg = err.message || err.response?.data?.message || "Verification failed";
+      
+      if (err.status === 400 || errorMsg.toLowerCase().includes("invalid") || errorMsg.toLowerCase().includes("incorrect")) {
+        errorMsg = "Incorrect code. Please try again.";
+      } else if (err.status === 404 || errorMsg.toLowerCase().includes("expired")) {
+        errorMsg = "Code expired. Please request a new code.";
+      }
+      
+      setError(errorMsg);
       setDigits(Array(6).fill(""));
-    } finally {
       setVerifying(false);
     }
   }
 
   async function handleResend() {
     if (!email) return;
+    
+    console.log("[OTP] Resending email OTP for:", email);
+    
     try {
-      await authApi.sendOtp({ email, purpose: "verification" });
+      const response = await apiClient.post("/api/auth/signup/resend-email-otp", {
+        email,
+      });
+      
+      console.log("[OTP] ✅ OTP resent:", response.data.message);
+      
       cd.reset();
       setDigits(Array(6).fill(""));
       setError(null);
-    } catch {
-      setError("Unable to resend the code. Please try again.");
+    } catch (err: any) {
+      console.error("[OTP] Resend failed:", err);
+      const errorMsg = err.message || err.response?.data?.message || "Unable to resend the code. Please try again.";
+      setError(errorMsg);
     }
   }
 

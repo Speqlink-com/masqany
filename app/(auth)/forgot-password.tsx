@@ -6,7 +6,7 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
-import { authApi } from "@/modules/auth/api";
+import { apiClient } from "@/lib/api/client";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -44,20 +44,48 @@ export default function ForgotPasswordScreen() {
     setError(null);
     setSuccess(null);
 
-    const contact = contactType === "email" ? email.trim() : `+254${phoneDigits}`;
+    const identifier = contactType === "email" ? email.trim() : `+254${phoneDigits}`;
 
-    if (contactType !== "email") {
-      setError("Password reset currently uses email only.");
-      setLoading(false);
-      return;
-    }
+    console.log("=".repeat(50));
+    console.log("[FORGOT PASSWORD] Requesting password reset...");
+    console.log("[FORGOT PASSWORD] Contact type:", contactType);
+    console.log("[FORGOT PASSWORD] Identifier:", identifier);
+    console.log("=".repeat(50));
 
     try {
-      await authApi.forgotPassword({ email: contact });
-      setSuccess("If an account exists with this email, you’ll receive a password reset link shortly.");
-    } catch {
-      setError("Unable to send reset link. Please try again.");
-    } finally {
+      console.log("[FORGOT PASSWORD] Calling POST /api/auth/password/forgot/request");
+      
+      const response = await apiClient.post("/api/auth/password/forgot/request", {
+        identifier: identifier,
+      });
+
+      console.log("[FORGOT PASSWORD] ✅ Response:", JSON.stringify(response.data, null, 2));
+      console.log("=".repeat(50));
+
+      setSuccess("OTP sent successfully. Check your email or phone.");
+      setLoading(false);
+      
+      // Navigate to OTP verification screen
+      router.push({
+        pathname: "/forgot-password-otp" as any,
+        params: { identifier: identifier, contactType: contactType },
+      });
+    } catch (err: any) {
+      console.log("[FORGOT PASSWORD] ❌ Error:");
+      console.error("[FORGOT PASSWORD] Full error:", err);
+      console.error("[FORGOT PASSWORD] Error message:", err.message);
+      console.error("[FORGOT PASSWORD] Error status:", err.status);
+      console.log("=".repeat(50));
+      
+      let errorMsg = err.message || err.response?.data?.message || "Unable to send reset code";
+      
+      if (err.status === 404) {
+        errorMsg = "No account found with this email or phone.";
+      } else if (err.status === 429) {
+        errorMsg = "Too many requests. Please try again later.";
+      }
+      
+      setError(errorMsg);
       setLoading(false);
     }
   }
@@ -222,7 +250,7 @@ export default function ForgotPasswordScreen() {
               </View>
             ) : (
               <PrimaryButton
-                label="Send reset link"
+                label="Send reset code"
                 onPress={handleSendOTP}
                 disabled={!canSubmit}
                 loading={loading}

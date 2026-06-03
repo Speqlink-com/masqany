@@ -11,6 +11,9 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
+import { apiClient } from "@/lib/api/client";
+import { saveSession } from "@/modules/auth/storage";
+import { tokenStore, useAuthStore } from "@/store/auth.store";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -33,6 +36,7 @@ function getNextRoute(role: string): string {
 
 export default function OnboardingCompleteScreen() {
   const router = useRouter();
+  const setUser = useAuthStore((state) => state.setUser);
   const { name, role, email, phone } = useLocalSearchParams<{
     name: string;
     role: string;
@@ -42,6 +46,55 @@ export default function OnboardingCompleteScreen() {
 
   const [closingDone, setClosingDone] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleComplete() {
+    if (!accepted || !email) return;
+    
+    setLoading(true);
+    
+    console.log("=".repeat(50));
+    console.log("[SIGNUP COMPLETE] Completing signup...");
+    console.log("[SIGNUP COMPLETE] Email:", email);
+    console.log("=".repeat(50));
+
+    try {
+      console.log("[SIGNUP COMPLETE] Calling POST /api/auth/signup/complete");
+      
+      const response = await apiClient.post("/api/auth/signup/complete", {
+        email,
+        termsAccepted: true,
+      });
+
+      console.log("[SIGNUP COMPLETE] ✅ Response:", JSON.stringify(response.data, null, 2));
+
+      const { refreshToken, user } = response.data;
+
+      // Save session
+      console.log("[SIGNUP COMPLETE] Saving session...");
+      await saveSession(refreshToken, refreshToken, user);
+      tokenStore.getState().setTokens(refreshToken, refreshToken);
+      setUser(user);
+
+      console.log("[SIGNUP COMPLETE] ✅ Signup complete! User:", user.fullName);
+      console.log("=".repeat(50));
+
+      setLoading(false);
+
+      // Route based on role
+      router.replace(getNextRoute(user.role) as never);
+    } catch (err: any) {
+      console.log("[SIGNUP COMPLETE] ❌ Error:");
+      console.error("[SIGNUP COMPLETE] Full error:", err);
+      console.error("[SIGNUP COMPLETE] Error message:", err.message);
+      console.error("[SIGNUP COMPLETE] Error status:", err.status);
+      console.log("=".repeat(50));
+      
+      const errorMsg = err.message || err.response?.data?.message || "Signup completion failed. Please try again.";
+      setLoading(false);
+      alert(errorMsg);
+    }
+  }
 
   return (
     <AuthLayout>
@@ -117,11 +170,9 @@ export default function OnboardingCompleteScreen() {
 
             <PrimaryButton
               label="Acknowledge & Finish"
-              onPress={() => {
-                // TODO: call useRegister() with { name, role, email, phone }
-                router.replace(getNextRoute(role ?? "") as never);
-              }}
+              onPress={handleComplete}
               disabled={!accepted}
+              loading={loading}
             />
           </>
         )}

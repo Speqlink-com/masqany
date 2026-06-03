@@ -17,8 +17,9 @@ import { AgentBubble } from "@/components/auth/AgentBubble";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
-import { authApi } from "@/modules/auth/api";
+import { apiClient } from "@/lib/api/client";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
+import { signUpWithGoogle, isGoogleSignInAvailable } from "@/modules/auth/google";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import type { ImageSourcePropType } from "react-native";
@@ -31,6 +32,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 
 // ---------------------------------------------------------------------------
@@ -278,6 +280,7 @@ export default function OnboardingCredentialsScreen() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [touched, setTouched] = useState({ email: false, phone: false, password: false, confirm: false });
 
   const phoneRef = useRef<TextInput>(null);
@@ -318,24 +321,63 @@ export default function OnboardingCredentialsScreen() {
     if (!isValid) return;
 
     setLoading(true);
+    
+    console.log("=".repeat(50));
+    console.log("[SIGNUP] Starting signup...");
+    console.log("[SIGNUP] Name:", name);
+    console.log("[SIGNUP] Role:", role);
+    console.log("[SIGNUP] Email:", email.trim());
+    console.log("[SIGNUP] Phone:", `+254${phoneDigits}`);
+    console.log("=".repeat(50));
+
     try {
-      await authApi.signup({
-        name: name ?? "",
+      console.log("[SIGNUP] Calling POST /api/auth/signup/start");
+      
+      const response = await apiClient.post("/api/auth/signup/start", {
+        fullName: name ?? "",
+        role: role ?? "tenant",
         email: email.trim(),
-        phone_number: `+254${phoneDigits}`,
-        role: (role ?? "TENANT") as "TENANT" | "PROPERTY_OWNER" | "DRIVER",
+        phone: `+254${phoneDigits}`,
         password,
+        confirmPassword: confirm,
       });
+
+      console.log("[SIGNUP] ✅ Response received:", JSON.stringify(response.data, null, 2));
+      console.log("[SIGNUP] Next step:", response.data.nextStep);
+      console.log("=".repeat(50));
+
+      setLoading(false);
 
       router.push({
         pathname: "/onboarding-otp" as any,
-        params: { name: name ?? "", role: role ?? "", email: email.trim(), phone: `+254${phoneDigits}` },
+        params: { 
+          name: name ?? "", 
+          role: role ?? "", 
+          email: email.trim(), 
+          phone: `+254${phoneDigits}` 
+        },
       });
-    } catch {
-      // Keep the inline UX lightweight; the screen already shows validation states.
-      setSubmitted(true);
-    } finally {
+    } catch (err: any) {
+      console.log("[SIGNUP] ❌ Error occurred:");
+      console.error("[SIGNUP] Full error:", err);
+      console.error("[SIGNUP] Error message:", err.message);
+      console.error("[SIGNUP] Error status:", err.status);
+      console.error("[SIGNUP] Response data:", err.response?.data);
+      console.log("=".repeat(50));
+      
+      // Error can be in err.message (normalized by apiClient) or err.response?.data?.message
+      const errorMsg = err.message || err.response?.data?.message || "Signup failed. Please try again.";
+      
       setLoading(false);
+      
+      // Show user-friendly error
+      if (err.status === 409 || errorMsg.toLowerCase().includes("already exists")) {
+        alert("An account with this email or phone already exists. Please try logging in instead.");
+      } else if (err.status === 400) {
+        alert(errorMsg);
+      } else {
+        alert("Signup failed. Please check your details and try again.");
+      }
     }
   }
 
@@ -435,8 +477,56 @@ export default function OnboardingCredentialsScreen() {
                 inputRef={confirmRef}
               />
 
+              {/* Test Credentials for Development */}
+              {__DEV__ && (
+                <View style={{ marginBottom: 16, padding: 12, backgroundColor: "rgba(32, 166, 253, 0.1)", borderRadius: 12 }}>
+                  <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#28B4FA", marginBottom: 8 }}>
+                    🐛 Debug Info (DEV)
+                  </Text>
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#4F5C62", lineHeight: 18 }}>
+                    Name: {name || "not set"}{"\n"}
+                    Role: {role || "not set"}{"\n"}
+                    Email: {email || "empty"}{"\n"}
+                    Phone: {phoneDigits || "empty"}{"\n"}
+                    Password: {password ? "set" : "empty"}{"\n"}
+                    Confirm: {confirm ? "set" : "empty"}{"\n"}
+                    Valid: {isValid ? "✅ YES" : "❌ NO"}{"\n"}
+                    Loading: {loading ? "YES" : "NO"}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEmail("test@example.com");
+                      setPhoneDigits("712345678");
+                      setPassword("TestPass123!");
+                      setConfirm("TestPass123!");
+                    }}
+                    style={{ marginTop: 8, padding: 8, backgroundColor: "#28B4FA", borderRadius: 8 }}
+                  >
+                    <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#FFF", textAlign: "center" }}>
+                      Fill Test Data
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
               <View style={{ marginTop: 2, marginBottom: 16 }}>
-                <PrimaryButton label="Continue" onPress={handleContinue} loading={loading} />
+                <PrimaryButton 
+                  label="Continue" 
+                  onPress={() => {
+                    console.log("=".repeat(50));
+                    console.log("[SIGNUP BUTTON] Button pressed!");
+                    console.log("[SIGNUP BUTTON] Loading state:", loading);
+                    console.log("[SIGNUP BUTTON] isValid:", isValid);
+                    console.log("[SIGNUP BUTTON] Email valid:", isValidEmail(email));
+                    console.log("[SIGNUP BUTTON] Phone valid:", isValidPhoneDigits(phoneDigits));
+                    console.log("[SIGNUP BUTTON] Password strong:", isStrongPassword(password));
+                    console.log("[SIGNUP BUTTON] Passwords match:", password === confirm);
+                    console.log("=".repeat(50));
+                    handleContinue();
+                  }} 
+                  loading={loading}
+                  disabled={loading}
+                />
               </View>
 
               {/* Divider */}
@@ -446,38 +536,105 @@ export default function OnboardingCredentialsScreen() {
                 <View style={{ flex: 1, height: 1, backgroundColor: "#DEDFE3" }} />
               </View>
 
-              {/* Google sign-up */}
-              <TouchableOpacity
-                onPress={() =>
-                  router.push({
-                    pathname: "/onboarding-complete" as any,
-                    params: { name: name ?? "", role: role ?? "", email: "", phone: "" },
-                  })
-                }
-                activeOpacity={0.85}
-                style={{
-                  height: 56,
-                  borderRadius: 999,
-                  backgroundColor: "#28B4FA",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 10,
-                }}
-              >
-                <Image
-                  source={require("@/assets/icons/google.webp")}
-                  style={{ width: 22, height: 22 }}
-                  resizeMode="contain"
-                />
-                <Text style={{ fontFamily: "Inter_800ExtraBold", fontSize: 17, color: "#fff" }}>
-                  Sign up with Google
+              {/* Google sign-up - Only show if native module is available */}
+              {isGoogleSignInAvailable() ? (
+                googleLoading ? (
+                  <View style={{ alignItems: "center", paddingVertical: 16 }}>
+                    <ActivityIndicator size="large" color="#28B4FA" />
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 14, color: "#4F5C62", marginTop: 8 }}>
+                      Signing up with Google...
+                    </Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={handleGoogleSignup}
+                    activeOpacity={0.85}
+                    style={{
+                      height: 56,
+                      borderRadius: 999,
+                      backgroundColor: "#FFFFFF",
+                      borderWidth: 1.5,
+                      borderColor: "#E5E7EB",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 10,
+                    }}
+                  >
+                    <Image
+                      source={require("@/assets/icons/google.webp")}
+                      style={{ width: 22, height: 22 }}
+                      resizeMode="contain"
+                    />
+                    <Text style={{ fontFamily: "Inter_800ExtraBold", fontSize: 17, color: "#1A2225" }}>
+                      Sign up with Google
+                    </Text>
+                  </TouchableOpacity>
+                )
+              ) : (
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#BDBDC0", textAlign: "center", marginTop: 8 }}>
+                  Google Sign-In requires a development build
                 </Text>
-              </TouchableOpacity>
+              )}
             </>
           )}
         </ScrollView>
       </KeyboardAvoidingView>
     </AuthLayout>
   );
+}
+
+async function handleGoogleSignup() {
+  if (!name || !role) {
+    alert("Please go back and select your name and role first.");
+    return;
+  }
+
+  setGoogleLoading(true);
+
+  console.log("=".repeat(50));
+  console.log("[GOOGLE SIGNUP] Starting Google Sign-Up...");
+  console.log("[GOOGLE SIGNUP] Name:", name);
+  console.log("[GOOGLE SIGNUP] Role:", role);
+  console.log("=".repeat(50));
+
+  try {
+    const result = await signUpWithGoogle(name, role as any);
+    
+    console.log("[GOOGLE SIGNUP] ✅ Success! User:", result.user.fullName);
+    console.log("=".repeat(50));
+
+    setGoogleLoading(false);
+    
+    // Navigate based on role
+    switch (result.user.role) {
+      case "property_owner":
+      case "property_agent":
+        router.replace("/(registration)/property-prompt" as any);
+        break;
+      case "relocation_driver":
+        router.replace("/(registration)/vehicle-prompt" as any);
+        break;
+      case "tenant":
+      default:
+        router.replace("/(tabs)/home" as any);
+    }
+  } catch (err: any) {
+    console.log("[GOOGLE SIGNUP] ❌ Error:");
+    console.error("[GOOGLE SIGNUP] Full error:", err);
+    console.error("[GOOGLE SIGNUP] Error message:", err.message);
+    console.error("[GOOGLE SIGNUP] Error status:", err.status);
+    console.log("=".repeat(50));
+
+    let errorMsg = err.message || "Google Sign-Up failed";
+    
+    if (err.status === 409) {
+      errorMsg = "Account already exists with this Google email. Please sign in instead.";
+    } else if (errorMsg.includes("not yet configured")) {
+      errorMsg = "Google Sign-Up is not configured yet. Use email/password instead.";
+    }
+    
+    setGoogleLoading(false);
+    alert(errorMsg);
+  }
 }

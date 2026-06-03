@@ -6,6 +6,7 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
+import { apiClient } from "@/lib/api/client";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -150,40 +151,107 @@ function useCountdown(initial = 60) {
 // ---------------------------------------------------------------------------
 export default function ForgotPasswordOtpScreen() {
   const router = useRouter();
-  const { contact, contactType } = useLocalSearchParams<{
-    contact: string;
+  const { identifier, contactType } = useLocalSearchParams<{
+    identifier: string;
     contactType: "email" | "phone";
   }>();
 
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
   const cd = useCountdown(60);
 
   async function handleVerify() {
     if (!digits.every((d) => d)) return;
+    
     setVerifying(true);
-    await new Promise((r) => setTimeout(r, 900));
-    setVerifying(false);
+    const code = digits.join("");
+    
+    console.log("=".repeat(50));
+    console.log("[FORGOT PASSWORD OTP] Verifying OTP and resetting password...");
+    console.log("[FORGOT PASSWORD OTP] Identifier:", identifier);
+    console.log("[FORGOT PASSWORD OTP] Code:", code);
+    console.log("=".repeat(50));
 
-    // Mock OTP verification
-    if (digits.join("") !== "123456") {
-      setError("Incorrect code. Please try again.");
-      setDigits(Array(6).fill(""));
+    // Show password form first
+    setVerifying(false);
+    setShowPasswordForm(true);
+  }
+
+  async function handleResetPassword() {
+    if (!password || password !== confirmPassword) {
+      setError("Passwords do not match");
       return;
     }
 
-    // Success - navigate to reset password
-    router.push({
-      pathname: "/reset-password" as any,
-      params: { contact, resetToken: "mock-reset-token" },
-    });
+    setVerifying(true);
+    const code = digits.join("");
+
+    try {
+      console.log("[FORGOT PASSWORD OTP] Calling POST /api/auth/password/forgot/complete");
+      
+      const response = await apiClient.post("/api/auth/password/forgot/complete", {
+        identifier: identifier,
+        code: code,
+        newPassword: password,
+        confirmPassword: confirmPassword,
+      });
+
+      console.log("[FORGOT PASSWORD OTP] ✅ Password reset successful:", JSON.stringify(response.data, null, 2));
+      console.log("=".repeat(50));
+
+      setVerifying(false);
+      
+      // Navigate back to login
+      router.replace("/login" as any);
+    } catch (err: any) {
+      console.log("[FORGOT PASSWORD OTP] ❌ Reset failed:");
+      console.error("[FORGOT PASSWORD OTP] Full error:", err);
+      console.error("[FORGOT PASSWORD OTP] Error message:", err.message);
+      console.error("[FORGOT PASSWORD OTP] Error status:", err.status);
+      console.log("=".repeat(50));
+      
+      let errorMsg = err.message || err.response?.data?.message || "Password reset failed";
+      
+      if (err.status === 400 || errorMsg.toLowerCase().includes("invalid")) {
+        errorMsg = "Invalid or expired code. Please try again.";
+      } else if (errorMsg.toLowerCase().includes("password")) {
+        // Keep the specific password error message
+        errorMsg = err.message;
+      }
+      
+      setError(errorMsg);
+      setVerifying(false);
+    }
+  }
+
+  async function handleResend() {
+    console.log("[FORGOT PASSWORD OTP] Resending OTP...");
+    
+    try {
+      await apiClient.post("/api/auth/password/forgot/request", {
+        identifier: identifier,
+      });
+      
+      console.log("[FORGOT PASSWORD OTP] ✅ OTP resent");
+      
+      cd.reset();
+      setDigits(Array(6).fill(""));
+      setError(null);
+    } catch (err: any) {
+      console.error("[FORGOT PASSWORD OTP] Resend failed:", err);
+      const errorMsg = err.message || err.response?.data?.message || "Unable to resend code. Please try again.";
+      setError(errorMsg);
+    }
   }
 
   const maskedContact =
     contactType === "email"
-      ? contact?.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "***" + c) ?? ""
-      : contact ? contact.slice(0, 7) + "***" + contact.slice(-2) : "";
+      ? identifier?.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "***" + c) ?? ""
+      : identifier ? identifier.slice(0, 7) + "***" + identifier.slice(-2) : "";
 
   return (
     <AuthLayout>
@@ -212,39 +280,99 @@ export default function ForgotPasswordOtpScreen() {
           </Text>
         )}
 
-        {/* Resend */}
-        <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 24, marginBottom: 36 }}>
-          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 14, color: "#4F5C62" }}>
-            Didn't receive it?{" "}
-          </Text>
-          {cd.canResend ? (
-            <TouchableOpacity onPress={() => { cd.reset(); setDigits(Array(6).fill("")); setError(null); }} activeOpacity={0.7}>
-              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: "#20A6FD", textDecorationLine: "underline" }}>
-                Resend code
+        {!showPasswordForm && (
+          <>
+            {/* Resend */}
+            <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 24, marginBottom: 36 }}>
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 14, color: "#4F5C62" }}>
+                Didn't receive it?{" "}
               </Text>
-            </TouchableOpacity>
-          ) : (
-            <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#BDBDC0" }}>
-              Resend in {cd.secs}s
-            </Text>
-          )}
-        </View>
+              {cd.canResend ? (
+                <TouchableOpacity onPress={handleResend} activeOpacity={0.7}>
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: "#20A6FD", textDecorationLine: "underline" }}>
+                    Resend code
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#BDBDC0" }}>
+                  Resend in {cd.secs}s
+                </Text>
+              )}
+            </View>
 
-        {verifying ? (
-          <View style={{ alignItems: "center", paddingVertical: 16 }}>
-            <ActivityIndicator size="large" color="#28B4FA" />
-          </View>
-        ) : (
-          <PrimaryButton
-            label="Verify Code"
-            onPress={handleVerify}
-            disabled={!digits.every((d) => d)}
-          />
+            {verifying ? (
+              <View style={{ alignItems: "center", paddingVertical: 16 }}>
+                <ActivityIndicator size="large" color="#28B4FA" />
+              </View>
+            ) : (
+              <PrimaryButton
+                label="Verify Code"
+                onPress={handleVerify}
+                disabled={!digits.every((d) => d)}
+              />
+            )}
+          </>
         )}
 
-        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#BDBDC0", textAlign: "center", marginTop: 20 }}>
-          Demo: use code 123456
-        </Text>
+        {showPasswordForm && (
+          <>
+            <View style={{ marginTop: 24 }}>
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#1A2225", marginBottom: 8 }}>
+                New Password
+              </Text>
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Enter new password"
+                placeholderTextColor="rgba(0,0,0,0.4)"
+                secureTextEntry
+                style={{
+                  height: 48,
+                  backgroundColor: "#AAAABB",
+                  borderRadius: 24,
+                  paddingHorizontal: 16,
+                  fontFamily: "Inter_400Regular",
+                  fontSize: 15,
+                  color: "#000",
+                  marginBottom: 16,
+                }}
+              />
+
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#1A2225", marginBottom: 8 }}>
+                Confirm Password
+              </Text>
+              <TextInput
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Confirm new password"
+                placeholderTextColor="rgba(0,0,0,0.4)"
+                secureTextEntry
+                style={{
+                  height: 48,
+                  backgroundColor: "#AAAABB",
+                  borderRadius: 24,
+                  paddingHorizontal: 16,
+                  fontFamily: "Inter_400Regular",
+                  fontSize: 15,
+                  color: "#000",
+                  marginBottom: 24,
+                }}
+              />
+
+              {verifying ? (
+                <View style={{ alignItems: "center", paddingVertical: 16 }}>
+                  <ActivityIndicator size="large" color="#28B4FA" />
+                </View>
+              ) : (
+                <PrimaryButton
+                  label="Reset Password"
+                  onPress={handleResetPassword}
+                  disabled={!password || password !== confirmPassword}
+                />
+              )}
+            </View>
+          </>
+        )}
       </View>
     </AuthLayout>
   );

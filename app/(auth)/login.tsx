@@ -6,12 +6,15 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
-import { authApi } from "@/modules/auth/api";
-import { useAuthStore } from "@/store/auth.store";
+import { apiClient } from "@/lib/api/client";
+import { saveSession } from "@/modules/auth/storage";
+import { signInWithGoogle, isGoogleSignInAvailable } from "@/modules/auth/google";
+import { tokenStore, useAuthStore, User } from "@/store/auth.store";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import type { ImageSourcePropType } from "react-native";
 import {
+    ActivityIndicator,
     Image,
     KeyboardAvoidingView,
     Platform,
@@ -114,6 +117,8 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [otpSent, setOtpSent] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const canSubmit = identifier.trim().length > 0 && 
     (loginMethod === "otp" || password.length >= 6);
@@ -123,46 +128,155 @@ export default function LoginScreen() {
     setLoading(true);
     setError(null);
 
+    console.log("=".repeat(50));
+    console.log("[LOGIN] Starting login attempt...");
+    console.log("[LOGIN] Identifier:", identifier.trim());
+    console.log("[LOGIN] Password length:", password.length);
+    console.log("[LOGIN] API Base URL:", process.env.EXPO_PUBLIC_API_URL || "http://192.168.0.100");
+    console.log("=".repeat(50));
+
     if (loginMethod === "password") {
       try {
-        const response = await authApi.login({
-          email: identifier.trim(),
-          password,
-          device_info: `${Platform.OS}`,
+        // Call the EXACT endpoint that works with curl
+        console.log("[LOGIN] Calling POST /api/auth/signin/password");
+        
+        const response = await apiClient.post("/api/auth/signin/password", {
+          identifier: identifier.trim(),
+          password: password,
         });
+
+        console.log("[LOGIN] ✅ Response received:", JSON.stringify(response.data, null, 2));
+
+        const { refreshToken, user } = response.data;
+
+        // Save tokens and user to secure storage
+        console.log("[LOGIN] Saving session to secure storage...");
+        await saveSession(refreshToken, refreshToken, user);
+        
+        // Update app state
+        console.log("[LOGIN] Updating app state...");
+        tokenStore.getState().setTokens(refreshToken, refreshToken);
+        setUser(user);
+
+        console.log("[LOGIN] ✅ Login successful! User:", user.fullName, "Role:", user.role);
+        console.log("=".repeat(50));
+
         setLoading(false);
-        routeByRole(response.user.role, router);
-      } catch (err) {
-        setError("Invalid email or password");
+        
+        // Route based on role
+        routeByRole(user.role, router);
+        
+      } catch (err: any) {
+        console.log("[LOGIN] ❌ Error occurred:");
+        console.error("[LOGIN] Full error:", err);
+        console.error("[LOGIN] Error message:", err.message);
+        console.error("[LOGIN] Error status:", err.status);
+        console.error("[LOGIN] Response data:", err.response?.data);
+        console.log("=".repeat(50));
+        
+        // Normalize error message
+        let errorMsg = err.message || err.response?.data?.message || "Login failed";
+        
+        // User-friendly messages based on error type
+        if (err.status === 401 || errorMsg.toLowerCase().includes("invalid") || errorMsg.toLowerCase().includes("incorrect")) {
+          errorMsg = "Invalid email or password. Please try again.";
+        } else if (err.status === 404) {
+          errorMsg = "No account found with this email or phone.";
+        } else if (err.status === 429) {
+          errorMsg = "Too many login attempts. Please try again later.";
+        } else if (!err.status && err.code === "ERR_NETWORK") {
+          errorMsg = "Network error. Please check your connection.";
+        }
+        
+        setError(errorMsg);
         setLoading(false);
-        return;
       }
     } else {
+      // OTP Login
+      console.log("=".repeat(50));
+      console.log("[LOGIN OTP] Requesting OTP...");
+      console.log("[LOGIN OTP] Identifier:", identifier.trim());
+      console.log("=".repeat(50));
+
       try {
-        await authApi.sendOtp({ email: identifier.trim(), purpose: "login" });
+        console.log("[LOGIN OTP] Calling POST /api/auth/signin/otp/request");
+        
+        const response = await apiClient.post("/api/auth/signin/otp/request", {
+          identifier: identifier.trim(),
+        });
+
+        console.log("[LOGIN OTP] ✅ OTP sent:", JSON.stringify(response.data, null, 2));
+        console.log("=".repeat(50));
+
         setLoading(false);
+        setOtpSent(true);
+        
+        // Navigate to OTP screen
         router.push({
           pathname: "/login-otp" as any,
           params: { identifier: identifier.trim() },
         });
-      } catch (err) {
-        setError("Unable to send OTP. Please try again.");
+      } catch (err: any) {
+        console.log("[LOGIN OTP] ❌ Error:");
+        console.error("[LOGIN OTP] Full error:", err);
+        console.error("[LOGIN OTP] Error message:", err.message);
+        console.error("[LOGIN OTP] Error status:", err.status);
+        console.log("=".repeat(50));
+        
+        const errorMsg = err.message || err.response?.data?.message || "Unable to send OTP";
+        setError(errorMsg);
         setLoading(false);
       }
     }
   }
 
+  async function handleGoogleSignIn() {
+    setGoogleLoading(true);
+    setError(null);
+
+    console.log("=".repeat(50));
+    console.log("[LOGIN GOOGLE] Starting Google Sign-In...");
+    console.log("=".repeat(50));
+
+    try {
+      const result = await signInWithGoogle();
+      
+      console.log("[LOGIN GOOGLE] ✅ Success! User:", result.user.fullName);
+      console.log("=".repeat(50));
+
+      setGoogleLoading(false);
+      
+      // Route based on role
+      routeByRole(result.user.role, router);
+    } catch (err: any) {
+      console.log("[LOGIN GOOGLE] ❌ Error:");
+      console.error("[LOGIN GOOGLE] Full error:", err);
+      console.error("[LOGIN GOOGLE] Error message:", err.message);
+      console.error("[LOGIN GOOGLE] Error status:", err.status);
+      console.log("=".repeat(50));
+
+      let errorMsg = err.message || "Google Sign-In failed";
+      
+      if (err.status === 404) {
+        errorMsg = "No account found. Please sign up first.";
+      } else if (errorMsg.includes("not yet configured")) {
+        errorMsg = "Google Sign-In is not configured yet. Use email/password instead.";
+      }
+      
+      setError(errorMsg);
+      setGoogleLoading(false);
+    }
+  }
+
   function handleDevAccess() {
-    // Set mock user with Property_Owner role
-    const mockUser = {
+    console.log("[LOGIN] Dev Access - Bypassing authentication");
+    // Set mock user with Property_Owner role matching backend format
+    const mockUser: User = {
       id: "dev-user-001",
-      name: "Dev Property Owner",
+      fullName: "Dev Property Owner",
       email: "dev@masqany.com",
       phone: "+254700000000",
-      role: "property_owner" as const,
-      isHost: true,
-      isVerified: true,
-      createdAt: new Date().toISOString(),
+      role: "property_owner",
     };
     
     setUser(mockUser);
@@ -304,12 +418,93 @@ export default function LoginScreen() {
               </Text>
             )}
 
-            <PrimaryButton
-              label={loginMethod === "password" ? "Login" : "Send OTP"}
-              onPress={handleLogin}
-              disabled={!canSubmit}
-              loading={loading}
-            />
+            {loading ? (
+              <View className="items-center py-4 mb-4">
+                <ActivityIndicator size="large" color="#28B4FA" />
+                <Text className="font-inter-regular text-dark-200 mt-2" style={{ fontSize: 14 }}>
+                  Signing in...
+                </Text>
+              </View>
+            ) : (
+              <PrimaryButton
+                label={loginMethod === "password" ? "Login" : "Send OTP"}
+                onPress={handleLogin}
+                disabled={!canSubmit}
+              />
+            )}
+
+            {/* Google Sign-In - Only show if native module is available */}
+            {isGoogleSignInAvailable() && (
+              <>
+                {/* Divider */}
+                <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 20, gap: 12 }}>
+                  <View style={{ flex: 1, height: 1, backgroundColor: "#DEDFE3" }} />
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 14, color: "#BDBDC0" }}>or</Text>
+                  <View style={{ flex: 1, height: 1, backgroundColor: "#DEDFE3" }} />
+                </View>
+
+                {/* Google Sign-In */}
+                {googleLoading ? (
+                  <View className="items-center py-4 mb-4">
+                    <ActivityIndicator size="large" color="#28B4FA" />
+                    <Text className="font-inter-regular text-dark-200 mt-2" style={{ fontSize: 14 }}>
+                      Signing in with Google...
+                    </Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={handleGoogleSignIn}
+                    activeOpacity={0.85}
+                    style={{
+                      height: 56,
+                      borderRadius: 999,
+                      backgroundColor: "#FFFFFF",
+                      borderWidth: 1.5,
+                      borderColor: "#E5E7EB",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 10,
+                      marginBottom: 16,
+                    }}
+                  >
+                    <Image
+                      source={require("@/assets/icons/google.webp")}
+                      style={{ width: 22, height: 22 }}
+                      resizeMode="contain"
+                    />
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: "#1A2225" }}>
+                      Sign in with Google
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+
+            {/* Test Credentials Hint */}
+            {__DEV__ && (
+              <View className="mt-6 p-4 rounded-2xl" style={{ backgroundColor: "rgba(32, 166, 253, 0.1)" }}>
+                <Text className="font-inter-semibold text-primary-700 mb-2" style={{ fontSize: 14 }}>
+                  Test Credentials
+                </Text>
+                <Text className="font-inter-regular text-dark-300" style={{ fontSize: 13, lineHeight: 20 }}>
+                  Email: speqlink@gmail.com{'\n'}
+                  Password: @Speqlink1240.,,.
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setIdentifier("speqlink@gmail.com");
+                    setPassword("@Speqlink1240.,,.");
+                  }}
+                  className="mt-2 py-2 px-3 rounded-full"
+                  style={{ backgroundColor: "#28B4FA" }}
+                >
+                  <Text className="font-inter-semibold text-white text-center" style={{ fontSize: 12 }}>
+                    Fill Test Credentials
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
             {/* Development Access Button */}
             {__DEV__ && (
@@ -341,22 +536,26 @@ export default function LoginScreen() {
 }
 
 function routeByRole(role: string, router: ReturnType<typeof useRouter>) {
+  console.log("[LOGIN] Routing user based on role:", role);
+  
   switch (role) {
     case "admin":
-      router.replace("/(tabs)/home"); // TODO: Change to /(admin)/dashboard when ready
-      break;
-    case "super_admin":
-      router.replace("/(tabs)/home"); // TODO: Change to /(admin)/dashboard when ready
+    case "superadmin":
+      console.log("[LOGIN] -> Routing to super-admin dashboard");
+      router.replace("/(super-admin)/dashboard" as any);
       break;
     case "property_owner":
     case "property_agent":
-      router.replace("/(tabs)/home");
+      console.log("[LOGIN] -> Routing to property-admin");
+      router.replace("/(property-admin)" as any);
       break;
     case "relocation_driver":
-      router.replace("/(tabs)/home");
+      console.log("[LOGIN] -> Routing to driver dashboard");
+      router.replace("/(tabs)/home" as any); // Update when driver dashboard is ready
       break;
     case "tenant":
     default:
-      router.replace("/(tabs)/home");
+      console.log("[LOGIN] -> Routing to home");
+      router.replace("/(tabs)/home" as any);
   }
 }

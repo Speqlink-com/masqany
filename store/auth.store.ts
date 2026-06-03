@@ -8,8 +8,26 @@
  * the token without importing the full auth store (avoids circular deps).
  */
 
-import type { User } from "@/types";
 import { create } from "zustand";
+
+// ---------------------------------------------------------------------------
+// User type matching backend response
+// ---------------------------------------------------------------------------
+export type UserRole =
+  | "property_owner"
+  | "tenant"
+  | "relocation_driver"
+  | "admin"
+  | "superadmin"
+  | "property_agent";
+
+export interface User {
+  id: string;
+  fullName: string;
+  role: UserRole;
+  email: string;
+  phone: string | null;
+}
 
 // ---------------------------------------------------------------------------
 // Token store — minimal slice used by the API client interceptor

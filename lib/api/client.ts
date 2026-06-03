@@ -17,7 +17,7 @@ import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } fro
 // Base URL — swap via environment variable in EAS build profiles
 // ---------------------------------------------------------------------------
 const BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.0.100:8080/api/v1";
+  process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.0.100";
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -36,6 +36,7 @@ const INITIAL_RETRY_DELAY = 1000; // 1 second
 
 interface RetryConfig extends AxiosRequestConfig {
   __retryCount?: number;
+  __isRetry?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -55,10 +56,82 @@ apiClient.interceptors.request.use(
 // ---------------------------------------------------------------------------
 // Response interceptor — normalize errors + handle 401 refresh + retry logic
 // ---------------------------------------------------------------------------
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((promise) => {
+    if (error) {
+      promise.reject(error);
+    } else if (token) {
+      promise.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const config = error.config as RetryConfig;
+
+    // Handle 401 Unauthorized - Token refresh
+    if (error.response?.status === 401 && config && !config.__isRetry) {
+      if (isRefreshing) {
+        // Wait for the ongoing refresh
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            if (config.headers) {
+              config.headers.Authorization = `Bearer ${token}`;
+            }
+            return apiClient(config);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      config.__isRetry = true;
+      isRefreshing = true;
+
+      const refreshToken = tokenStore.getState().refreshToken;
+      
+      if (!refreshToken) {
+        isRefreshing = false;
+        processQueue(new Error("No refresh token available"), null);
+        return Promise.reject(normalizeApiError(error));
+      }
+
+      try {
+        // Import dynamically to avoid circular dependency
+        const { refreshAccessToken } = await import("@/modules/auth/hooks");
+        const newAccessToken = await refreshAccessToken(refreshToken);
+
+        if (config.headers) {
+          config.headers.Authorization = `Bearer ${newAccessToken}`;
+        }
+
+        processQueue(null, newAccessToken);
+        isRefreshing = false;
+        
+        return apiClient(config);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        isRefreshing = false;
+
+        // Clear session and redirect to login
+        const { clearSession } = await import("@/modules/auth/storage");
+        const { tokenStore: store } = await import("@/store/auth.store");
+        await clearSession();
+        store.getState().clearTokens();
+
+        return Promise.reject(normalizeApiError(error));
+      }
+    }
     
     // Check if error is retryable (network errors, 5xx errors)
     const isRetryable = 
@@ -85,9 +158,6 @@ apiClient.interceptors.response.use(
       // Retry the request
       return apiClient(config);
     }
-    
-    // TODO: implement token refresh flow when auth service is ready
-    // if (error.response?.status === 401) { ... }
     
     return Promise.reject(normalizeApiError(error));
   }
