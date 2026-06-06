@@ -61,7 +61,7 @@ export const AgentBubble = memo(function AgentBubble({
       />
       <View
         className="flex-1 rounded-2xl px-4 py-3"
-        style={{ backgroundColor: "rgba(255,255,255,0.78)", borderTopLeftRadius: 4 }}
+        style={{ backgroundColor: "#e1e6e8", borderTopLeftRadius: 4 }}
       >
         <Text
           className="font-inter-regular text-dark-300"

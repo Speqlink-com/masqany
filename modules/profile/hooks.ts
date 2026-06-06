@@ -7,14 +7,7 @@ import {
     useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
-import { profileApi } from "./api";
-import type {
-    LanguageUpdatePayload,
-    NotificationUpdatePayload,
-    PasswordChangePayload,
-    ProfileUpdatePayload,
-    TwoFactorTogglePayload,
-} from "./types";
+import * as profileApi from "./api";
 
 // ---------------------------------------------------------------------------
 // Query keys — centralized for cache management
@@ -34,11 +27,26 @@ export const profileKeys = {
 /**
  * Fetch current user profile
  * Stale time: 5 minutes
+ * Only runs when user is authenticated
  */
 export function useProfile() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const accessToken = tokenStore((s) => s.accessToken);
+  
   return useQuery({
     queryKey: profileKeys.detail(),
-    queryFn: () => profileApi.getProfile(),
+    queryFn: async () => {
+      const response = await profileApi.getProfile();
+      // Transform to match component expectations
+      return {
+        id: response.profile.userId,
+        name: response.profile.fullName,
+        email: response.profile.email,
+        phone: response.profile.phone || undefined,
+        avatar: response.profile.avatarUrl || undefined,
+      };
+    },
+    enabled: isAuthenticated && !!accessToken,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
@@ -46,11 +54,19 @@ export function useProfile() {
 /**
  * Fetch user accounts for multi-account management
  * Stale time: 10 minutes
+ * Only runs when user is authenticated
  */
 export function useAccounts() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const accessToken = tokenStore((s) => s.accessToken);
+  
   return useQuery({
     queryKey: profileKeys.accounts(),
-    queryFn: () => profileApi.getAccounts(),
+    queryFn: async () => {
+      const response = await profileApi.getAccounts();
+      return response;
+    },
+    enabled: isAuthenticated && !!accessToken,
     staleTime: 1000 * 60 * 10, // 10 minutes
   });
 }
@@ -66,17 +82,23 @@ export function useAccounts() {
 export function useUpdateProfile() {
   const qc = useQueryClient();
   const setUser = useAuthStore((s) => s.setUser);
+  const user = useAuthStore((s) => s.user);
 
   return useMutation({
-    mutationFn: (payload: ProfileUpdatePayload) =>
-      profileApi.updateProfile(payload),
+    mutationFn: async (payload: { name?: string; email?: string; phone?: string; avatar?: string }) => {
+      return await profileApi.updateProfile(payload);
+    },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: profileKeys.detail() });
-      // Convert UserProfile to User by adding role field
-      setUser({
-        ...data,
-        role: "tenant", // Default role, should be fetched from API in production
-      });
+      // Update auth store with new profile data
+      if (user) {
+        setUser({
+          ...user,
+          fullName: data.name,
+          email: data.email,
+          phone: data.phone || null,
+        });
+      }
     },
   });
 }
@@ -89,7 +111,9 @@ export function useUploadAvatar() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (formData: FormData) => profileApi.uploadAvatar(formData),
+    mutationFn: async (formData: FormData) => {
+      return await profileApi.uploadAvatarImage(formData);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: profileKeys.detail() });
     },
@@ -108,8 +132,9 @@ export function useUpdateLanguage() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: LanguageUpdatePayload) =>
-      profileApi.updateLanguage(payload),
+    mutationFn: async (payload: { language: "en" | "sw" }) => {
+      return await profileApi.updateLanguagePreference(payload);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: profileKeys.detail() });
     },
@@ -124,8 +149,9 @@ export function useUpdateNotifications() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: NotificationUpdatePayload) =>
-      profileApi.updateNotifications(payload),
+    mutationFn: async (payload: { preferences: any }) => {
+      return await profileApi.updateNotificationPreferences(payload);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: profileKeys.notifications() });
     },
@@ -137,8 +163,9 @@ export function useUpdateNotifications() {
  */
 export function useChangePassword() {
   return useMutation({
-    mutationFn: (payload: PasswordChangePayload) =>
-      profileApi.changePassword(payload),
+    mutationFn: async (payload: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
+      return await profileApi.changeUserPassword(payload);
+    },
   });
 }
 
@@ -150,8 +177,9 @@ export function useToggleTwoFactor() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: TwoFactorTogglePayload) =>
-      profileApi.toggleTwoFactor(payload),
+    mutationFn: async (payload: { enabled: boolean }) => {
+      return await profileApi.toggleTwoFactorAuth(payload);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: profileKeys.security() });
     },
@@ -172,13 +200,17 @@ export function useSwitchAccount() {
   const setTokens = tokenStore((s) => s.setTokens);
 
   return useMutation({
-    mutationFn: (accountId: string) => profileApi.switchAccount(accountId),
+    mutationFn: async (accountId: string) => {
+      return await profileApi.switchAccount(accountId);
+    },
     onSuccess: (data) => {
       setTokens(data.accessToken, data.refreshToken);
-      // Convert UserProfile to User by adding role field
       setUser({
-        ...data.user,
-        role: "tenant", // Default role, should be fetched from API in production
+        id: data.user.id,
+        fullName: data.user.name,
+        email: data.user.email,
+        phone: data.user.phone || null,
+        role: "tenant",
       });
       qc.invalidateQueries(); // Invalidate all queries
     },
@@ -193,8 +225,9 @@ export function useAddAccount() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (credentials: { email: string; password: string }) =>
-      profileApi.addAccount(credentials),
+    mutationFn: async (credentials: { email: string; password: string }) => {
+      return await profileApi.addAccount(credentials);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: profileKeys.accounts() });
     },
@@ -211,7 +244,9 @@ export function useLogout() {
   const clearTokens = tokenStore((s) => s.clearTokens);
 
   return useMutation({
-    mutationFn: () => profileApi.logout(),
+    mutationFn: async () => {
+      return await profileApi.logout();
+    },
     onSuccess: () => {
       clearTokens();
       clearSession();

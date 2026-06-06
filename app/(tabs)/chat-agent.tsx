@@ -1,14 +1,24 @@
 /**
  * AI Chat Agent — Masqany AI assistant for property discovery and planning.
+ * Integrated with chat-agent microservice backend for real AI responses.
  */
-import { mockVideoFeedData } from "@/assets/data/video-feed";
 import { AgentBubble } from "@/components/auth/AgentBubble";
 import type { PropertyVideo } from "@/modules/video-feed/types";
+import { mockVideoFeedData } from "@/assets/data/video-feed";
+import {
+  useChats,
+  useCreateChat,
+  useDeleteChat,
+  useGetAgentResponse,
+  useUpdateChat,
+} from "@/modules/chat";
+import { chatApi } from "@/modules/chat/api";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+    ActivityIndicator,
     Alert,
     Animated,
     Dimensions,
@@ -98,100 +108,45 @@ function imageFor(index: number) {
   return resultImages[index % resultImages.length];
 }
 
-const initialChats: ChatSession[] = [
-  {
-    id: "chat-1",
-    title: "2BR Apartment in Kilimani",
-    date: "Today, 2:30 PM",
-    isPinned: true,
-    isArchived: false,
-    mode: "start",
-    messages: [
-      {
-        id: "msg-1",
-        role: "assistant",
-        text: "I found active and coming-soon homes around Kilimani. You can open any listing, ask for safer routes, or compare total move-in cost.",
-        resultIds: ["video-001", "video-008", "video-010"],
-        suggestions: ["Compare deposits", "Show only vacant now", "Add relocation driver"],
-      },
-    ],
-  },
-  {
-    id: "chat-2",
-    title: "Short stay near JKIA",
-    date: "Yesterday, 5:45 PM",
-    isPinned: false,
-    isArchived: false,
-    mode: "plan",
-    messages: [
-      {
-        id: "msg-2",
-        role: "assistant",
-        text: "I can run this as a discovery plan. Tell me your dates, guest count, and whether you prefer hotel, Airbnb, or serviced apartment.",
-        suggestions: ["Hotel room", "Airbnb entire place", "Budget under 8k/night"],
-      },
-    ],
-  },
-  {
-    id: "chat-3",
-    title: "Student hostel Ngara",
-    date: "May 21, 11:10 AM",
-    isPinned: false,
-    isArchived: false,
-    mode: "start",
-    messages: [],
-  },
-];
-
-function getMatchedProperties(prompt: string) {
-  const normalized = prompt.toLowerCase();
-  const matches = mockVideoFeedData.filter((property) => {
-    if (property.unitStatus === "occupied") return false;
-    const searchable = [
-      property.title,
-      property.description,
-      property.propertyType,
-      property.location.estate,
-      property.location.county,
-      property.amenities.join(" "),
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    return normalized
-      .split(/\s+/)
-      .filter((word) => word.length > 2)
-      .some((word) => searchable.includes(word));
-  });
-
-  return (matches.length ? matches : mockVideoFeedData.filter((p) => p.unitStatus !== "occupied")).slice(0, 4);
+/**
+ * Parse markdown bold (**text**) and return Text components with proper styling
+ */
+function parseMarkdownText(text: string, baseStyle: any, boldStyle: any) {
+  // Split by **bold** pattern
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  
+  return (
+    <Text style={baseStyle}>
+      {parts.map((part, index) => {
+        // Check if this part is bold (wrapped in **)
+        if (part.startsWith('**') && part.endsWith('**')) {
+          const boldText = part.slice(2, -2); // Remove **
+          return (
+            <Text key={index} style={boldStyle}>
+              {boldText}
+            </Text>
+          );
+        }
+        // Regular text
+        return part;
+      })}
+    </Text>
+  );
 }
 
-function buildAgentReply(prompt: string, mode: ChatMode) {
-  const matches = getMatchedProperties(prompt);
-
-  if (mode === "plan") {
-    return {
-      text:
-        "Sawa. I will treat this like a spec-driven search plan. I will evaluate your budget, preferred areas, stay type, amenities, availability, and whether a relocation driver is needed. To make the match sharper, answer these first:\n\n" +
-        planQuestions.map((question, index) => `${index + 1}. ${question}`).join("\n") +
-        "\n\nOnce the plan is running, I can add strong matches daily and notify you with links that open the listing page.",
-      resultIds: matches.map((item) => item.id),
-      suggestions: ["Budget is 20k-40k", "I need a driver", "Only available now"],
-    };
-  }
-
-  return {
-    text:
-      "I have checked active Masqany listings for that request. Here are strong matches and a few next steps you can ask in English, Kiswahili, or Sheng.",
-    resultIds: matches.map((item) => item.id),
-    suggestions: ["Show exact location", "Book physical viewing", "Compare with cheaper homes"],
-  };
-}
+const initialChats: ChatSession[] = [];
 
 export default function ChatAgentScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  
+  // ✅ REAL API HOOKS
+  const { data: backendChats, isLoading: isLoadingChats } = useChats();
+  const createChatMutation = useCreateChat();
+  const getAgentResponse = useGetAgentResponse();
+  const updateChatMutation = useUpdateChat();
+  const deleteChatMutation = useDeleteChat();
+  
   const [chats, setChats] = useState<ChatSession[]>(initialChats);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -291,126 +246,176 @@ export default function ChatAgentScreen() {
     setChats((prev) => prev.map((chat) => (chat.id === chatId ? updater(chat) : chat)));
   };
 
-  const createNewChat = (mode: ChatMode = "start") => {
-    const id = makeId("chat");
-    const newChat: ChatSession = {
-      id,
-      title: mode === "plan" ? "New discovery plan" : "New Masqany chat",
-      date: "Now",
-      isPinned: false,
-      isArchived: false,
-      mode,
-      messages: [],
-    };
-    setChats((prev) => [newChat, ...prev]);
-    setActiveChatId(id);
-    setChatInput("");
-    setChatOptionsVisible(null);
-    closeSidebar();
-  };
-
-  const startFlow = (mode: ChatMode) => {
-    const id = makeId("chat");
-    const intro =
-      mode === "plan"
-        ? "Plan Now activated. Tell me the property type, area, budget, move date, must-have amenities, and whether you need a relocation driver. I will ask smart follow-up questions and keep finding matches."
-        : "Start Now activated. Ask me anything about Masqany properties, areas, prices, viewing, short stays, long stays, or moving support.";
-
-    setChats((prev) => [
-      {
-        id,
-        title: mode === "plan" ? "Smart discovery plan" : "Instant Masqany query",
-        date: "Now",
-        isPinned: false,
-        isArchived: false,
-        mode,
-        messages: [
-          {
-            id: makeId("msg"),
-            role: "assistant",
-            text: intro,
-            suggestions: mode === "plan" ? planQuestions : starterSuggestions,
-          },
-        ],
-      },
-      ...prev,
-    ]);
-    setActiveChatId(id);
-    setChatInput("");
-  };
-
-  const selectChat = (chatId: string) => {
-    setActiveChatId(chatId);
-    setChatOptionsVisible(null);
-    closeSidebar();
-  };
-
-  const sendMessage = (preset?: string) => {
-    const value = (preset ?? chatInput).trim();
-    if (!value) return;
-
-    let chatId = activeChatId;
-    const mode: ChatMode = activeChat?.mode ?? "start";
-
-    if (!chatId) {
-      chatId = makeId("chat");
+  const createNewChat = async (mode: ChatMode = "start") => {
+    try {
+      console.log("[CHAT] Creating new chat...");
+      const backendChat = await createChatMutation.mutateAsync({
+        title: mode === "plan" ? "New discovery plan" : "New Masqany chat",
+      });
+      
       const newChat: ChatSession = {
-        id: chatId,
-        title: value.slice(0, 34),
-        date: "Now",
+        id: backendChat.id,
+        title: backendChat.title,
+        date: formatTime(),
         isPinned: false,
         isArchived: false,
         mode,
         messages: [],
       };
+      
       setChats((prev) => [newChat, ...prev]);
-      setActiveChatId(chatId);
+      setActiveChatId(backendChat.id);
+      setChatInput("");
+      setChatOptionsVisible(null);
+      closeSidebar();
+      
+      console.log("[CHAT] ✅ New chat created:", backendChat.id);
+    } catch (error) {
+      console.error("[CHAT] Failed to create chat:", error);
+      Alert.alert("Error", "Failed to create new chat");
     }
+  };
 
-    const userMessage: ChatMessage = {
-      id: makeId("msg"),
-      role: "user",
-      text: value,
-    };
+  const selectChat = async (chatId: string) => {
+    setActiveChatId(chatId);
+    setChatOptionsVisible(null);
+    closeSidebar();
+    
+    // Load messages from backend if chat has no messages
+    const chat = chats.find((c) => c.id === chatId);
+    if (chat && chat.messages.length === 0) {
+      try {
+        console.log("[CHAT] Loading messages for chat:", chatId);
+        const messages = await chatApi.getMessages(chatId);
+        console.log("[CHAT] ✅ Loaded messages:", messages.length);
+        
+        // Convert backend messages to ChatMessage format
+        const chatMessages: ChatMessage[] = messages.map((msg) => ({
+          id: msg.id,
+          role: msg.role as "user" | "assistant",
+          text: msg.content,
+        }));
+        
+        // Update chat with messages
+        updateChat(chatId, (chat) => ({ ...chat, messages: chatMessages }));
+      } catch (error) {
+        console.error("[CHAT] Failed to load messages:", error);
+      }
+    }
+  };
 
-    setChats((prev) =>
-      prev.map((chat) =>
-        chat.id === chatId
-          ? {
-              ...chat,
-              title: chat.messages.length === 0 ? value.slice(0, 34) : chat.title,
-              date: formatTime(),
-              messages: [...chat.messages, userMessage],
-            }
-          : chat
-      )
-    );
+  const sendMessage = async (preset?: string) => {
+    const value = (preset ?? chatInput).trim();
+    if (!value) return;
+
+    console.log("[CHAT] ========== SEND MESSAGE START ==========");
+    console.log("[CHAT] Message:", value);
+    console.log("[CHAT] Active chat ID:", activeChatId);
+
+    let chatId = activeChatId;
+    const mode: ChatMode = activeChat?.mode ?? "start";
+
+    // Clear input immediately
     setChatInput("");
     setIsAgentTyping(true);
 
-    const reply = buildAgentReply(value, mode);
-    setTimeout(() => {
+    try {
+      // Step 1: Ensure we have a chat ID
+      if (!chatId) {
+        console.log("[CHAT] No active chat, creating new one...");
+        const backendChat = await createChatMutation.mutateAsync({
+          title: value.slice(0, 50),
+        });
+        chatId = backendChat.id;
+        console.log("[CHAT] ✅ Chat created:", chatId);
+        
+        // Add to local state immediately
+        const newChat: ChatSession = {
+          id: backendChat.id,
+          title: backendChat.title,
+          date: formatTime(),
+          isPinned: false,
+          isArchived: false,
+          mode,
+          messages: [],
+        };
+        setChats((prev) => [newChat, ...prev]);
+        setActiveChatId(chatId);
+      }
+
+      // Step 2: Add user message to UI (optimistic update)
+      console.log("[CHAT] Adding user message to UI...");
+      const userMessage: ChatMessage = {
+        id: makeId("msg"),
+        role: "user",
+        text: value,
+      };
+
       setChats((prev) =>
         prev.map((chat) =>
           chat.id === chatId
             ? {
                 ...chat,
-                messages: [
-                  ...chat.messages,
-                  {
-                    id: makeId("msg"),
-                    role: "assistant",
-                    text: reply.text,
-                    resultIds: reply.resultIds,
-                    suggestions: reply.suggestions,
-                  },
-                ],
+                title: chat.messages.length === 0 ? value.slice(0, 34) : chat.title,
+                date: formatTime(),
+                messages: [...chat.messages, userMessage],
               }
             : chat
         )
       );
+
+      // Step 3: Get AI response from backend
+      console.log("[CHAT] Calling getAgentResponse...");
+      console.log("[CHAT] Request params:", { message: value, chat_id: chatId });
+      
+      const aiResponse = await getAgentResponse.mutateAsync({
+        message: value,
+        chat_id: chatId,
+      });
+
+      console.log("[CHAT] ✅ AI Response received");
+
+      // Step 4: Add AI message to UI
+      const responseText = aiResponse.answer || aiResponse.response || "Sorry, I couldn't generate a response.";
+      
+      const aiMessage: ChatMessage = {
+        id: makeId("msg"),
+        role: "assistant",
+        text: responseText,
+        resultIds: aiResponse.property_id ? [aiResponse.property_id] : undefined,
+      };
+
+      setChats((prev) =>
+        prev.map((chat) =>
+          chat.id === chatId
+            ? {
+                ...chat,
+                messages: [...chat.messages, aiMessage],
+              }
+            : chat
+        )
+      );
+
+      console.log("[CHAT] ========== SEND MESSAGE COMPLETE ==========");
+      
+    } catch (error: any) {
+      console.error("[CHAT] ========== SEND MESSAGE FAILED ==========");
+      console.error("[CHAT] Error:", JSON.stringify(error, null, 2));
+      
+      let errorMessage = "Failed to send message. Please try again.";
+      
+      if (error?.code === "ERR_NETWORK") {
+        errorMessage = "Network error. Please check your connection.";
+      } else if (error?.code === "ERR_BAD_REQUEST") {
+        errorMessage = "Bad request. The message couldn't be processed.";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert("Error", errorMessage);
+    } finally {
       setIsAgentTyping(false);
-    }, 650);
+    }
   };
 
   const openRename = (chat: ChatSession) => {
@@ -419,22 +424,51 @@ export default function ChatAgentScreen() {
     setChatOptionsVisible(null);
   };
 
-  const saveRename = () => {
+  const saveRename = async () => {
     if (!renameChatId || !renameValue.trim()) return;
-    updateChat(renameChatId, (chat) => ({ ...chat, title: renameValue.trim() }));
-    setRenameChatId(null);
-    setRenameValue("");
+    
+    try {
+      await updateChatMutation.mutateAsync({
+        chatId: renameChatId,
+        request: { title: renameValue.trim() },
+      });
+      updateChat(renameChatId, (chat) => ({ ...chat, title: renameValue.trim() }));
+      setRenameChatId(null);
+      setRenameValue("");
+    } catch (error) {
+      console.error("[CHAT] Failed to rename:", error);
+      Alert.alert("Error", "Failed to rename chat");
+    }
   };
 
-  const archiveChat = (chatId: string) => {
-    updateChat(chatId, (chat) => ({ ...chat, isArchived: true }));
-    if (activeChatId === chatId) setActiveChatId(null);
-    setChatOptionsVisible(null);
+  const archiveChat = async (chatId: string) => {
+    try {
+      await updateChatMutation.mutateAsync({
+        chatId,
+        request: { archived: true },
+      });
+      updateChat(chatId, (chat) => ({ ...chat, isArchived: true }));
+      if (activeChatId === chatId) setActiveChatId(null);
+      setChatOptionsVisible(null);
+    } catch (error) {
+      console.error("[CHAT] Failed to archive:", error);
+    }
   };
 
-  const pinChat = (chatId: string) => {
-    updateChat(chatId, (chat) => ({ ...chat, isPinned: !chat.isPinned }));
-    setChatOptionsVisible(null);
+  const pinChat = async (chatId: string) => {
+    const chat = chats.find((c) => c.id === chatId);
+    if (!chat) return;
+    
+    try {
+      await updateChatMutation.mutateAsync({
+        chatId,
+        request: { pinned: !chat.isPinned },
+      });
+      updateChat(chatId, (chat) => ({ ...chat, isPinned: !chat.isPinned }));
+      setChatOptionsVisible(null);
+    } catch (error) {
+      console.error("[CHAT] Failed to pin:", error);
+    }
   };
 
   const deleteChat = (chatId: string) => {
@@ -443,10 +477,16 @@ export default function ChatAgentScreen() {
       {
         text: "Delete",
         style: "destructive",
-        onPress: () => {
-          setChats((prev) => prev.filter((chat) => chat.id !== chatId));
-          if (activeChatId === chatId) setActiveChatId(null);
-          setChatOptionsVisible(null);
+        onPress: async () => {
+          try {
+            await deleteChatMutation.mutateAsync(chatId);
+            setChats((prev) => prev.filter((chat) => chat.id !== chatId));
+            if (activeChatId === chatId) setActiveChatId(null);
+            setChatOptionsVisible(null);
+          } catch (error) {
+            console.error("[CHAT] Failed to delete:", error);
+            Alert.alert("Error", "Failed to delete chat");
+          }
         },
       },
     ]);
@@ -463,6 +503,27 @@ export default function ChatAgentScreen() {
     setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 120);
   }, [activeChat?.messages.length, isAgentTyping]);
 
+  // Load backend chats on mount
+  useEffect(() => {
+    if (backendChats && backendChats.length > 0) {
+      console.log("[CHAT] Loading backend chats:", backendChats.length);
+      const loadedChats: ChatSession[] = backendChats.map((chat) => ({
+        id: chat.id,
+        title: chat.title || "Untitled chat",
+        date: new Date(chat.updated_at || chat.created_at).toLocaleDateString("en-KE", {
+          month: "short",
+          day: "numeric",
+        }),
+        isPinned: chat.pinned || false,
+        isArchived: chat.archived || false,
+        mode: "start" as ChatMode,
+        messages: [], // Messages loaded separately when chat is opened
+      }));
+      setChats(loadedChats);
+      console.log("[CHAT] ✅ Loaded chats from backend");
+    }
+  }, [backendChats]);
+
   useEffect(() => {
     const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
     const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
@@ -478,6 +539,17 @@ export default function ChatAgentScreen() {
   return (
     <View style={styles.root}>
       <StatusBar style="dark" />
+      
+      {/* Loading overlay for initial chats load */}
+      {isLoadingChats && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color={THEME_BLUE} />
+            <Text style={styles.loadingText}>Loading your chats...</Text>
+          </View>
+        </View>
+      )}
+      
       <ImageBackground
         source={require("@/assets/images/app-full-screen.webp")}
         style={styles.background}
@@ -495,7 +567,7 @@ export default function ChatAgentScreen() {
               </TouchableOpacity>
               <View style={styles.headerCopy}>
                 <Text style={styles.headerTitle}>Masqany AI</Text>
-                <Text style={styles.headerSubtitle}>English • Kiswahili • Sheng</Text>
+                <Text style={styles.headerSubtitle}>English • Kiswahili</Text>
               </View>
               <TouchableOpacity
                 onPress={() => createNewChat("start")}
@@ -525,11 +597,11 @@ export default function ChatAgentScreen() {
                 keyboardShouldPersistTaps="handled"
               >
                 {!activeChat ? (
-                  <WelcomePanel onStart={startFlow} />
+                  <WelcomePanel onStart={createNewChat} />
                 ) : (
                   <>
                     {activeChat.messages.length === 0 ? (
-                      <ChatStarter mode={activeChat.mode} onStart={startFlow} />
+                      <ChatStarter mode={activeChat.mode} onStart={createNewChat} />
                     ) : null}
 
                     {activeChat.messages.map((message, index) => (
@@ -1072,7 +1144,11 @@ function MessageBlock({
             resizeMode="cover"
           />
           <View style={styles.agentStaticBubble}>
-            <Text style={styles.agentStaticText}>{message.text}</Text>
+            {parseMarkdownText(
+              message.text,
+              styles.agentStaticText,
+              [styles.agentStaticText, styles.agentBoldText]
+            )}
           </View>
         </View>
       )}
@@ -1540,7 +1616,7 @@ const styles = StyleSheet.create({
   },
   agentStaticBubble: {
     flex: 1,
-    backgroundColor: "rgba(255,255,255,0.78)",
+    backgroundColor: CARD_BG,
     borderRadius: 18,
     borderTopLeftRadius: 5,
     paddingHorizontal: 15,
@@ -1551,6 +1627,10 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 16,
     lineHeight: 24,
+  },
+  agentBoldText: {
+    fontFamily: "Inter_600SemiBold",
+    fontWeight: "600",
   },
   propertyList: {
     paddingLeft: 56,
@@ -1607,7 +1687,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 18,
     borderTopLeftRadius: 5,
-    backgroundColor: "rgba(255,255,255,0.78)",
+    backgroundColor: CARD_BG,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
@@ -2035,5 +2115,29 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontFamily: "Inter_700Bold",
     fontSize: 13,
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 9999,
+  },
+  loadingCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    gap: 16,
+    minWidth: 200,
+  },
+  loadingText: {
+    color: "#1A2225",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 16,
   },
 });

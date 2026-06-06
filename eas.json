@@ -8,13 +8,13 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.0.100"
+        "EXPO_PUBLIC_API_URL": "http://masqany.speqlink.com"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.0.100"
+        "EXPO_PUBLIC_API_URL": "http://masqany.speqlink.com"
       }
     },
     "production": {

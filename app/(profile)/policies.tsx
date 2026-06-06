@@ -5,11 +5,12 @@
  * Uses NativeWind (Tailwind CSS) for styling
  * Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7
  */
+import { ScreenHeader } from "@/components/profile";
 import { colors, spacing, typography } from "@/constants/tokens";
-import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import {
+    Image,
     ImageBackground,
     Modal,
     ScrollView,
@@ -444,23 +445,7 @@ export default function PoliciesScreen() {
       >
         <SafeAreaView className="flex-1" edges={["top", "left", "right"]}>
           {/* Header */}
-          <View className="px-5 py-4 flex-row items-center">
-            <TouchableOpacity
-              onPress={() => router.back()}
-              className="w-10 h-10 rounded-full items-center justify-center"
-              style={{ backgroundColor: "#85C9FF" }}
-              activeOpacity={0.8}
-            >
-              <Text style={{ fontSize: 20, color: colors.dark[400] }}>←</Text>
-            </TouchableOpacity>
-            <Text
-              className="flex-1 text-center font-poppins-semibold"
-              style={{ fontSize: typography.size.lg, color: colors.dark[400] }}
-            >
-              Terms & Policies
-            </Text>
-            <View className="w-10" />
-          </View>
+          <ScreenHeader title="Terms & Policies" />
 
           <ScrollView
             className="flex-1"
@@ -482,7 +467,8 @@ export default function PoliciesScreen() {
                   key={policy.id}
                   onPress={() => handlePolicyPress(policy)}
                   activeOpacity={0.7}
-                  className="bg-white rounded-lg p-4 mb-3"
+                  className="rounded-lg p-4 mb-3"
+                  style={{ backgroundColor: "#e1e6e8" }}
                 >
                   <View className="flex-row items-center">
                     <View
@@ -505,7 +491,12 @@ export default function PoliciesScreen() {
                         Last updated: {policy.lastUpdated}
                       </Text>
                     </View>
-                    <Text style={{ fontSize: 16, color: colors.dark[100] }}>›</Text>
+                    <Image
+                      source={require("@/assets/icons/right-chevron.png")}
+                      className="w-4 h-4"
+                      style={{ tintColor: colors.dark[100] }}
+                      resizeMode="contain"
+                    />
                   </View>
                 </TouchableOpacity>
               ))}
@@ -524,6 +515,11 @@ export default function PoliciesScreen() {
               </View>
             </View>
           </ScrollView>
+
+          {/* Bottom Blue Bar */}
+          <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#3fbdfd] z-50">
+            <View className="h-[2px] bg-white" />
+          </View>
         </SafeAreaView>
       </ImageBackground>
 

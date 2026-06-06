@@ -68,12 +68,14 @@ export default function OnboardingCompleteScreen() {
 
       console.log("[SIGNUP COMPLETE] ✅ Response:", JSON.stringify(response.data, null, 2));
 
-      const { refreshToken, user } = response.data;
+      const { accessToken, refreshToken, user } = response.data;
 
       // Save session
       console.log("[SIGNUP COMPLETE] Saving session...");
-      await saveSession(refreshToken, refreshToken, user);
-      tokenStore.getState().setTokens(refreshToken, refreshToken);
+      console.log("[SIGNUP COMPLETE] Access token length:", accessToken?.length);
+      console.log("[SIGNUP COMPLETE] Refresh token length:", refreshToken?.length);
+      await saveSession(accessToken, refreshToken, user);
+      tokenStore.getState().setTokens(accessToken, refreshToken);
       setUser(user);
 
       console.log("[SIGNUP COMPLETE] ✅ Signup complete! User:", user.fullName);

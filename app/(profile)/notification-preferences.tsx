@@ -286,6 +286,11 @@ export default function NotificationPreferencesScreen() {
               )}
             </View>
           </ScrollView>
+
+          {/* Bottom Blue Bar */}
+          <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#3fbdfd] z-50">
+            <View className="h-[2px] bg-white" />
+          </View>
         </SafeAreaView>
       </ImageBackground>
     </View>

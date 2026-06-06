@@ -24,6 +24,8 @@ export const useVideoFeedStore = create<VideoFeedStore>((set, get) => ({
   // Actions
   setCurrentVideoIndex: (index) => set({ currentVideoIndex: index }),
   togglePlayback: () => set((state) => ({ isPlaying: !state.isPlaying })),
+  pauseVideo: () => set({ isPlaying: false }),
+  resumeVideo: () => set({ isPlaying: true }),
   toggleMute: () => set((state) => ({ isMuted: !state.isMuted })),
   setVisibleVideos: (ids) => set({ visibleVideoIds: ids }),
 }));

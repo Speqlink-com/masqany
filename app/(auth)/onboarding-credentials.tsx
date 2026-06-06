@@ -24,6 +24,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import type { ImageSourcePropType } from "react-native";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -547,7 +548,7 @@ export default function OnboardingCredentialsScreen() {
                   </View>
                 ) : (
                   <TouchableOpacity
-                    onPress={handleGoogleSignup}
+                    onPress={() => handleGoogleSignup(name, role, router, setGoogleLoading)}
                     activeOpacity={0.85}
                     style={{
                       height: 56,
@@ -584,9 +585,14 @@ export default function OnboardingCredentialsScreen() {
   );
 }
 
-async function handleGoogleSignup() {
+async function handleGoogleSignup(
+  name: string | undefined,
+  role: string | undefined,
+  router: ReturnType<typeof useRouter>,
+  setGoogleLoading: (loading: boolean) => void
+) {
   if (!name || !role) {
-    alert("Please go back and select your name and role first.");
+    Alert.alert("Missing Information", "Please go back and select your name and role first.");
     return;
   }
 
@@ -630,11 +636,15 @@ async function handleGoogleSignup() {
     
     if (err.status === 409) {
       errorMsg = "Account already exists with this Google email. Please sign in instead.";
-    } else if (errorMsg.includes("not yet configured")) {
-      errorMsg = "Google Sign-Up is not configured yet. Use email/password instead.";
+    } else if (errorMsg.includes("not yet configured") || errorMsg.includes("requires a development build")) {
+      errorMsg = "Google Sign-Up requires a development build. Use email/password instead.";
+    } else if (errorMsg.includes("cancelled")) {
+      // User cancelled - don't show error
+      setGoogleLoading(false);
+      return;
     }
     
     setGoogleLoading(false);
-    alert(errorMsg);
+    Alert.alert("Sign-Up Failed", errorMsg);
   }
 }

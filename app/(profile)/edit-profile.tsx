@@ -3,10 +3,10 @@
  * Allows users to update their name, email, phone, and avatar
  * Uses NativeWind (Tailwind CSS) for styling
  */
-import { colors, spacing, typography } from "@/constants/tokens";
+import { ScreenHeader } from "@/components/profile";
+import { colors, radius, spacing, typography } from "@/constants/tokens";
 import { useProfile, useUpdateProfile, useUploadAvatar } from "@/modules/profile";
 import * as ImagePicker from "expo-image-picker";
-import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import {
@@ -138,18 +138,60 @@ export default function EditProfileScreen() {
 
       // Upload avatar first if a new image was selected
       if (selectedImage) {
-        const formData = new FormData();
-        formData.append("avatar", {
-          uri: selectedImage,
-          type: "image/jpeg",
-          name: "avatar.jpg",
-        } as any);
+        try {
+          const formData = new FormData();
+          formData.append("avatar", {
+            uri: selectedImage,
+            type: "image/jpeg",
+            name: "avatar.jpg",
+          } as any);
 
-        const uploadResult = await uploadAvatar.mutateAsync(formData);
-        avatarUrl = uploadResult.avatarUrl;
+          const uploadResult = await uploadAvatar.mutateAsync(formData);
+          avatarUrl = uploadResult.avatarUrl;
+        } catch (avatarError: any) {
+          console.error("[EDIT PROFILE] Avatar upload failed:", avatarError);
+          
+          // Check if it's a Cloudinary configuration error
+          if (avatarError.message?.includes("Cloudinary is not configured")) {
+            Alert.alert(
+              "Avatar Upload Unavailable",
+              "Avatar upload is not configured on the server yet. Your other profile changes will be saved.",
+              [
+                {
+                  text: "Continue Without Avatar",
+                  onPress: async () => {
+                    // Continue saving without avatar
+                    await saveProfileData(profile?.avatar);
+                  },
+                },
+                {
+                  text: "Cancel",
+                  style: "cancel",
+                },
+              ]
+            );
+            return;
+          } else {
+            // Other avatar upload errors
+            throw avatarError;
+          }
+        }
       }
 
-      // Update profile with form data
+      // Save profile data with avatar URL
+      await saveProfileData(avatarUrl);
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      Alert.alert(
+        "Error",
+        error?.message || "Failed to update profile. Please try again."
+      );
+    }
+  };
+
+  // Helper function to save profile data
+  const saveProfileData = async (avatarUrl?: string) => {
+    try {
       await updateProfile.mutateAsync({
         name: name.trim(),
         email: email.trim(),
@@ -164,7 +206,7 @@ export default function EditProfileScreen() {
         },
       ]);
     } catch (error: any) {
-      console.error("Error updating profile:", error);
+      console.error("Error saving profile data:", error);
       Alert.alert(
         "Error",
         error?.message || "Failed to update profile. Please try again."
@@ -193,28 +235,13 @@ export default function EditProfileScreen() {
         resizeMode="cover"
       >
         <SafeAreaView className="flex-1" edges={["top", "left", "right"]}>
+          {/* Header */}
+          <ScreenHeader title="Edit Profile" />
+
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             className="flex-1"
           >
-            {/* Header */}
-            <View className="px-5 py-4 flex-row items-center">
-              <TouchableOpacity
-                onPress={() => router.back()}
-                className="w-10 h-10 rounded-full items-center justify-center"
-                style={{ backgroundColor: "#85C9FF" }}
-                activeOpacity={0.8}
-              >
-                <Text style={{ fontSize: 20, color: colors.dark[400] }}>←</Text>
-              </TouchableOpacity>
-              <Text
-                className="flex-1 text-center font-poppins-semibold"
-                style={{ fontSize: typography.size.lg, color: colors.dark[400] }}
-              >
-                Edit Profile
-              </Text>
-              <View className="w-10" />
-            </View>
 
             <ScrollView
               className="flex-1"
@@ -401,6 +428,11 @@ export default function EditProfileScreen() {
               </View>
             </ScrollView>
           </KeyboardAvoidingView>
+
+          {/* Bottom Blue Bar */}
+          <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#3fbdfd] z-50">
+            <View className="h-[2px] bg-white" />
+          </View>
         </SafeAreaView>
       </ImageBackground>
     </View>
@@ -414,6 +446,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.light[400],
     fontSize: typography.size.base,
     color: colors.dark[400],
+    borderRadius: radius.lg,
   },
   inputError: {
     borderColor: colors.danger,

@@ -5,17 +5,18 @@
  * Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7
  */
 import { ScreenHeader } from "@/components/profile";
-import { colors, spacing, typography } from "@/constants/tokens";
+import { colors, radius, spacing, typography } from "@/constants/tokens";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import {
-  Alert,
-  ImageBackground,
-  Linking,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Image,
+    ImageBackground,
+    Linking,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -42,7 +43,7 @@ const FAQS: FAQ[] = [
     id: "3",
     question: "How do I contact support?",
     answer:
-      "You can reach us via email at support@masqany.com or call us at +254 700 000 000. Our support team is available Monday to Friday, 9 AM to 6 PM EAT.",
+      "You can reach us via email at support@masqany.speqlink.com or call us at +254 796218073. Our support team is available Monday to Friday, 9 AM to 6 PM EAT.",
   },
   {
     id: "4",
@@ -63,7 +64,7 @@ export default function SupportScreen() {
 
   // Handle email contact
   const handleEmailPress = async () => {
-    const email = "support@masqany.com";
+    const email = "support@masqany.speqlink.com";
     const url = `mailto:${email}`;
     
     try {
@@ -141,7 +142,8 @@ export default function SupportScreen() {
                 <TouchableOpacity
                   onPress={handleEmailPress}
                   activeOpacity={0.7}
-                  className="bg-white rounded-lg p-4 mb-3 flex-row items-center"
+                  className="p-4 mb-3 flex-row items-center"
+                  style={{ backgroundColor: "#e1e6e8", borderRadius: radius.lg }}
                 >
                   <View
                     className="w-12 h-12 rounded-full items-center justify-center mr-4"
@@ -160,17 +162,23 @@ export default function SupportScreen() {
                       className="font-inter-regular"
                       style={{ fontSize: typography.size.sm, color: colors.primary[700] }}
                     >
-                      support@masqany.com
+                      support@masqany.speqlink.com
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 16, color: colors.dark[100] }}>›</Text>
+                  <Image
+                    source={require("@/assets/icons/right-chevron.png")}
+                    className="w-4 h-4"
+                    style={{ tintColor: colors.dark[100] }}
+                    resizeMode="contain"
+                  />
                 </TouchableOpacity>
 
                 {/* Phone Card */}
                 <TouchableOpacity
                   onPress={handlePhonePress}
                   activeOpacity={0.7}
-                  className="bg-white rounded-lg p-4 mb-3 flex-row items-center"
+                  className="p-4 mb-3 flex-row items-center"
+                  style={{ backgroundColor: "#e1e6e8", borderRadius: radius.lg }}
                 >
                   <View
                     className="w-12 h-12 rounded-full items-center justify-center mr-4"
@@ -192,7 +200,12 @@ export default function SupportScreen() {
                       +254 796218073
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 16, color: colors.dark[100] }}>›</Text>
+                  <Image
+                    source={require("@/assets/icons/right-chevron.png")}
+                    className="w-4 h-4"
+                    style={{ tintColor: colors.dark[100] }}
+                    resizeMode="contain"
+                  />
                 </TouchableOpacity>
 
                 {/* Support Hours */}
@@ -319,6 +332,11 @@ export default function SupportScreen() {
               </View>
             </View>
           </ScrollView>
+
+          {/* Bottom Blue Bar */}
+          <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#3fbdfd] z-50">
+            <View className="h-[2px] bg-white" />
+          </View>
         </SafeAreaView>
       </ImageBackground>
     </View>

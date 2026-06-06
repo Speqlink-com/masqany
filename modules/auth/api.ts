@@ -3,40 +3,40 @@
  * Comprehensive authentication API bindings for all backend endpoints
  * 
  * Base URL: 
- * - Dev: http://192.168.0.100/api/auth
+ * - Dev: http://masqany.speqlink.com/api/auth
  * - Prod: https://masqany.speqlink.com/api/auth
  */
 
 import { apiClient } from "@/lib/api/client";
 import type {
-  SignupStartPayload,
-  SignupStartResponse,
-  VerifyEmailPayload,
-  VerifyEmailResponse,
-  VerifyPhonePayload,
-  VerifyPhoneResponse,
-  CompleteSignupPayload,
-  AuthSuccessResponse,
-  ResendOtpPayload,
-  SignInPasswordPayload,
-  SignInOtpRequestPayload,
-  SignInOtpVerifyPayload,
-  OtpRequestResponse,
-  ForgotPasswordRequestPayload,
-  ForgotPasswordCompletePayload,
-  PasswordResetResponse,
-  ChangePasswordPayload,
-  PasswordChangeResponse,
-  GoogleMobileSignInPayload,
-  GoogleMobileSignUpPayload,
-  GoogleAuthResponse,
-  RefreshTokenPayload,
-  RefreshTokenResponse,
-  LogoutResponse,
-  CreateSuperadminPayload,
-  CreateAdminPayload,
-  CreatePropertyAgentPayload,
-  AdminCreatedResponse,
+    AdminCreatedResponse,
+    AuthSuccessResponse,
+    ChangePasswordPayload,
+    CompleteSignupPayload,
+    CreateAdminPayload,
+    CreatePropertyAgentPayload,
+    CreateSuperadminPayload,
+    ForgotPasswordCompletePayload,
+    ForgotPasswordRequestPayload,
+    GoogleAuthResponse,
+    GoogleMobileSignInPayload,
+    GoogleMobileSignUpPayload,
+    LogoutResponse,
+    OtpRequestResponse,
+    PasswordChangeResponse,
+    PasswordResetResponse,
+    RefreshTokenPayload,
+    RefreshTokenResponse,
+    ResendOtpPayload,
+    SignInOtpRequestPayload,
+    SignInOtpVerifyPayload,
+    SignInPasswordPayload,
+    SignupStartPayload,
+    SignupStartResponse,
+    VerifyEmailPayload,
+    VerifyEmailResponse,
+    VerifyPhonePayload,
+    VerifyPhoneResponse,
 } from "./types";
 
 // ============================================================================

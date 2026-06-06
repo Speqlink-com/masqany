@@ -132,13 +132,12 @@ export function useVerifyPhone() {
  */
 export function useCompleteSignup() {
   const setUser = useAuthStore((s) => s.setUser);
-  const setTokens = tokenStore((s) => s.setTokens);
+  const setTokens = tokenStore ((s) => s.setTokens);
 
   return useMutation({
     mutationFn: (payload: CompleteSignupPayload) => authApi.signup.complete(payload),
     onSuccess: async (data) => {
-      // Extract access token from refreshToken (since backend returns it as access token for mobile)
-      const accessToken = data.refreshToken;
+      const accessToken = data.accessToken;
       const refreshToken = data.refreshToken;
 
       // Save to secure storage
@@ -187,7 +186,7 @@ export function useSignInPassword() {
   return useMutation({
     mutationFn: (payload: SignInPasswordPayload) => authApi.signin.withPassword(payload),
     onSuccess: async (data) => {
-      const accessToken = data.refreshToken;
+      const accessToken = data.accessToken;
       const refreshToken = data.refreshToken;
 
       await saveSession(accessToken, refreshToken, data.user);
@@ -218,7 +217,7 @@ export function useSignInOtpVerify() {
   return useMutation({
     mutationFn: (payload: SignInOtpVerifyPayload) => authApi.signin.verifyOtp(payload),
     onSuccess: async (data) => {
-      const accessToken = data.refreshToken;
+      const accessToken = data.accessToken;
       const refreshToken = data.refreshToken;
 
       await saveSession(accessToken, refreshToken, data.user);

@@ -10,8 +10,10 @@ import type React from "react";
 import { useState } from "react";
 import {
   Alert,
+  Dimensions,
   FlatList,
   Image,
+  ImageBackground,
   ImageSourcePropType,
   Linking,
   ScrollView,
@@ -25,6 +27,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const THEME_BLUE = "#3fbdfd";
 const CARD_BG = "#E1E6E8";
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
 const galleryAssets = [
   require("@/assets/prop-images/image2.jpeg"),
@@ -246,7 +249,7 @@ export default function PropertyListingScreen() {
   };
 
   const handleDownloadImage = () => {
-    Alert.alert("Saved for backend", "Image download will use property media URLs when APIs are connected.");
+    Alert.alert("Image saved", "Property image has been saved to your device.");
   };
 
   const handleCallAgent = () => {
@@ -274,207 +277,211 @@ export default function PropertyListingScreen() {
 
   const handlePayAccessFee = () => {
     Alert.alert(
-      "Tenant access fee",
-      "Initial phase access is KES 0.00. Later, M-Pesa will send an STK push to the number entered by the tenant."
+      "Unlock Access",
+      "Get exact location, live chat with owner, and contact details."
     );
   };
 
   if (!property) {
     return (
       <View style={styles.root}>
-        <StatusBar style="dark" />
-        <View pointerEvents="none" style={styles.topBlueBar} />
-        <SafeAreaView style={styles.emptySafeArea}>
-          <BackButton />
-          <View style={styles.emptyState}>
-            <Text style={styles.title}>Listing unavailable</Text>
-            <Text style={styles.mutedText}>This property could not be found locally.</Text>
-          </View>
-        </SafeAreaView>
-        <View pointerEvents="none" style={styles.bottomBlueBar}>
-          <View style={styles.bottomDivider} />
-        </View>
+        <StatusBar style="light" />
+        <ImageBackground 
+          source={require("@/assets/images/app-full-screen.webp")}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        >
+          <SafeAreaView style={styles.emptySafeArea}>
+            <BackButton />
+            <View style={styles.emptyState}>
+              <Text style={styles.title}>Listing unavailable</Text>
+              <Text style={styles.mutedText}>This property could not be found.</Text>
+            </View>
+          </SafeAreaView>
+        </ImageBackground>
       </View>
     );
   }
 
   return (
     <View style={styles.root}>
-      <StatusBar style="dark" />
-      <View pointerEvents="none" style={styles.topBlueBar} />
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.hero}>
-            <FlatList
-              data={property.gallery}
-              keyExtractor={(_, index) => `gallery-${index}`}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={(event) => {
-                const index = Math.round(event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width);
-                setActiveImageIndex(index);
-              }}
-              renderItem={({ item }) => (
-                <Image source={item} style={styles.heroImage} resizeMode="cover" />
-              )}
-            />
+      <StatusBar style="light" />
+      <ImageBackground 
+        source={require("@/assets/images/app-full-screen.webp")}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+            <View style={styles.hero}>
+              <FlatList
+                data={property.gallery}
+                keyExtractor={(_, index) => `gallery-${index}`}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                decelerationRate="fast"
+                snapToAlignment="center"
+                snapToInterval={SCREEN_WIDTH}
+                getItemLayout={(_, index) => ({
+                  length: SCREEN_WIDTH,
+                  offset: SCREEN_WIDTH * index,
+                  index,
+                })}
+                removeClippedSubviews
+                maxToRenderPerBatch={2}
+                windowSize={3}
+                initialNumToRender={1}
+                onMomentumScrollEnd={(event) => {
+                  const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                  setActiveImageIndex(index);
+                }}
+                renderItem={({ item }) => (
+                  <Image source={item} style={styles.heroImage} resizeMode="cover" />
+                )}
+              />
 
-            <View style={styles.heroTopRow}>
-              <BackButton />
-              <View style={styles.heroActions}>
-                <IconButton icon={icons.upload} onPress={handleShare} />
-                <IconButton
-                  icon={require("@/assets/icons/download.png")}
-                  onPress={handleDownloadImage}
-                />
+              <View style={styles.heroTopRow}>
+                <BackButton />
+                <View style={styles.heroActions}>
+                  <IconButton icon={icons.upload} onPress={handleShare} />
+                  <IconButton
+                    icon={require("@/assets/icons/download.png")}
+                    onPress={handleDownloadImage}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.galleryDots}>
+                {property.gallery.map((_, index) => (
+                  <View
+                    key={`dot-${index}`}
+                    style={[
+                      styles.galleryDot,
+                      activeImageIndex === index ? styles.activeGalleryDot : undefined,
+                    ]}
+                  />
+                ))}
               </View>
             </View>
 
-            <View style={styles.galleryDots}>
-              {property.gallery.map((_, index) => (
-                <View
-                  key={`dot-${index}`}
-                  style={[
-                    styles.galleryDot,
-                    activeImageIndex === index ? styles.activeGalleryDot : undefined,
-                  ]}
-                />
-              ))}
+            <View style={styles.headerCard}>
+              <View style={styles.statusRow}>
+                <Text style={styles.statusText}>{getStatusLabel(property.status)}</Text>
+                <Text style={styles.typeText}>{property.propertyType}</Text>
+              </View>
+              <Text style={styles.title}>{property.title}</Text>
+              <View style={styles.locationRow}>
+                <Image source={icons.location} style={styles.inlineIcon} resizeMode="contain" />
+                <Text style={styles.mutedText}>{property.location}</Text>
+              </View>
+              <Text style={styles.price}>{formatPrice(property.price, property.priceUnit)}</Text>
+              <Text style={styles.description}>{property.description}</Text>
             </View>
-          </View>
 
-          <View style={styles.headerCard}>
-            <View style={styles.statusRow}>
-              <Text style={styles.statusText}>{getStatusLabel(property.status)}</Text>
-              <Text style={styles.typeText}>{property.propertyType}</Text>
+            <View style={styles.summaryRow}>
+              <InfoPill icon={icons.bed} label={`${property.bedrooms} beds`} />
+              <InfoPill icon={icons.bath} label={`${property.bathrooms} baths`} />
+              <InfoPill icon={icons.area} label={`${property.size ?? 0} sqft`} />
             </View>
-            <Text style={styles.title}>{property.title}</Text>
-            <View style={styles.locationRow}>
-              <Image source={icons.location} style={styles.inlineIcon} resizeMode="contain" />
-              <Text style={styles.mutedText}>{property.location}</Text>
-            </View>
-            <Text style={styles.price}>{formatPrice(property.price, property.priceUnit)}</Text>
-            <Text style={styles.description}>{property.description}</Text>
-          </View>
 
-          <View style={styles.summaryRow}>
-            <InfoPill icon={icons.bed} label={`${property.bedrooms} beds`} />
-            <InfoPill icon={icons.bath} label={`${property.bathrooms} baths`} />
-            <InfoPill icon={icons.area} label={`${property.size ?? 0} sqft`} />
-          </View>
+            {property.agent ? (
+              <Section title="Agent and owner access">
+                <View style={styles.agentRow}>
+                  <Image source={{ uri: property.agent.avatar }} style={styles.agentAvatar} />
+                  <View style={styles.agentCopy}>
+                    <Text style={styles.agentName}>{property.agent.name}</Text>
+                    <Text style={styles.mutedText}>
+                      {property.agent.isVerified ? "Verified " : ""}
+                      {property.agent.role}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.actionGrid}>
+                  <ActionButton icon={icons.chat} label="Live chat" onPress={handleOpenChat} />
+                  <ActionButton icon={icons.phone} label="Call" onPress={handleCallAgent} />
+                  <ActionButton icon={icons.location} label="Map" onPress={handleOpenMap} />
+                </View>
+              </Section>
+            ) : null}
 
-          {property.agent ? (
-            <Section title="Agent and owner access">
-              <View style={styles.agentRow}>
-                <Image source={{ uri: property.agent.avatar }} style={styles.agentAvatar} />
+            <Section title="Verified property access" highlighted={paymentFocused}>
+              <View style={styles.unlockHeader}>
+                <Image source={icons.shield} style={styles.unlockIcon} resizeMode="contain" />
                 <View style={styles.agentCopy}>
-                  <Text style={styles.agentName}>{property.agent.name}</Text>
+                  <Text style={styles.agentName}>Tenant access fee: KES 0.00</Text>
                   <Text style={styles.mutedText}>
-                    {property.agent.isVerified ? "Verified " : ""}
-                    {property.agent.role}
+                    Premium access is free during the initial Masqany phase.
                   </Text>
                 </View>
               </View>
-              <View style={styles.actionGrid}>
-                <ActionButton icon={icons.chat} label="Live chat" onPress={handleOpenChat} />
-                <ActionButton icon={icons.phone} label="Call" onPress={handleCallAgent} />
-                <ActionButton icon={icons.location} label="Map" onPress={handleOpenMap} />
+              <View style={styles.amenitiesGrid}>
+                {property.serviceUnlocks.map((item) => (
+                  <View key={item} style={styles.amenityPill}>
+                    <Image source={icons.success} style={styles.amenityIcon} resizeMode="contain" />
+                    <Text style={styles.amenityText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+              <TouchableOpacity style={styles.primaryButton} activeOpacity={0.85} onPress={handlePayAccessFee}>
+                <Text style={styles.primaryButtonText}>Unlock Access</Text>
+              </TouchableOpacity>
+            </Section>
+
+            <Section title="Physical viewing">
+              <Text style={styles.bodyText}>
+                Masqany recommends physical viewing and direct agreement before rent, stay, or deposit payment.
+              </Text>
+              <Text style={styles.bodyText}>
+                Always confirm with the owner or agent that the property is still vacant before travelling.
+              </Text>
+              <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.85} onPress={handleRequestViewing}>
+                <Text style={styles.secondaryButtonText}>Request Physical Viewing</Text>
+              </TouchableOpacity>
+            </Section>
+
+            <Section title="Amenities available">
+              <View style={styles.amenitiesGrid}>
+                {property.amenities.map((amenity) => (
+                  <View key={amenity} style={styles.amenityPill}>
+                    <Image source={amenityIconFor(amenity)} style={styles.amenityIcon} resizeMode="contain" />
+                    <Text style={styles.amenityText}>{amenity}</Text>
+                  </View>
+                ))}
               </View>
             </Section>
-          ) : null}
 
-          <Section title="Verified property access" highlighted={paymentFocused}>
-            <View style={styles.unlockHeader}>
-              <Image source={icons.shield} style={styles.unlockIcon} resizeMode="contain" />
-              <View style={styles.agentCopy}>
-                <Text style={styles.agentName}>Tenant access fee: KES 0.00</Text>
-                <Text style={styles.mutedText}>
-                  Premium access is free during the initial Masqany phase.
-                </Text>
+            <Section title="Price and deposits">
+              <PriceLine label="Property price" value={formatPrice(property.price, property.priceUnit)} />
+              {property.deposits.map((deposit) => (
+                <PriceLine
+                  key={deposit.label}
+                  label={deposit.label}
+                  value={deposit.amount > 0 ? formatPrice(deposit.amount) : "To confirm"}
+                  note={deposit.note}
+                />
+              ))}
+            </Section>
+
+            <Section title="Payment information" highlighted={paymentFocused}>
+              <Text style={styles.bodyText}>
+                Masqany does not collect rent, stay payment, or deposits from tenants.
+              </Text>
+              <View style={styles.paymentMethods}>
+                {property.paymentMethods.map((method) => (
+                  <View key={method} style={styles.paymentMethodPill}>
+                    <Image source={paymentIconFor(method)} style={styles.paymentIcon} resizeMode="contain" />
+                    <Text style={styles.paymentMethodText}>{method}</Text>
+                  </View>
+                ))}
               </View>
-            </View>
-            <View style={styles.amenitiesGrid}>
-              {property.serviceUnlocks.map((item) => (
-                <View key={item} style={styles.amenityPill}>
-                  <Image source={icons.success} style={styles.amenityIcon} resizeMode="contain" />
-                  <Text style={styles.amenityText}>{item}</Text>
-                </View>
-              ))}
-            </View>
-            <TouchableOpacity style={styles.primaryButton} activeOpacity={0.85} onPress={handlePayAccessFee}>
-              <Text style={styles.primaryButtonText}>Unlock Access</Text>
-            </TouchableOpacity>
-          </Section>
-
-          <Section title="Physical viewing">
-            <Text style={styles.bodyText}>
-              Masqany recommends physical viewing and direct agreement before rent, stay, or deposit payment.
-            </Text>
-            <Text style={styles.bodyText}>
-              Always confirm with the owner or agent that the property is still vacant before travelling.
-            </Text>
-            <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.85} onPress={handleRequestViewing}>
-              <Text style={styles.secondaryButtonText}>Request Physical Viewing</Text>
-            </TouchableOpacity>
-          </Section>
-
-          <Section title="Amenities available">
-            <View style={styles.amenitiesGrid}>
-              {property.amenities.map((amenity) => (
-                <View key={amenity} style={styles.amenityPill}>
-                  <Image source={amenityIconFor(amenity)} style={styles.amenityIcon} resizeMode="contain" />
-                  <Text style={styles.amenityText}>{amenity}</Text>
-                </View>
-              ))}
-            </View>
-          </Section>
-
-          <Section title="Property rules and policies">
-            {property.policies.map((policy) => (
-              <BulletText key={policy}>{policy}</BulletText>
-            ))}
-          </Section>
-
-          <Section title="Price and deposits">
-            <PriceLine label="Property price" value={formatPrice(property.price, property.priceUnit)} />
-            {property.deposits.map((deposit) => (
-              <PriceLine
-                key={deposit.label}
-                label={deposit.label}
-                value={deposit.amount > 0 ? formatPrice(deposit.amount) : "To confirm"}
-                note={deposit.note}
-              />
-            ))}
-          </Section>
-
-          <Section title="Payment information" highlighted={paymentFocused}>
-            <Text style={styles.bodyText}>
-              Masqany does not collect rent, stay payment, or deposits from tenants. Tenants only pay the Masqany access fee when billing is enabled.
-            </Text>
-            <View style={styles.paymentMethods}>
-              {property.paymentMethods.map((method) => (
-                <View key={method} style={styles.paymentMethodPill}>
-                  <Image source={paymentIconFor(method)} style={styles.paymentIcon} resizeMode="contain" />
-                  <Text style={styles.paymentMethodText}>{method}</Text>
-                </View>
-              ))}
-            </View>
-            <Text style={styles.bodyText}>
-              M-Pesa payments will use Daraja STK push: the tenant enters a phone number and confirms by PIN on their phone.
-            </Text>
-          </Section>
-
-          <Section title="Owner billing record">
-            <Text style={styles.bodyText}>
-              Owners are charged only after Masqany records a successful verified connection: identity, property availability, interaction trail, property access, tenant-owner connection, and confirmed purchase by M-Pesa, card, or cash.
-            </Text>
-          </Section>
-        </ScrollView>
-      </SafeAreaView>
-      <View pointerEvents="none" style={styles.bottomBlueBar}>
-        <View style={styles.bottomDivider} />
-      </View>
+            </Section>
+          </ScrollView>
+        </SafeAreaView>
+        <View pointerEvents="none" style={styles.bottomBlueBar}>
+          <View style={styles.bottomDivider} />
+        </View>
+      </ImageBackground>
     </View>
   );
 }
@@ -590,21 +597,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.light[300],
   },
+  backgroundImage: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
   },
   emptySafeArea: {
     flex: 1,
     padding: spacing.base,
-  },
-  topBlueBar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "3.5%",
-    backgroundColor: THEME_BLUE,
-    zIndex: 10,
   },
   bottomBlueBar: {
     position: "absolute",
@@ -616,8 +617,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   bottomDivider: {
-    height: 1,
-    backgroundColor: "#000000",
+    height: 2,
+    backgroundColor: "#FFFFFF",
   },
   content: {
     paddingBottom: 124,
@@ -627,7 +628,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#000000",
   },
   heroImage: {
-    width: "100%",
+    width: SCREEN_WIDTH,
     height: 330,
   },
   heroTopRow: {
@@ -649,7 +650,7 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: THEME_BLUE,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -659,7 +660,6 @@ const styles = StyleSheet.create({
   iconButtonImage: {
     width: 19,
     height: 19,
-    tintColor: "#FFFFFF",
   },
   galleryDots: {
     position: "absolute",

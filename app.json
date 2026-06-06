@@ -26,15 +26,15 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-screen.png",
+          "image": "./assets/images/msq.png",
           "backgroundColor": "#3fbdfd",
           "android": {
-            "image": "./assets/images/splash-screen.png",
+            "image": "./assets/images/msq.png",
             "backgroundColor": "#3fbdfd",
             "resizeMode": "contain"
           },
           "ios": {
-            "image": "./assets/images/splash-screen.png",
+            "image": "./assets/images/msq.png",
             "resizeMode": "cover",
             "backgroundColor": "#3fbdfd",
             "enableFullScreenImage_legacy": true
@@ -62,8 +62,7 @@
         }
       ],
       "expo-video",
-      "expo-font",
-      "@react-native-google-signin/google-signin"
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

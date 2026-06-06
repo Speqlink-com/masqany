@@ -133,6 +133,8 @@ export interface VideoFeedStore {
   // Actions
   setCurrentVideoIndex: (index: number) => void;
   togglePlayback: () => void;
+  pauseVideo: () => void;
+  resumeVideo: () => void;
   toggleMute: () => void;
   setVisibleVideos: (ids: string[]) => void;
 }

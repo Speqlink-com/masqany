@@ -7,8 +7,8 @@ import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
 import { PrimaryButton } from "@/components/auth/PrimaryButton";
 import { apiClient } from "@/lib/api/client";
+import { isGoogleSignInAvailable, signInWithGoogle } from "@/modules/auth/google";
 import { saveSession } from "@/modules/auth/storage";
-import { signInWithGoogle, isGoogleSignInAvailable } from "@/modules/auth/google";
 import { tokenStore, useAuthStore, User } from "@/store/auth.store";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -132,7 +132,7 @@ export default function LoginScreen() {
     console.log("[LOGIN] Starting login attempt...");
     console.log("[LOGIN] Identifier:", identifier.trim());
     console.log("[LOGIN] Password length:", password.length);
-    console.log("[LOGIN] API Base URL:", process.env.EXPO_PUBLIC_API_URL || "http://192.168.0.100");
+    console.log("[LOGIN] API Base URL:", process.env.EXPO_PUBLIC_API_URL || "http://masqany.speqlink.com");
     console.log("=".repeat(50));
 
     if (loginMethod === "password") {
@@ -147,15 +147,15 @@ export default function LoginScreen() {
 
         console.log("[LOGIN] ✅ Response received:", JSON.stringify(response.data, null, 2));
 
-        const { refreshToken, user } = response.data;
+        const { accessToken, refreshToken, user } = response.data;
 
         // Save tokens and user to secure storage
         console.log("[LOGIN] Saving session to secure storage...");
-        await saveSession(refreshToken, refreshToken, user);
+        await saveSession(accessToken, refreshToken, user);
         
         // Update app state
         console.log("[LOGIN] Updating app state...");
-        tokenStore.getState().setTokens(refreshToken, refreshToken);
+        tokenStore.getState().setTokens(accessToken, refreshToken);
         setUser(user);
 
         console.log("[LOGIN] ✅ Login successful! User:", user.fullName, "Role:", user.role);
@@ -479,54 +479,6 @@ export default function LoginScreen() {
                   </TouchableOpacity>
                 )}
               </>
-            )}
-
-            {/* Test Credentials Hint */}
-            {__DEV__ && (
-              <View className="mt-6 p-4 rounded-2xl" style={{ backgroundColor: "rgba(32, 166, 253, 0.1)" }}>
-                <Text className="font-inter-semibold text-primary-700 mb-2" style={{ fontSize: 14 }}>
-                  Test Credentials
-                </Text>
-                <Text className="font-inter-regular text-dark-300" style={{ fontSize: 13, lineHeight: 20 }}>
-                  Email: speqlink@gmail.com{'\n'}
-                  Password: @Speqlink1240.,,.
-                </Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    setIdentifier("speqlink@gmail.com");
-                    setPassword("@Speqlink1240.,,.");
-                  }}
-                  className="mt-2 py-2 px-3 rounded-full"
-                  style={{ backgroundColor: "#28B4FA" }}
-                >
-                  <Text className="font-inter-semibold text-white text-center" style={{ fontSize: 12 }}>
-                    Fill Test Credentials
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* Development Access Button */}
-            {__DEV__ && (
-              <TouchableOpacity
-                onPress={handleDevAccess}
-                activeOpacity={0.8}
-                className="mt-4 py-4 px-6 rounded-full items-center"
-                style={{ backgroundColor: "#f3f4f3" }}
-              >
-                <Text
-                  className="font-inter-semibold"
-                  style={{ fontSize: 16, color: "#000000" }}
-                >
-                  Property Admin (Dev)
-                </Text>
-                <Text
-                  className="font-inter-regular mt-1"
-                  style={{ fontSize: 12, color: "#545454" }}
-                >
-                  Development Only
-                </Text>
-              </TouchableOpacity>
             )}
           </View>
         </ScrollView>

@@ -471,7 +471,7 @@ Integrate `@react-native-google-signin/google-signin` or `expo-auth-session` for
 
 ### Base URLs
 
-- **Development**: `http://192.168.0.100/api/auth`
+- **Development**: `http://masqany.speqlink.com/api/auth`
 - **Production**: `https://masqany.speqlink.com/api/auth`
 
 ### All Endpoints

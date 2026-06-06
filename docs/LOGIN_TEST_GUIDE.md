@@ -41,7 +41,7 @@ You should see detailed logs like this:
 [LOGIN] Starting login attempt...
 [LOGIN] Identifier: speqlink@gmail.com
 [LOGIN] Password length: 17
-[LOGIN] API Base URL: http://192.168.0.100
+[LOGIN] API Base URL: http://masqany.speqlink.com
 ==================================================
 [LOGIN] Calling POST /api/auth/signin/password
 [LOGIN] ✅ Response received: {
@@ -94,7 +94,7 @@ After successful login:
 
 2. Is Kong healthy?
    ```bash
-   curl http://192.168.0.100/api/auth/health
+   curl http://masqany.speqlink.com/api/auth/health
    ```
 
 3. Are you on the same network?
@@ -123,7 +123,7 @@ If you see an error response in console:
 2. Use the "Fill Test Credentials" button
 3. Test with curl first:
    ```bash
-   curl -X POST http://192.168.0.100/api/auth/signin/password \
+   curl -X POST http://masqany.speqlink.com/api/auth/signin/password \
      -H "Content-Type: application/json" \
      -d '{"identifier":"speqlink@gmail.com","password":"@Speqlink1240.,,."}'
    ```
@@ -145,7 +145,7 @@ If you see an error response in console:
 
 1. **Test backend directly:**
    ```bash
-   curl -X POST http://192.168.0.100/api/auth/signin/password \
+   curl -X POST http://masqany.speqlink.com/api/auth/signin/password \
      -H "Content-Type: application/json" \
      -d '{"identifier":"speqlink@gmail.com","password":"@Speqlink1240.,,."}' \
      | python3 -m json.tool
@@ -160,10 +160,10 @@ If you see an error response in console:
 3. **Verify network:**
    ```bash
    # From your computer
-   ping 192.168.0.100
+   ping masqany.speqlink.com
    
    # Test Kong
-   curl http://192.168.0.100:8001/status
+   curl http://masqany.speqlink.com:8001/status
    ```
 
 4. **Check apiClient config:**

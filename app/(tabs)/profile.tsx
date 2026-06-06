@@ -31,32 +31,22 @@ export default function ProfileScreen() {
   // Get user from auth store (fallback if API is not available)
   const authUser = useAuthStore((s) => s.user);
 
-  // Fetch profile data using TanStack Query (will use auth store as fallback)
-  const { data: profile, isLoading, error, refetch } = useProfile();
+  // Fetch profile data using TanStack Query
+  const { data: profile, isLoading } = useProfile();
 
   // Fetch user accounts for multi-account management
   const { data: accountsData } = useAccounts();
   const accounts = accountsData?.accounts || [];
 
-  // Use profile data from API if available, otherwise fall back to auth store
-  const displayUser = profile || authUser;
-
-  // For development: Set mock user if no user exists
-  React.useEffect(() => {
-    if (!authUser && !profile) {
-      useAuthStore.getState().setUser({
-        id: "mock-user-1",
-        name: "Boom Detroit",
-        email: "comphortine@speqlink.com",
-        phone: "+1234567890",
-        avatar: undefined, // Will use default icon
-        role: "tenant",
-        isHost: false,
-        isVerified: true,
-        createdAt: new Date().toISOString(),
-      });
-    }
-  }, [authUser, profile]);
+  // Convert profile data to match User type for display
+  const displayUser = profile ? {
+    id: profile.id,
+    fullName: profile.name,
+    email: profile.email,
+    phone: profile.phone || undefined,
+    role: authUser?.role || "tenant",
+    avatar: profile.avatar || undefined,
+  } : authUser;
 
   // Logout mutation
   const logout = useLogout();
@@ -136,12 +126,16 @@ export default function ProfileScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Profile Header Section - Task 8.2 */}
+            {/* Profile Header Section */}
             {isLoading && !displayUser ? (
               <ProfileSkeleton />
             ) : (
               <ProfileHeader
-                user={displayUser as any || null}
+                user={{
+                  ...displayUser,
+                  name: displayUser?.fullName || displayUser?.email || "User",
+                  avatar: profile?.avatar || undefined
+                } as any}
                 isLoading={false}
                 onEditPress={handleEditProfile}
               />

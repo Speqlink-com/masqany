@@ -178,7 +178,8 @@ export default function SecuritySettingsScreen() {
               <TouchableOpacity
                 onPress={() => setShowPasswordModal(true)}
                 activeOpacity={0.8}
-                className="bg-white rounded-lg p-4 mb-3"
+                className="rounded-lg p-4 mb-3"
+                style={{ backgroundColor: "#e1e6e8" }}
               >
                 <Text
                   className="font-inter-semibold mb-1"
@@ -195,7 +196,7 @@ export default function SecuritySettingsScreen() {
               </TouchableOpacity>
 
               {/* Two-Factor Authentication Card */}
-              <View className="bg-white rounded-lg p-4 mb-3">
+              <View className="rounded-lg p-4 mb-3" style={{ backgroundColor: "#e1e6e8" }}>
                 <View className="flex-row items-center justify-between mb-2">
                   <View className="flex-1 mr-3">
                     <Text
@@ -264,6 +265,11 @@ export default function SecuritySettingsScreen() {
               )}
             </View>
           </ScrollView>
+
+          {/* Bottom Blue Bar */}
+          <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#3fbdfd] z-50">
+            <View className="h-[2px] bg-white" />
+          </View>
         </SafeAreaView>
       </ImageBackground>
 

@@ -17,11 +17,11 @@ import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } fro
 // Base URL — swap via environment variable in EAS build profiles
 // ---------------------------------------------------------------------------
 const BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.0.100";
+  process.env.EXPO_PUBLIC_API_URL ?? "http://masqany.speqlink.com";
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 15_000,
+  timeout: 45_000, // 45 seconds for GPT responses
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -40,14 +40,67 @@ interface RetryConfig extends AxiosRequestConfig {
 }
 
 // ---------------------------------------------------------------------------
-// Request interceptor — attach Bearer token on every request
+// Helper to decode JWT payload without verification (client-side only)
+// ---------------------------------------------------------------------------
+function decodeJwt(token: string): any | null {
+  try {
+    console.log("[API CLIENT] Token preview:", token.substring(0, 50) + "...");
+    console.log("[API CLIENT] Token length:", token.length);
+    
+    const parts = token.split(".");
+    console.log("[API CLIENT] Token has", parts.length, "parts (JWT should have 3)");
+    
+    if (parts.length !== 3) {
+      console.log("[API CLIENT] ❌ Invalid JWT structure - not 3 parts");
+      return null;
+    }
+    
+    console.log("[API CLIENT] Decoding part 2 (payload)...");
+    const payload = JSON.parse(atob(parts[1]));
+    console.log("[API CLIENT] ✅ Decoded payload:", JSON.stringify(payload, null, 2));
+    return payload;
+  } catch (error) {
+    console.log("[API CLIENT] ❌ Decode error:", error);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Request interceptor — attach Bearer token + user headers on every request
 // ---------------------------------------------------------------------------
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = tokenStore.getState().accessToken;
+    
+    console.log("[API CLIENT] Request interceptor running...");
+    console.log("[API CLIENT] Token exists:", !!token);
+    console.log("[API CLIENT] URL:", config.url);
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      
+      // Decode token to extract user information
+      console.log("[API CLIENT] Decoding JWT token...");
+      const payload = decodeJwt(token);
+      console.log("[API CLIENT] Decoded payload:", payload ? "success" : "failed");
+      
+      if (payload) {
+        // Add user headers required by profile service
+        config.headers["X-User-Id"] = payload.sub || "";
+        config.headers["X-User-Email"] = payload.email || "";
+        config.headers["X-User-Role"] = payload.role || "";
+        
+        console.log("[API CLIENT] ✅ Headers added:");
+        console.log("[API CLIENT]    X-User-Id:", payload.sub);
+        console.log("[API CLIENT]    X-User-Email:", payload.email);
+        console.log("[API CLIENT]    X-User-Role:", payload.role);
+      } else {
+        console.log("[API CLIENT] ⚠️ Failed to decode JWT - headers NOT added");
+      }
+    } else {
+      console.log("[API CLIENT] ⚠️ No token found - request will be unauthenticated");
     }
+    
     return config;
   },
   (error) => Promise.reject(error)

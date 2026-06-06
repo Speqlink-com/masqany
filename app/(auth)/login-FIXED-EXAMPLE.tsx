@@ -7,7 +7,7 @@
  * - Email: speqlink@gmail.com
  * - Password: @Speqlink1240.,,.
  * 
- * Backend endpoint: POST http://192.168.0.100/api/auth/signin/password
+ * Backend endpoint: POST http://masqany.speqlink.com/api/auth/signin/password
  * Response: {status: "success", message: "Signed in", refreshToken: "...", user: {...}}
  */
 
@@ -21,15 +21,15 @@ import { tokenStore, useAuthStore } from "@/store/auth.store";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const INPUT_BG = "#AAAABB";
@@ -134,7 +134,7 @@ export default function LoginScreenFixed() {
 
     try {
       console.log("[Login] Attempting sign in...");
-      console.log("[Login] API Base URL:", process.env.EXPO_PUBLIC_API_URL || "http://192.168.0.100");
+      console.log("[Login] API Base URL:", process.env.EXPO_PUBLIC_API_URL || "http://masqany.speqlink.com");
       
       // Call the backend endpoint that we tested with curl
       const response = await signInPassword({

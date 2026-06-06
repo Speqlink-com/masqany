@@ -15,11 +15,12 @@ import {
   useLikeVideo,
   useShareVideo,
   useVideoFeed,
+  useVideoFeedStore,
 } from "@/modules/video-feed";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useCallback } from "react";
-import { Alert, Linking, Platform, Text, View } from "react-native";
+import React, { useCallback, useEffect } from "react";
+import { Alert, AppState, Linking, Platform, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
@@ -27,6 +28,31 @@ export default function HomeScreen() {
   const params = useLocalSearchParams<{ videoId?: string }>();
   const networkStatus = useNetworkStatus();
   const { data, isLoading, isError, error, fetchNextPage, hasNextPage, refetch } = useVideoFeed();
+
+  // Get store actions to control video playback
+  const pauseVideo = useVideoFeedStore((state) => state.pauseVideo);
+  const resumeVideo = useVideoFeedStore((state) => state.resumeVideo);
+
+  // Pause video when tab loses focus or app goes to background
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        // User left the app or switched tabs
+        pauseVideo();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [pauseVideo]);
+
+  // Pause video when component unmounts (tab switch)
+  useEffect(() => {
+    return () => {
+      pauseVideo();
+    };
+  }, [pauseVideo]);
 
   // Mutation hooks for engagement actions
   const likeVideoMutation = useLikeVideo();

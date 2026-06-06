@@ -372,22 +372,22 @@ Accept terms and finish
 
 ```bash
 # Test login
-curl -X POST http://192.168.0.100/api/auth/signin/password \
+curl -X POST http://masqany.speqlink.com/api/auth/signin/password \
   -H "Content-Type: application/json" \
   -d '{"identifier":"speqlink@gmail.com","password":"@Speqlink1240.,,."}'
 
 # Test signup
-curl -X POST http://192.168.0.100/api/auth/signup/start \
+curl -X POST http://masqany.speqlink.com/api/auth/signup/start \
   -H "Content-Type: application/json" \
   -d '{"fullName":"Test","role":"tenant","email":"test@test.com","phone":"+254712345678","password":"Test1234","confirmPassword":"Test1234"}'
 
 # Test verify email (replace with actual OTP)
-curl -X POST http://192.168.0.100/api/auth/signup/verify-email \
+curl -X POST http://masqany.speqlink.com/api/auth/signup/verify-email \
   -H "Content-Type: application/json" \
   -d '{"email":"test@test.com","code":"123456"}'
 
 # Test complete
-curl -X POST http://192.168.0.100/api/auth/signup/complete \
+curl -X POST http://masqany.speqlink.com/api/auth/signup/complete \
   -H "Content-Type: application/json" \
   -d '{"email":"test@test.com","termsAccepted":true}'
 ```

@@ -173,13 +173,13 @@ Test any endpoint from terminal:
 
 ```bash
 # Test login
-curl -X POST http://192.168.0.100/api/auth/signin/password \
+curl -X POST http://masqany.speqlink.com/api/auth/signin/password \
   -H "Content-Type: application/json" \
   -d '{"identifier":"speqlink@gmail.com","password":"@Speqlink1240.,,."}' \
   | python3 -m json.tool
 
 # Test signup start
-curl -X POST http://192.168.0.100/api/auth/signup/start \
+curl -X POST http://masqany.speqlink.com/api/auth/signup/start \
   -H "Content-Type: application/json" \
   -d '{
     "fullName":"Test User",
@@ -206,7 +206,7 @@ If the login screen doesn't work:
 
 1. Check console logs - Look for API call details
 2. Check network tab - See actual HTTP requests
-3. Verify base URL - Should be `http://192.168.0.100`
+3. Verify base URL - Should be `http://masqany.speqlink.com`
 4. Test with curl first - Confirm backend is responding
 5. Check Kong logs - `docker logs masqany-kong`
 6. Check auth service logs - `docker logs masqany-auth-service`
@@ -217,7 +217,7 @@ If the login screen doesn't work:
 - All paths must start with `/api/auth/`
 - Phone numbers must be in format `+254XXXXXXXXX`
 - Backend returns Zurich roles exactly: "superadmin", "admin", "property_owner", "property_agent", "tenant", "relocation_driver"
-- The `apiClient` base URL should be just `http://192.168.0.100` (no `/api` suffix)
+- The `apiClient` base URL should be just `http://masqany.speqlink.com` (no `/api` suffix)
 
 ## Summary
 

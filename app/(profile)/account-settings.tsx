@@ -150,55 +150,28 @@ export default function AccountSettingsScreen() {
                   Account Status
                 </Text>
 
-                {/* Verified Badge */}
+                {/* Account Status from API */}
                 <View className="flex-row items-center mb-3">
                   <Text
                     className="font-inter-regular flex-1"
                     style={{ fontSize: typography.size.base, color: colors.dark[400] }}
                   >
-                    Verification Status
+                    Status
                   </Text>
                   <View
                     className="px-3 py-1 rounded-full"
                     style={{
-                      backgroundColor: profile?.isVerified
-                        ? colors.success
-                        : colors.warning,
+                      backgroundColor: 
+                        profile?.status === "verified" ? colors.success :
+                        profile?.status === "active" ? colors.primary[700] :
+                        colors.warning,
                     }}
                   >
                     <Text
-                      className="font-inter-semibold"
+                      className="font-inter-semibold capitalize"
                       style={{ fontSize: typography.size.sm, color: colors.light[400] }}
                     >
-                      {profile?.isVerified ? "Verified" : "Unverified"}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Host Badge */}
-                <View className="flex-row items-center mb-3">
-                  <Text
-                    className="font-inter-regular flex-1"
-                    style={{ fontSize: typography.size.base, color: colors.dark[400] }}
-                  >
-                    Host Status
-                  </Text>
-                  <View
-                    className="px-3 py-1 rounded-full"
-                    style={{
-                      backgroundColor: profile?.isHost
-                        ? colors.primary[700]
-                        : colors.light[200],
-                    }}
-                  >
-                    <Text
-                      className="font-inter-semibold"
-                      style={{
-                        fontSize: typography.size.sm,
-                        color: profile?.isHost ? colors.light[400] : colors.dark[100],
-                      }}
-                    >
-                      {profile?.isHost ? "Host" : "Guest"}
+                      {profile?.status || "Unknown"}
                     </Text>
                   </View>
                 </View>
@@ -236,6 +209,11 @@ export default function AccountSettingsScreen() {
               </TouchableOpacity>
             </View>
           </ScrollView>
+
+          {/* Bottom Blue Bar */}
+          <View className="absolute bottom-0 left-0 right-0 h-[100px] bg-[#3fbdfd] z-50">
+            <View className="h-[2px] bg-white" />
+          </View>
         </SafeAreaView>
       </ImageBackground>
     </View>

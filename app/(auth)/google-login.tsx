@@ -1,15 +1,16 @@
 /**
  * Google Login Screen
- * Simulates Google OAuth flow - ready for expo-auth-session integration
+ * Handles Google OAuth sign-in flow
  */
-import { mockGoogleLogin } from "@/assets/data/auth";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
+import { signInWithGoogle, isGoogleSignInAvailable } from "@/modules/auth/google";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     Image,
     Text,
     TouchableOpacity,
@@ -21,19 +22,51 @@ export default function GoogleLoginScreen() {
   const [loading, setLoading] = useState(false);
 
   async function handleGoogleSignIn() {
+    if (!isGoogleSignInAvailable()) {
+      Alert.alert(
+        "Development Build Required",
+        "Google Sign-In requires a development build. It won't work with Expo Go.\n\nPlease use email/password login instead.",
+        [{ text: "OK", onPress: () => router.back() }]
+      );
+      return;
+    }
+
     setLoading(true);
     
-    // Simulate Google OAuth flow
-    // TODO: Replace with expo-auth-session when ready
-    await new Promise((r) => setTimeout(r, 1500));
-    
-    // Mock Google login
-    const response = mockGoogleLogin("mock-google-token");
-    
-    setLoading(false);
-    
-    // Route based on user role
-    routeByRole(response.user.role, router);
+    console.log("=".repeat(50));
+    console.log("[GOOGLE LOGIN] Starting Google Sign-In...");
+    console.log("=".repeat(50));
+
+    try {
+      const response = await signInWithGoogle();
+      
+      console.log("[GOOGLE LOGIN] ✅ Sign-in successful!");
+      console.log("[GOOGLE LOGIN] User:", response.user.fullName);
+      console.log("[GOOGLE LOGIN] Role:", response.user.role);
+      console.log("=".repeat(50));
+      
+      setLoading(false);
+      
+      // Route based on user role
+      routeByRole(response.user.role, router);
+    } catch (err: any) {
+      console.log("[GOOGLE LOGIN] ❌ Sign-in failed:");
+      console.error("[GOOGLE LOGIN] Error:", err);
+      console.log("=".repeat(50));
+      
+      setLoading(false);
+      
+      let errorMsg = err.message || "Google Sign-In failed";
+      
+      if (err.status === 404) {
+        errorMsg = "No account found with this Google email. Please sign up first.";
+      } else if (errorMsg.includes("cancelled")) {
+        // User cancelled - don't show error
+        return;
+      }
+      
+      Alert.alert("Sign-In Failed", errorMsg);
+    }
   }
 
   return (
@@ -88,15 +121,16 @@ export default function GoogleLoginScreen() {
           </Text>
         </View>
 
-        {/* Demo note */}
-        <View className="mt-8 p-4 rounded-2xl" style={{ backgroundColor: "rgba(32, 166, 253, 0.1)" }}>
-          <Text className="font-inter-semibold text-primary-700 mb-2" style={{ fontSize: 14 }}>
-            Demo Mode
-          </Text>
-          <Text className="font-inter-regular text-dark-300" style={{ fontSize: 13, lineHeight: 20 }}>
-            This is a simulated Google login. In production, this will use Google OAuth for secure authentication.
-          </Text>
-        </View>
+        {!isGoogleSignInAvailable() && (
+          <View className="mt-8 p-4 rounded-2xl" style={{ backgroundColor: "rgba(245, 85, 85, 0.1)" }}>
+            <Text className="font-inter-semibold mb-2" style={{ fontSize: 14, color: "#F75555" }}>
+              Development Build Required
+            </Text>
+            <Text className="font-inter-regular text-dark-300" style={{ fontSize: 13, lineHeight: 20 }}>
+              Google Sign-In requires a development build and won't work with Expo Go. Please use email/password login instead.
+            </Text>
+          </View>
+        )}
       </View>
     </AuthLayout>
   );

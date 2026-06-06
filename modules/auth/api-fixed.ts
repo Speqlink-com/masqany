@@ -1,33 +1,33 @@
 /**
  * Auth API - Fixed version matching EXACTLY the working backend endpoints
- * Base URL: http://192.168.0.100 (set in apiClient)
+ * Base URL: http://masqany.speqlink.com (set in apiClient)
  * All paths start with /api/auth/
  */
 
 import { apiClient } from "@/lib/api/client";
 import type {
-  SignupStartPayload,
-  SignupStartResponse,
-  VerifyEmailPayload,
-  VerifyEmailResponse,
-  VerifyPhonePayload,
-  VerifyPhoneResponse,
-  CompleteSignupPayload,
-  AuthSuccessResponse,
-  ResendOtpPayload,
-  SignInPasswordPayload,
-  SignInOtpRequestPayload,
-  SignInOtpVerifyPayload,
-  OtpRequestResponse,
-  ForgotPasswordRequestPayload,
-  ForgotPasswordCompletePayload,
-  PasswordResetResponse,
-  GoogleMobileSignInPayload,
-  GoogleMobileSignUpPayload,
-  GoogleAuthResponse,
-  RefreshTokenPayload,
-  RefreshTokenResponse,
-  LogoutResponse,
+    AuthSuccessResponse,
+    CompleteSignupPayload,
+    ForgotPasswordCompletePayload,
+    ForgotPasswordRequestPayload,
+    GoogleAuthResponse,
+    GoogleMobileSignInPayload,
+    GoogleMobileSignUpPayload,
+    LogoutResponse,
+    OtpRequestResponse,
+    PasswordResetResponse,
+    RefreshTokenPayload,
+    RefreshTokenResponse,
+    ResendOtpPayload,
+    SignInOtpRequestPayload,
+    SignInOtpVerifyPayload,
+    SignInPasswordPayload,
+    SignupStartPayload,
+    SignupStartResponse,
+    VerifyEmailPayload,
+    VerifyEmailResponse,
+    VerifyPhonePayload,
+    VerifyPhoneResponse,
 } from "./types";
 
 // All endpoints start with /api/auth

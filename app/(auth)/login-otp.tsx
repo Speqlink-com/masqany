@@ -184,15 +184,15 @@ export default function LoginOtpScreen() {
 
       console.log("[LOGIN OTP VERIFY] ✅ Response received:", JSON.stringify(response.data, null, 2));
 
-      const { refreshToken, user } = response.data;
+      const { accessToken, refreshToken, user } = response.data;
 
       // Save session to secure storage
       console.log("[LOGIN OTP VERIFY] Saving session...");
-      await saveSession(refreshToken, refreshToken, user);
+      await saveSession(accessToken, refreshToken, user);
       
       // Update app state
       console.log("[LOGIN OTP VERIFY] Updating app state...");
-      setTokens(refreshToken, refreshToken);
+      setTokens(accessToken, refreshToken);
       setUser(user);
 
       console.log("[LOGIN OTP VERIFY] ✅ Login successful! User:", user.fullName, "Role:", user.role);
