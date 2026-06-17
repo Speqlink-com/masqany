@@ -478,38 +478,6 @@ export default function OnboardingCredentialsScreen() {
                 inputRef={confirmRef}
               />
 
-              {/* Test Credentials for Development */}
-              {__DEV__ && (
-                <View style={{ marginBottom: 16, padding: 12, backgroundColor: "rgba(32, 166, 253, 0.1)", borderRadius: 12 }}>
-                  <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#28B4FA", marginBottom: 8 }}>
-                    🐛 Debug Info (DEV)
-                  </Text>
-                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#4F5C62", lineHeight: 18 }}>
-                    Name: {name || "not set"}{"\n"}
-                    Role: {role || "not set"}{"\n"}
-                    Email: {email || "empty"}{"\n"}
-                    Phone: {phoneDigits || "empty"}{"\n"}
-                    Password: {password ? "set" : "empty"}{"\n"}
-                    Confirm: {confirm ? "set" : "empty"}{"\n"}
-                    Valid: {isValid ? "✅ YES" : "❌ NO"}{"\n"}
-                    Loading: {loading ? "YES" : "NO"}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setEmail("test@example.com");
-                      setPhoneDigits("712345678");
-                      setPassword("TestPass123!");
-                      setConfirm("TestPass123!");
-                    }}
-                    style={{ marginTop: 8, padding: 8, backgroundColor: "#28B4FA", borderRadius: 8 }}
-                  >
-                    <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#FFF", textAlign: "center" }}>
-                      Fill Test Data
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
               <View style={{ marginTop: 2, marginBottom: 16 }}>
                 <PrimaryButton 
                   label="Continue" 
@@ -635,7 +603,20 @@ async function handleGoogleSignup(
     let errorMsg = err.message || "Google Sign-Up failed";
     
     if (err.status === 409) {
-      errorMsg = "Account already exists with this Google email. Please sign in instead.";
+      // Account already exists - show alert with option to sign in
+      setGoogleLoading(false);
+      Alert.alert(
+        "Account Already Exists",
+        "An account with this Google email already exists. Would you like to sign in instead?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { 
+            text: "Sign In", 
+            onPress: () => router.push("/google-login" as any)
+          }
+        ]
+      );
+      return;
     } else if (errorMsg.includes("not yet configured") || errorMsg.includes("requires a development build")) {
       errorMsg = "Google Sign-Up requires a development build. Use email/password instead.";
     } else if (errorMsg.includes("cancelled")) {

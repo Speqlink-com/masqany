@@ -32,7 +32,7 @@ export default function AuthScreen() {
               <Text className="font-inter-semibold text-[#B8860B] text-center" style={{ fontSize: 14 }}>
                 🚧 Beta Version
               </Text>
-              <Text className="font-inter-regular text-[#8B7355] text-center mt-1" style={{ fontSize: 12 }}>
+              <Text className="font-inter-regular text-[#000000] text-center mt-1" style={{ fontSize: 12 }}>
                 Secure your account now. Full version coming soon!
               </Text>
             </View>

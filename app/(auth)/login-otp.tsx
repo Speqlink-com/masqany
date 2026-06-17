@@ -340,7 +340,7 @@ function routeByRole(role: string, router: ReturnType<typeof useRouter>) {
       break;
     case "relocation_driver":
       console.log("[LOGIN OTP] -> Routing to driver dashboard");
-      router.replace("/(tabs)/home" as any);
+      router.replace("/(driver)/dashboard" as any);
       break;
     case "tenant":
     default:

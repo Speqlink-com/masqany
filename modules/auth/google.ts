@@ -9,8 +9,8 @@
  */
 
 import { apiClient } from "@/lib/api/client";
-import { saveSession } from "./storage";
 import { tokenStore, useAuthStore, User } from "@/store/auth.store";
+import { saveSession } from "./storage";
 
 // Lazy load GoogleSignin to avoid errors in Expo Go
 let GoogleSignin: any = null;
@@ -150,17 +150,32 @@ async function promptGoogleSignIn(): Promise<string | null> {
     console.log("[GOOGLE] Checking Play Services...");
     await GoogleSignin.hasPlayServices();
     
-    console.log("[GOOGLE] Prompting user to sign in...");
+    // Sign out first to clear cached account and force account selection
+    console.log("[GOOGLE] Signing out to clear cached account...");
+    try {
+      await GoogleSignin.signOut();
+    } catch (e) {
+      // Ignore errors if no one is signed in
+      console.log("[GOOGLE] No cached account to sign out");
+    }
+    
+    console.log("[GOOGLE] Prompting user to sign in (account selection)...");
     const userInfo = await GoogleSignin.signIn();
     
-    console.log("[GOOGLE] ✅ User signed in:", userInfo.user.email);
+    console.log("[GOOGLE] ✅ User signed in:", userInfo.user?.email || userInfo.data?.user?.email);
+    console.log("[GOOGLE] Full userInfo:", JSON.stringify(userInfo, null, 2));
     
-    if (!userInfo.data?.idToken) {
+    // Try multiple possible locations for idToken
+    const idToken = userInfo.data?.idToken || userInfo.idToken || null;
+    
+    if (!idToken) {
       console.error("[GOOGLE] ❌ No ID token received");
+      console.error("[GOOGLE] userInfo structure:", Object.keys(userInfo));
       return null;
     }
     
-    return userInfo.data.idToken;
+    console.log("[GOOGLE] ✅ Got ID token (first 20 chars):", idToken.substring(0, 20) + "...");
+    return idToken;
   } catch (error: any) {
     console.error('[GOOGLE] ❌ Sign-In error:', error);
     

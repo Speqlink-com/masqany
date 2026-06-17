@@ -20,7 +20,7 @@ export const MAP_CONFIG = {
     ne: [42.0, 5.5] as [number, number],  // Northeast Kenya
   },
   
-  // White Mapbox style for the Bolt-like map treatment.
+  // White Mapbox style
   style: "mapbox://styles/mapbox/light-v11",
   
   // Cluster configuration

@@ -503,7 +503,7 @@ function routeByRole(role: string, router: ReturnType<typeof useRouter>) {
       break;
     case "relocation_driver":
       console.log("[LOGIN] -> Routing to driver dashboard");
-      router.replace("/(tabs)/home" as any); // Update when driver dashboard is ready
+      router.replace("/(driver)/dashboard" as any);
       break;
     case "tenant":
     default:

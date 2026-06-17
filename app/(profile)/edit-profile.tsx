@@ -26,6 +26,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function EditProfileScreen() {
+  const router = useRouter();
+  
   // Fetch current profile data
   const { data: profile, isLoading } = useProfile();
 

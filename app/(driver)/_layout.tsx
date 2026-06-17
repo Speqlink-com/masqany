@@ -65,6 +65,30 @@ export default function DriverLayout() {
         }}
       />
       <Tabs.Screen
+        name="chat-agent"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              icon={require("@/assets/icons/ai-chat-tab-icon.webp")}
+              label="Chat"
+              focused={focused}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              icon={require("@/assets/icons/profile-tab-icon.webp")}
+              label="Profile"
+              focused={focused}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="move-execution/[moveId]"
         options={{
           href: null,

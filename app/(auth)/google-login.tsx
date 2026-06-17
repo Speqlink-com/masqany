@@ -5,7 +5,7 @@
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BackButton } from "@/components/auth/BackButton";
 import { ContactUs } from "@/components/auth/ContactUs";
-import { signInWithGoogle, isGoogleSignInAvailable } from "@/modules/auth/google";
+import { isGoogleSignInAvailable, signInWithGoogle } from "@/modules/auth/google";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -137,20 +137,27 @@ export default function GoogleLoginScreen() {
 }
 
 function routeByRole(role: string, router: ReturnType<typeof useRouter>) {
+  console.log("[GOOGLE LOGIN] Routing user based on role:", role);
+  
   switch (role) {
     case "admin":
+    case "superadmin":
     case "super_admin":
-      router.replace("/(tabs)/home"); // TODO: Change to /(admin)/dashboard when ready
+      console.log("[GOOGLE LOGIN] -> Routing to super-admin dashboard");
+      router.replace("/(super-admin)/dashboard" as any);
       break;
     case "property_owner":
     case "property_agent":
-      router.replace("/(tabs)/home");
+      console.log("[GOOGLE LOGIN] -> Routing to property-admin");
+      router.replace("/(property-admin)" as any);
       break;
     case "relocation_driver":
-      router.replace("/(tabs)/home");
+      console.log("[GOOGLE LOGIN] -> Routing to driver dashboard");
+      router.replace("/(driver)/dashboard" as any);
       break;
     case "tenant":
     default:
-      router.replace("/(tabs)/home");
+      console.log("[GOOGLE LOGIN] -> Routing to tenant home");
+      router.replace("/(tabs)/home" as any);
   }
 }
