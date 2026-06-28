@@ -8,8 +8,8 @@
 import { MAP_CONFIG } from "@/constants/mapConfig";
 import { Mapbox, mapboxUnavailableMessage } from "@/components/map/mapbox";
 import * as Location from "expo-location";
-import React, { forwardRef, useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React, { forwardRef, useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 interface BaseMapProps {
   children?: React.ReactNode;
@@ -18,6 +18,9 @@ interface BaseMapProps {
   onRegionDidChange?: (feature: any) => void;
   onUserLocationResolved?: (coordinate: [number, number]) => void;
   cameraRef?: React.RefObject<any | null>;
+  initialPitch?: number;
+  initialZoomLevel?: number;
+  gestureSettings?: Record<string, boolean | number>;
 }
 
 export const BaseMap = forwardRef<any, BaseMapProps>(
@@ -29,11 +32,19 @@ export const BaseMap = forwardRef<any, BaseMapProps>(
       onRegionDidChange,
       onUserLocationResolved,
       cameraRef,
+      initialPitch = 0,
+      initialZoomLevel = MAP_CONFIG.zoom,
+      gestureSettings,
     },
     ref
   ) => {
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
     const [locationPermission, setLocationPermission] = useState(false);
+    const [isMapLoading, setIsMapLoading] = useState(true);
+
+    const handleMapLoaded = useCallback(() => {
+      setIsMapLoading(false);
+    }, []);
 
     // Request location permission on mount
     useEffect(() => {
@@ -74,31 +85,63 @@ export const BaseMap = forwardRef<any, BaseMapProps>(
           onRegionDidChange={onRegionDidChange}
           compassEnabled={true}
           compassViewPosition={3} // Top right
+          compassViewMargins={{ x: 16, y: 128 }}
           scaleBarEnabled={false}
           logoEnabled={false}
           attributionEnabled={false}
+          zoomEnabled
+          scrollEnabled
+          rotateEnabled
+          pitchEnabled
+          maxPitch={60}
+          gestureSettings={{
+            doubleTapToZoomInEnabled: true,
+            doubleTouchToZoomOutEnabled: true,
+            pinchPanEnabled: true,
+            pinchZoomEnabled: true,
+            pitchEnabled: true,
+            quickZoomEnabled: true,
+            rotateEnabled: true,
+            simultaneousRotateAndPinchZoomEnabled: true,
+            panEnabled: true,
+            ...gestureSettings,
+          }}
+          onDidFinishLoadingMap={handleMapLoaded}
+          onMapLoadingError={handleMapLoaded}
         >
           <Mapbox.Camera
             ref={cameraRef}
-            zoomLevel={userLocation ? MAP_CONFIG.userLocationZoom : MAP_CONFIG.zoom}
+            zoomLevel={userLocation ? MAP_CONFIG.userLocationZoom : initialZoomLevel}
             centerCoordinate={userLocation || MAP_CONFIG.center}
+            pitch={initialPitch}
             minZoomLevel={MAP_CONFIG.camera.minZoom}
             maxZoomLevel={MAP_CONFIG.camera.maxZoom}
             followUserLocation={followUserLocation}
             followZoomLevel={followUserLocation ? MAP_CONFIG.camera.followUserZoom : undefined}
+            followPitch={followUserLocation ? initialPitch : undefined}
             animationDuration={2000}
           />
 
           {showUserLocation && locationPermission && (
-            <Mapbox.UserLocation
+            <Mapbox.LocationPuck
               visible={true}
-              showsUserHeadingIndicator={true}
-              androidRenderMode="normal"
+              puckBearingEnabled={true}
+              puckBearing="heading"
+              pulsing={{
+                isEnabled: true,
+                color: MAP_CONFIG.colors.property,
+                radius: 42,
+              }}
             />
           )}
 
           {children}
         </Mapbox.MapView>
+        {isMapLoading && (
+          <View pointerEvents="none" style={styles.loadingOverlay}>
+            <ActivityIndicator color={MAP_CONFIG.colors.property} size="large" />
+          </View>
+        )}
       </View>
     );
   }
@@ -112,6 +155,12 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    backgroundColor: "rgba(248, 250, 252, 0.72)",
+    justifyContent: "center",
   },
   unavailable: {
     alignItems: "center",

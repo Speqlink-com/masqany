@@ -3,4 +3,6 @@
  */
 
 export * from "./location";
+export * from "./roles";
+
 

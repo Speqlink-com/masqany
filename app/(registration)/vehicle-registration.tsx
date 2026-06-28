@@ -28,14 +28,38 @@ export default function VehicleRegistrationScreen() {
 
   // Check role-based access on mount
   useEffect(() => {
-    if (user && !canRegisterVehicle(user.role)) {
+    if (!user) {
+      // No user logged in - redirect to login
       Alert.alert(
-        "Access Denied",
-        getPermissionErrorMessage("register vehicles") + ". Only drivers can register vehicles.",
+        "Authentication Required",
+        "Please log in to register vehicles.",
         [
           {
             text: "OK",
+            onPress: () => router.replace("/(auth)/login" as any),
+          },
+        ]
+      );
+      return;
+    }
+
+    if (!canRegisterVehicle(user.role)) {
+      // User doesn't have permission
+      const currentRole = getRoleName(user.role);
+      const requiredRoles = getRequiredRolesForAction('register_vehicle').join(' or ');
+      
+      Alert.alert(
+        "Access Denied",
+        `${getPermissionErrorMessage("register vehicles")}.\n\nYour current role: ${currentRole}\nRequired role: ${requiredRoles}\n\nPlease contact support if you believe this is an error.`,
+        [
+          {
+            text: "Go Back",
+            onPress: () => router.back(),
+          },
+          {
+            text: "Go Home",
             onPress: () => router.replace("/(tabs)/home" as any),
+            style: "cancel",
           },
         ]
       );

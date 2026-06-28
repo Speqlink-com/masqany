@@ -76,14 +76,38 @@ export default function PropertyRegistrationScreen() {
 
   // Check role-based access on mount
   useEffect(() => {
-    if (user && !canRegisterProperty(user.role)) {
+    if (!user) {
+      // No user logged in - redirect to login
       Alert.alert(
-        "Access Denied",
-        getPermissionErrorMessage("register properties") + ". Only property owners and agents can register properties.",
+        "Authentication Required",
+        "Please log in to register properties.",
         [
           {
             text: "OK",
+            onPress: () => router.replace("/(auth)/login" as any),
+          },
+        ]
+      );
+      return;
+    }
+
+    if (!canRegisterProperty(user.role)) {
+      // User doesn't have permission
+      const currentRole = getRoleName(user.role);
+      const requiredRoles = getRequiredRolesForAction('register_property').join(' or ');
+      
+      Alert.alert(
+        "Access Denied",
+        `${getPermissionErrorMessage("register properties")}.\n\nYour current role: ${currentRole}\nRequired role: ${requiredRoles}\n\nPlease contact support if you believe this is an error.`,
+        [
+          {
+            text: "Go Back",
+            onPress: () => router.back(),
+          },
+          {
+            text: "Go Home",
             onPress: () => router.replace("/(tabs)/home" as any),
+            style: "cancel",
           },
         ]
       );
